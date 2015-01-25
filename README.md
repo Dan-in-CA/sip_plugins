@@ -1,8 +1,7 @@
 OSPi Plugins
 ============
-###A collection of user contributed plugins for the Raspberry Pi based irrigation controller OSPi
-
-- - -
+A collection of user contributed plugins for the Raspberry Pi based irrigation controller OSPi
+---------
 
 proto
 ---------

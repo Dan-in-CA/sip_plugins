@@ -1,5 +1,5 @@
 # !/usr/bin/env python
-# this plugins check sha on github and update ospi file from github
+# this plugin check sha on github and update ospi file from github
 
 from threading import Thread, Event, Condition
 from random import randint
@@ -133,7 +133,11 @@ def perform_update():
     command = "git config core.filemode false"  # http://superuser.com/questions/204757/git-chmod-problem-checkout-screws-exec-bit
     subprocess.call(command.split())
 
-    command = "git pull"
+    #command = "git pull"
+    command = "git fetch"
+    subprocess.call(command.split())
+
+    command = "git reset –hard origin/master"
     output = subprocess.check_output(command.split())
 
     print 'Update result:', output

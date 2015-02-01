@@ -10,11 +10,13 @@ You should have received a copy of the GNU General Public License along with thi
 ******************
 proto
 ---------
-A bare bones plugin for use as a starting point for plugin authoring.
+A bare bones plugin for use as a starting point for plugin authoring.</br>
+(Installed by default)
 
 system_update
 ----------
-Allows updating OSPi software from integrated UI
+Allows updating OSPi software from integrated UI</br>
+(Installed by default)
 
 email_adj
 ----------
@@ -26,7 +28,7 @@ Checks water pressure when master station is switched on
 
 lcd_adj
 ----------
-Uses I2C for LCD 16x2 char data display
+Uses I2C for LCD 16x2 char data display</br>
 Requires pylcd2 library
 
 pfc_8591_adj

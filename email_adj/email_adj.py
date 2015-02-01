@@ -82,7 +82,7 @@ class EmailSender(Thread):
         if dataeml["emllog"] != "off":          # if eml_log send email is enable (on)
             body = ('On ' + time.strftime("%d.%m.%Y at %H:%M:%S", time.localtime(time.time())) +
                     ': System was powered on.')
-            self.try_mail(subject, body, "/home/pi/ospi/data/log.json")
+            self.try_mail(subject, body, "data/log.json")
 
         while True:
             try:

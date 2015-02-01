@@ -1,0 +1,11 @@
+Description: This plugin read data (temp or voltage) from I2C PCF8591 on address 0x48. For temperature probe use LM35D. Power for PCF8591 or LM35D is 5V dc! no 3.3V dc.
+Author: Martim Pihrt
+Requirements:
+
+##### List all plugin files below preceded by a blank line [file_name.ext path] relative to OSPi directory #####
+
+pcf_8591_adj.py plugins
+pcf_8591_adj.html templates
+pcf_8591_adj.json data (generated)
+pcflog.json data (generated)
+pcf_8591_adj.manifest plugins/manifests

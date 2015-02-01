@@ -1,0 +1,10 @@
+Description: This plugin send and check SMS data for modem to control your ospi
+Author: Martin Pihrt
+Requirements:
+
+##### List all plugin files below preceded by a blank line [file_name.ext path] relative to OSPi directory #####
+
+sms_adj.py plugins
+sms_adj.html templates
+sms_adj.json data (generated)
+sms_adj.manifest plugins/manifests

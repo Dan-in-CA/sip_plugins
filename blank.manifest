@@ -1,0 +1,11 @@
+Description: 
+Author: 
+Requirements:
+
+##### List all plugin files below preceded by a blank line [file_name.ext path] relative to OSPi directory #####
+
+.py plugins
+.html templates
+.html static/docs/plugins
+.json data (generated)
+.manifest plugins/manifests

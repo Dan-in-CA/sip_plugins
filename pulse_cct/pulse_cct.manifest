@@ -1,0 +1,10 @@
+Description: Pulses a selected circuit with a 2.5 Hz signal for 30 sec
+to discover the location of a valve
+Author: camx
+Requirements:
+
+##### List all plugin files below preceded by a blank line [file_name.ext path] relative to OSPi directory #####
+
+pulse_cct.py plugins
+pulse.html templates
+pulse_cct.manifest plugins/manifests

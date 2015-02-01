@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import smbus
 from time import sleep
 

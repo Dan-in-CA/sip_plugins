@@ -1,2 +1,9 @@
-email_adj.html, templates/
-email_adj.py, plugins/
+Description: This plugins send email at google email.
+Author: Martin Pihrt 
+
+##### List all plugin files below preceded by a blank line [file_name.ext path] relative to OSPi directory #####
+
+email_adj.py plugins
+email_adj.html templates
+email_adj.json data (generated)
+email_adj.manifest plugins/manifests

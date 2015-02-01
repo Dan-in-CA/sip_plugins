@@ -1,0 +1,10 @@
+Description: This plugin check pressure in pipe if master station is switched on
+Author: Martin Pihrt
+Requirements:
+
+##### List all plugin files below preceded by a blank line [file_name.ext path] relative to OSPi directory #####
+
+pressure_adj.py plugins
+pressure_adj.html templates
+pressure_adj.json data (generated)
+pressure_adj.manifest plugins/manifests

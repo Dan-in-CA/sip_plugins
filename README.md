@@ -1,7 +1,7 @@
 OSPi Plugins
 ============
 ###A collection of user contributed plugins for the Raspberry Pi based irrigation controller OSPi software.
-**Please note:** Unless otherwise stated:</br>
+**Please note:** Unless otherwise stated:  
 This is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
 These programs are distributed in the hope that they will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.

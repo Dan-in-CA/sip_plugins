@@ -1,6 +1,6 @@
 OSPi Plugins
 ============
-###A collection of user contributed plugins for the Raspberry Pi based irrigation controll [OSPi](https://github.com/Dan-in-CA/OSPi) software.
+###A collection of user contributed plugins for the Raspberry Pi based irrigation controll software  [OSPi](https://github.com/Dan-in-CA/OSPi).
 **Please note:** Unless otherwise stated:  
 This is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 

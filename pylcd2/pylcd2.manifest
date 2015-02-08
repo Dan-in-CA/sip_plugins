@@ -1,8 +1,0 @@
-Description: An updated version of lcd_adj
-Author: unknown
-Requirements:
-
-##### List all plugin files below preceded by a blank line [file_name.ext path] relative to OSPi directory #####
-
-pylcd2.py plugins
-pylcd2.manifest plugins/manifests

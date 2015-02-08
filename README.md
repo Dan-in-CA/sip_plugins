@@ -44,4 +44,22 @@ sms_adj
 ----------
 Control your ospi using SMS (Short Message Service)
 
+monthly_adj
+----------
+Adjust irrigation time each month
 
+relay
+----------
+Example plugin to demonstrate OSPi on-board relay
+
+signaling_examples
+----------
+Example plugin provides functions triggered by signals from core program
+
+weather_adj
+----------
+Adjust irrigation schedule based on weather forecast
+
+weather_level_adj
+----------
+Adjust irrigation time based on weather forecast

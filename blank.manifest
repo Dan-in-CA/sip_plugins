@@ -1,5 +1,9 @@
 Description: 
-Author: 
+Copyright 2015
+Author:
+Email: 
+License: GNU GPL 3.0
+
 Requirements:
 
 ##### List all plugin files below preceded by a blank line [file_name.ext path] relative to OSPi directory #####

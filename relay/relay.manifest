@@ -1,0 +1,12 @@
+Description: An example plugin to demonstrate the use of the on-board relay of the OSPi board.
+Copyright 2014
+Author: Dan
+Email: dkimberling59@gmail.com
+License: GNU GPL 3.0
+
+Requirements: none
+
+##### List all plugin files below preceded by a blank line [file_name.ext path] relative to OSPi directory #####
+
+relay.py plugins
+relay.manifest plugins/manifests

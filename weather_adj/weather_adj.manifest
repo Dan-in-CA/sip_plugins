@@ -1,0 +1,14 @@
+Description: Adjust irrigation schedule based on weather forecast
+Copyright 2014
+Author:
+Email: 
+License: GNU GPL 3.0
+
+Requirements:
+
+##### List all plugin files below preceded by a blank line [file_name.ext path] relative to OSPi directory #####
+
+weather_adj.py plugins
+weather_adj.html templates
+weather_adj.json data (generated)
+weather_adj.manifest plugins/manifests

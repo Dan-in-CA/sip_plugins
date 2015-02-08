@@ -1,0 +1,14 @@
+Description: Adjust irrigation time based on weather forecast
+Copyright 2015
+Author:
+Email: 
+License: GNU GPL 3.0
+
+Requirements:
+
+##### List all plugin files below preceded by a blank line [file_name.ext path] relative to OSPi directory #####
+
+weather_level_adj.py plugins
+weather_level_adj.html templates
+weather_level_adj.json data (generated)
+weather_level_adj.manifest plugins/manifests

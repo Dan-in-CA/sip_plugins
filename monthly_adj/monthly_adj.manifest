@@ -1,0 +1,14 @@
+Description: Adjusts the irrigation time by a percentage for each month.
+Copyright 2014
+Author: Dan
+Email: dkimberling59@gmail.com
+License: GNU GPL 3.0
+
+Requirements: none
+
+##### List all plugin files below preceded by a blank line [file_name.ext path] relative to OSPi directory #####
+
+monthly_adj.py plugins
+monthly.html templates
+levels.json data (generated)
+monthly_adj.manifest plugins/manifests

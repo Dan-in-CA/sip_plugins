@@ -53,7 +53,7 @@ Example plugin to demonstrate OSPi on-board relay
 
 signaling_examples
 ----------
-Example plugin provides functions triggered by signals from core program
+Example plugin provides functions triggered by signals from core program (installed by default)
 
 weather_adj
 ----------

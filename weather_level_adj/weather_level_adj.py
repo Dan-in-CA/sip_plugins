@@ -313,12 +313,15 @@ def history_info():
 
     result = {}
     for index, day_info in info.iteritems():
-        result[index] = {
-            'temp_c': float(day_info['maxtempm']),
-            'rain_mm': float(day_info['precipm']),
-            'wind_ms': float(day_info['meanwindspdm']) / 3.6,
-            'humidity': float(day_info['humidity'])
-        }
+        try:
+            result[index] = {
+                'temp_c': float(day_info['maxtempm']),
+                'rain_mm': float(day_info['precipm']),
+                'wind_ms': float(day_info['meanwindspdm']) / 3.6,
+                'humidity': float(day_info['humidity'])
+            }
+        except ValueError:
+            print "Error parsing JSON, maybe bad data from wunderground?"
 
     return result
 

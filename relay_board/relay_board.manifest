@@ -1,0 +1,14 @@
+Description: Allows the ospi program to use relay boards to control sprinkler valves etc.
+Copyright 2015
+Author: KanyonKris, Dan Kimberling
+Email:
+License: GNU GPL 3.0
+
+Requirements:
+
+##### List all plugin files below preceded by a blank line [file_name.ext path] relative to OSPi directory #####
+
+relay_board.py plugins
+relay_board.html templates
+relay_board.json data (generated)
+relay_board.manifest plugins/manifests

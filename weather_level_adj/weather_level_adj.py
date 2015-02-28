@@ -326,7 +326,7 @@ def history_info():
                 'humidity': float(day_info['humidity'])
             }
         except ValueError:
-            print "Error parsing JSON, maybe bad data from wunderground?"
+            self.add_status("Skipped wundergound data because of a parsing error")
 
     return result
 
@@ -344,12 +344,15 @@ def today_info():
 
     day_info = data['current_observation']
 
-    result = {
-        'temp_c': float(day_info['temp_c']),
-        'rain_mm': float(day_info['precip_today_metric']),
-        'wind_ms': float(day_info['wind_kph']) / 3.6,
-        'humidity': float(day_info['relative_humidity'].replace('%', ''))
-    }
+    try:
+        result = {
+            'temp_c': float(day_info['temp_c']),
+            'rain_mm': float(day_info['precip_today_metric']),
+            'wind_ms': float(day_info['wind_kph']) / 3.6,
+            'humidity': float(day_info['relative_humidity'].replace('%', ''))
+        }
+    except ValueError:
+        self.add_status("Skipped wundergound data because of a parsing error")
 
     return result
 
@@ -374,11 +377,14 @@ def forecast_info():
     result = {}
     for index, day_info in info.iteritems():
         if index <= int(options['days_forecast']):
-            result[index] = {
-                'temp_c': float(day_info['high']['celsius']),
-                'rain_mm': float(day_info['qpf_allday']['mm']),
-                'wind_ms': float(day_info['avewind']['kph']) / 3.6,
-                'humidity': float(day_info['avehumidity'])
-            }
+            try:
+                result[index] = {
+                    'temp_c': float(day_info['high']['celsius']),
+                    'rain_mm': float(day_info['qpf_allday']['mm']),
+                    'wind_ms': float(day_info['avewind']['kph']) / 3.6,
+                    'humidity': float(day_info['avehumidity'])
+                }
+            except ValueError:
+                self.add_status("Skipped wundergound data because of a parsing error")
 
     return result

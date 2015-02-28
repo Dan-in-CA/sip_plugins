@@ -258,13 +258,18 @@ def get_data(suffix, name=None, force=False):
             else:
                 raise Exception('JSON decoding failed.')
 
+            # If we made it here, we were successful, break
+            break
+
         except Exception as err:
             if try_nr < 2:
                 print str(err), 'Retrying.'
                 os.remove(path)
+                # If we had an exception, this is where we need to increase
+                # our count retry
+                try_nr += 1
             else:
                 raise
-        try_nr += 1
 
     return data
 

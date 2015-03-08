@@ -82,9 +82,9 @@ class WeatherLevelChecker(Thread):
                     print "Checking weather status..."
                     remove_data(['history_', 'conditions_', 'forecast10day_'])
 
-                    history = history_info()
-                    forecast = forecast_info()
-                    today = today_info()
+                    history = history_info(self)
+                    forecast = forecast_info(self)
+                    today = today_info(self)
 
                     info = {}
 
@@ -293,7 +293,7 @@ def remove_data(prefixes):
 # Info queries:                                                                #
 ################################################################################
 
-def history_info():
+def history_info(obj):
     options = options_data()
     if int(options['days_history']) == 0:
         return {}
@@ -326,12 +326,13 @@ def history_info():
                 'humidity': float(day_info['humidity'])
             }
         except ValueError:
-            self.add_status("Skipped wundergound data because of a parsing error")
+            obj.add_status("Skipped wundergound data because of a parsing error for %s" % day_info['date']['pretty'])
+            continue
 
     return result
 
 
-def today_info():
+def today_info(obj):
     lid = get_wunderground_lid()
     if lid == "":
         raise Exception('No Location ID found!')
@@ -344,6 +345,7 @@ def today_info():
 
     day_info = data['current_observation']
 
+    result = []
     try:
         result = {
             'temp_c': float(day_info['temp_c']),
@@ -352,12 +354,12 @@ def today_info():
             'humidity': float(day_info['relative_humidity'].replace('%', ''))
         }
     except ValueError:
-        self.add_status("Skipped wundergound data because of a parsing error")
+        obj.add_status("Skipped wundergound data because of a parsing error for today")
 
     return result
 
 
-def forecast_info():
+def forecast_info(obj):
     options = options_data()
 
     lid = get_wunderground_lid()
@@ -385,6 +387,7 @@ def forecast_info():
                     'humidity': float(day_info['avehumidity'])
                 }
             except ValueError:
-                self.add_status("Skipped wundergound data because of a parsing error")
+                obj.add_status("Skipped wundergound data because of a parsing error for forecast day %s" % index)
+                continue
 
     return result

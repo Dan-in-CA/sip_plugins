@@ -30,7 +30,7 @@ lcd_adj
 Uses I2C for LCD 16x2 char data display  
 Requires pylcd2 library
 
-pfc_8591_adj
+pcf_8591_adj
 ----------
 Read sensor data (temp or voltage) from I2C PCF8591 ADC/DAC
 

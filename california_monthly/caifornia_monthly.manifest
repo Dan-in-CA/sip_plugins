@@ -1,0 +1,16 @@
+Description: Automatically adjust irritation times based on historical weather data.
+Copyright 2015
+Author: Dan Kimberling
+Email: dkimberling59@gmail.com
+License: GNU GPL 3.0
+revision: 1.0
+
+Requirements: None
+
+##### List all plugin files below preceded by a blank line [file_name.ext path] relative to OSPi directory #####
+
+california_monthly.py plugins
+california_monthly.html templates
+ca_monthly-docs.html static/docs/plugins
+et0.json data (generated)
+california_monthly.manifest plugins/manifests

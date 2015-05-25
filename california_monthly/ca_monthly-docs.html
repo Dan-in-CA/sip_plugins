@@ -1,0 +1,67 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+  <head>
+    <meta content="text/html; charset=windows-1252" http-equiv="content-type">
+    <title>Cal Monthly Docs</title>
+    <meta name="GENERATOR" content="OpenOffice 4.1.1  (Win32)">
+    <meta name="CREATED" content="0;0">
+    <meta name="CHANGED" content="0;0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style type="text/css">
+	<!--
+		P { font-family: "Lucida Grande", "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", "Lucida Sans Unicode", "Helvetica", "Arial", sans-serif }
+		H2.cjk { font-family: "SimSun" }
+		H2.ctl { font-family: "Mangal" }
+		PRE.cjk { font-family: "NSimSun", monospace }
+		CODE.cjk { font-family: "NSimSun", monospace }
+	-->
+	</style>
+  </head>
+  <body dir="LTR" style="background-color: white; border: none; padding: 0in" lang="en-US">
+    <h1><a name="Cal-monthly-plugin-documentation"></a>Documentation for the
+      California Monthly plugin</h1>
+    <h2 class="western"><a name="about-the-plugin"></a>About the Plugin</h2>
+    <p>The <span style="font-weight: bold;">California Monthly</span> plugin
+      provides automatic monthly adjustment of irrigation times based on
+      historical weather data. It is intended as an aid for water conservation.</p>
+    <p>This plugin adjusts the run times for all scheduled irrigation programs
+      by a percentage which is calculated from the <span style="font-weight: bold;">Monthly
+        Average Reference Evapotranspiration by ETo Zone</span> table found on
+      page 3 of the linked PDF document.</p>
+    <p><a target="_blank" title="ETo Document" href="http://wwwcimis.water.ca.gov/Content/pdf/CimisRefEvapZones.pdf">http://wwwcimis.water.ca.gov/Content/pdf/CimisRefEvapZones.pdf</a></p>
+    <p>Reference ETo is an estimate of the amount of water removed from the soil
+      by <span style="font-weight: bold;">evaporation</span> from the soil
+      surface and by plants (<span style="font-weight: bold;">transpiration</span>)
+      in units of inches using a standard type of plant. You can think of the
+      ETo value as the amount of rain (in inches) it would take to replace the
+      water that has been removed.</p>
+    <p>The calculation divides the average ETo for each month by the maximum ETo
+      value for the selected zone.</p>
+    <p>ETo / Maximum ETo * 100 (rounded to a whole percentage) </p>
+    <h2 class="western"><a name="using-the-proto-plugin"></a>Using the
+      California Monthly plugin</h2>
+    <ol>
+      <li>Click the "<span style="font-weight: bold;">FIND YOUR ETO ZONE</span>"
+        button. A new tab will open in your browser with the <span style="font-weight: bold;">REFRENCE
+          EVAPOTRANSPIRATION ZONES</span> document loaded.</li>
+      <li>Scroll down to the zone map on page 2 and find the zone for your
+        location.</li>
+      <li>Enter your zone number in the "<span style="font-weight: bold;">ETo
+          Zone</span>" box.</li>
+      <li>Click "<span style="font-weight: bold;">CALCULATE</span>". The monthly
+        adjustments will appear as percentages of scheduled watering times. <br>
+        You may optionally change the percentages manually but it is recommended
+        to keep the calculated values and make changes to your irrigation
+        schedules to suit your local conditions.</li>
+      <li>Click "<span style="font-weight: bold;">SUBMIT</span>" at the bottom
+        of the page to save your settings and return to the home page.</li>
+    </ol>
+    <br>
+    <span style="font-weight: bold;">Note</span>:<br>
+    The month with the highest ETo value will appear with an adjustment of 100%
+    This is the month with the highest water use on average. Adjusting your
+    irrigation schedules during this month to provide adequate water to your
+    plants should give you a good base line for the rest of the year. However,
+    it is always wise to remain vigilant for changes in conditions.<br>
+  </body>
+</html>

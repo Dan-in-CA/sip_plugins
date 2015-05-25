@@ -7,6 +7,10 @@ This is free software: you can redistribute it and/or modify it under the terms 
 These programs are distributed in the hope that they will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 <http://opensource.org/licenses/gpl-3.0.html>
 ******************
+california_monthly
+---------
+Provides automatic monthly adjustment of irrigation times based on historical weather data.
+
 proto
 ---------
 A bare bones plugin for use as a starting point for plugin authoring.  

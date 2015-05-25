@@ -1,0 +1,101 @@
+$def with(m_vals)
+
+$var title: $_('California Monthly Adjustments')
+$var page: plugins
+
+$code:
+    if len(m_vals) == 13:
+        et_zone = m_vals[12]
+    else:
+        et_zone = ''
+    
+<script>
+    // Initialize behaviors
+    jQuery(document).ready(function(){
+
+        jQuery("#cSubmit").click(function() {
+            jQuery("#pluginForm").submit();
+        });     
+        jQuery("button#cCancel").click(function(){
+            window.location="/";
+        });
+        jQuery("button#docButton").click(function(){
+            window.open("/static/docs/plugins/ca_monthly-docs.html", "_blank");
+        });
+        jQuery("button#EToButton").click(function(){
+            window.open("http://wwwcimis.water.ca.gov/Content/pdf/CimisRefEvapZones.pdf", "_blank");
+        })
+        jQuery("button#calcButton").click(function(){
+        	jQuery("#pluginForm").attr('action', "/cacalcma").submit();
+        });        
+
+    });
+</script>
+
+<div id="plugin">
+    <div class="title">$_('Monthly Irrigation Adjustments for California')
+    <button class="execute" id="docButton" type="button" >$_('Help')</button>    
+    </div>
+
+    <form id="pluginForm" action="/cauma" method="get">
+        <p><button class="execute" id="EToButton" type="button" >$_('Find your ETo zone')</button>
+		ETo Zone: <input type="text" size="2" name="etoZone" value=$et_zone></p>
+		<p><button class="submit" id="calcButton" type="button">$_('Calculate')</button></p>
+		</br>
+		
+        <table class="optionList">
+            <tr>
+                <td style='text-transform: none;'>$_('January'):</td>
+                <td><input type="text" size="3" name="jan" value=$m_vals[0]>%</td>
+            </tr>
+            <tr>
+                <td style='text-transform: none;'>$_('February'):</td>
+                <td><input type="text" size="3" name="feb" value=$m_vals[1]>%</td>
+            </tr>
+            <tr>
+                <td style='text-transform: none;'>$_('March'):</td>
+                <td><input type="text" size="3" name="mar" value=$m_vals[2]>%</td>
+            </tr>
+            <tr>
+                <td style='text-transform: none;'>$_('April'):</td>
+                <td><input type="text" size="3" name="apr" value=$m_vals[3]>%</td>
+            </tr>
+            <tr>
+                <td style='text-transform: none;'>$_('May'):</td>
+                <td><input type="text" size="3" name="may" value=$m_vals[4]>%</td>
+            </tr>
+            <tr>
+                <td style='text-transform: none;'>$_('June'):</td>
+                <td><input type="text" size="3" name="jun" value=$m_vals[5]>%</td>
+            </tr>
+            <tr>
+                <td style='text-transform: none;'>$_('July'):</td>
+                <td><input type="text" size="3" name="jul" value=$m_vals[6]>%</td>
+            </tr>
+            <tr>
+                <td style='text-transform: none;'>$_('August'):</td>
+                <td><input type="text" size="3" name="aug" value=$m_vals[7]>%</td>
+            </tr>
+            <tr>
+                <td style='text-transform: none;'>$_('September'):</td>
+                <td><input type="text" size="3" name="sep" value=$m_vals[8]>%</td>
+            </tr>
+            <tr>
+                <td style='text-transform: none;'>$_('October'):</td>
+                <td><input type="text" size="3" name="oct" value=$m_vals[9]>%</td>
+            </tr>
+            <tr>
+                <td style='text-transform: none;'>$_('November'):</td>
+                <td><input type="text" size="3" name="nov" value=$m_vals[10]>%</td>
+            </tr>
+            <tr>
+                <td style='text-transform: none;'>$_('December'):</td>
+                <td><input type="text" size="3" name="dec" value=$m_vals[11]>%</td>
+            </tr>
+        </table>       
+    </form>
+</div>
+<div id="controls">
+    <button id="cSubmit" class="submit"><b>$_('Submit')</b></button>
+    <button id="cCancel" class="cancel danger">$_('Cancel')</button>
+</div>

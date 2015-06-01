@@ -1,6 +1,10 @@
 Description: Pulses a selected circuit with a 2.5 Hz signal for 30 sec
-to discover the location of a valve
+to discover the location of a valve. Allows enabling and disabling zones.
 Author: camx
+Updated by Dan K. 5/30/15
+License: GNU GPL 3.0
+revision: 2.0
+
 Requirements:
 
 ##### List all plugin files below preceded by a blank line [file_name.ext path] relative to OSPi directory #####

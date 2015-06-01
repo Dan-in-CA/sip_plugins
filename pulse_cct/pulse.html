@@ -1,13 +1,90 @@
-$def with (form, title)
-<!doctype html>
-<html>
-    <head>
-        <title>$title</title>
-    </head> 
-    <body>
-        <br />
-        <form class="form" method="post"> 
-        $:form.render()
-        </form>
-    </body>  
-</html>
+$def with()
+
+
+$var title: $_('OSPi Pulse Circuit')
+$var page: Pulse
+
+
+<script>
+    // Initialize behaviors
+    jQuery(document).ready(function(){
+
+        jQuery("#cSubmit").click(function() {
+            var vs;
+            for (bid=0; bid<nbrd; bid++) {
+                vs = 0;
+                for (s=0; s<8; s++) {
+                    sid = bid*8 + (7-s);
+                    vs = vs<<1;
+                    if (sid == mas-1) {
+                        vs = vs + 1;
+                        continue;
+                    }
+                    if (jQuery("#en"+sid).is(":checked")) {
+                        vs = vs + 1;
+                    }
+                }
+                jQuery("#sh"+bid).val(vs);
+            }
+        	jQuery("#pluginForm").attr('action', "/pls-sen").submit();
+        });
+        jQuery("button#cCancel").click(function(){
+            window.location="/";
+        });
+        jQuery("button#stop_p").click(function(){
+        	jQuery("#pluginForm").attr('action', "/pls-stop").submit();
+        });
+
+        
+    });
+    
+    function p(value) {
+    	document.getElementById("zone").value = value;
+    	document.forms["pluginForm"].submit();	
+    	};
+	
+</script>
+
+<div id="plugin">
+    <div class="title">Pulse Circuit
+
+    </div>
+
+    <form id="pluginForm" action="pls-run" method="get">
+
+        <p>$_('Pulse a circuit with a 2.5 Hz signal for 30 sec to discover the location of the valve')</p>
+        <p>$_('Click "SUBMIT" to save enabled stations')</p>
+		$code:
+			snames = gv.snames
+			enabled = gv.sd['show']
+			
+        <table class="stationList">
+            <tr>
+                <th class="stationName">$_('Circuit')</th>
+                <th class="stationName">$_('Enabled')</th>
+            </tr>
+                $for bid in range(0,gv.sd['nbrd']):
+                $for s in range(0,8):
+                    $ sid = bid*8 + s;
+	            <tr>
+	                <td class="station_name">${snames[sid]}</td>
+	                <td class="stationName">
+	                    <input type="checkbox" ${"checked" if gv.sd['show'][bid]&(1<<s) else ""} id="en${sid}">
+	                </td>
+	                <td class="stationName">
+	                    <input type="button" value="Pulse"  class="pulseButton, execute" id="pulse_${sid}" onClick="p(${sid})">
+	                </td>	              
+	              
+	            </tr>
+
+        </table></br>
+        <input type="hidden" name="zone" id="zone">
+        <input type="hidden" id="sh${bid}" name="sh${bid}"/>
+		<button id="stop_p" class="execute"><b>$_('Stop Pulsing')</b></button>
+    </form>
+
+<div id="controls">
+    <button id="cSubmit" class="submit"><b>$_('Submit')</b></button>
+    <button id="cCancel" class="cancel danger">$_('Cancel')</button>
+</div>
+</div>

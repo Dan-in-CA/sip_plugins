@@ -222,6 +222,8 @@ def get_wunderground_lid():
         data = json.load(data)
         if data is None:
             return ""
+        elif len(data['RESULTS']) == 0:
+            return ""
         lid = "zmw:" + data['RESULTS'][0]['zmw']
 
     return lid

@@ -1,0 +1,8 @@
+Enables the use of an 8x8 scanning keypad attached to the pi
+
+##### List all plugin files below preceded by a blank line [file_name.ext path] relative to OSPi directory #####
+
+keypad.py plugins
+keypad.html templates
+keypad.json data (generated)
+keypad.manifest plugins/manifests

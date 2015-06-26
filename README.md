@@ -70,3 +70,7 @@ Adjust irrigation time based on weather forecast
 relay_board
 ----------
 A plugin for using relay boards to control sprinkler valves, etc
+
+keypad_plugin
+----------
+A plugin for using an 8X8 scanning keypad and buzzer to execute simple functions without the use of an external peripheral

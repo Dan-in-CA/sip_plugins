@@ -16,6 +16,7 @@ try:
         pi = pigpio.pi()
     else:
         import RPi.GPIO as GPIO
+        pi = 0
 except IOError:
     pass
 
@@ -68,6 +69,8 @@ except:
 
 #### setup GPIO pins as output and either high or low ####
 def init_pins():
+  global pi
+
   try:
     for i in range(params['relays']):
         if gv.use_pigpio:
@@ -91,6 +94,8 @@ def init_pins():
 #### change outputs when blinker signal received ####
 def on_zone_change(arg): #  arg is just a necessary placeholder.
     """ Switch relays when core program signals a change in zone state."""
+
+    global pi
 
     with gv.output_srvals_lock:
         for i in range(params['relays']):

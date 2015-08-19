@@ -26,13 +26,13 @@ $var page: Pulse
                 }
                 jQuery("#sh"+bid).val(vs);
             }
-        	jQuery("#pluginForm").attr('action', "/pls-sen").submit();
+        	jQuery("#pluginForm").attr('action', "/puls-sen").submit();
         });
         jQuery("button#cCancel").click(function(){
             window.location="/";
         });
         jQuery("button#stop_p").click(function(){
-        	jQuery("#pluginForm").attr('action', "/pls-stop").submit();
+        	jQuery("#pluginForm").attr('action', "/puls-stop").submit();
         });
 
         
@@ -50,7 +50,7 @@ $var page: Pulse
 
     </div>
 
-    <form id="pluginForm" action="pls-run" method="get">
+    <form id="pluginForm" action="puls-run" method="get">
 
         <p>$_('Pulse a circuit with a 2.5 Hz signal for 30 sec to discover the location of the valve')</p>
         <p>$_('Click "SUBMIT" to save enabled stations')</p>

@@ -12,12 +12,12 @@ from gpio_pins import set_output
 
 
 urls.extend([
-             '/pls', 'plugins.pulse_cct.pulse',
-             '/pls-run', 'plugins.pulse_cct.p_run',
-             '/pls-stop', 'plugins.pulse_cct.p_stop',
-             '/pls-sen', 'plugins.pulse_cct.p_save_enabled'
+             '/puls', 'plugins.pulse_cct.pulse',
+             '/puls-run', 'plugins.pulse_cct.p_run',
+             '/puls-stop', 'plugins.pulse_cct.p_stop',
+             '/puls-sen', 'plugins.pulse_cct.p_save_enabled'
              ]) 
-gv.plugin_menu.append(['Pulse Circuit', '/pls']) # Add this plugin to the home page plugins menu
+gv.plugin_menu.append(['Pulse Circuit', '/puls']) # Add this plugin to the home page plugins menu
 
 stop = True
 
@@ -51,7 +51,7 @@ class p_run():
  #       print 'qdict: ', qdict
         stop = False
         chatter(int(qdict['zone']))
-        raise web.seeother('/pls')
+        raise web.seeother('/puls')
 
     
 class p_stop():
@@ -59,7 +59,7 @@ class p_stop():
     def GET(self):
         global stop
         stop = True
-        raise web.seeother('/pls')
+        raise web.seeother('/puls')
     
 class p_save_enabled():
     

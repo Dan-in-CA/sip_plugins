@@ -1,0 +1,12 @@
+Description: An plugin to use the on-board OSPi relay for an 8th zone 
+Copyright 2015
+Author: Greg
+Email: greglarious@gmail.com
+License: GNU GPL 3.0
+
+Requirements: none
+
+##### List all plugin files below preceded by a blank line [file_name.ext path] relative to OSPi directory #####
+
+zone8_relay.py plugins
+zone8_relay.manifest plugins/manifests

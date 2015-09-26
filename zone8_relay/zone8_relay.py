@@ -6,12 +6,14 @@ from gpio_pins import GPIO
 import gv
 
 def notify_zone_change(name, **kw):
-    if gv.srvals[8] == 1:
-       #print "zone 9 is on"
-       GPIO.output(10, GPIO.HIGH)
-    else:
-       #print "zone 9 is off"
-       GPIO.output(10, GPIO.LOW)
+    relayGPIO = 10 
+    targetZone = 8
+
+    if len(gv.srvals) >= targetZone:
+        if gv.srvals[targetZone] == 1:
+            GPIO.output(relayGPIO, GPIO.HIGH)
+        else:
+            GPIO.output(relayGPIO, GPIO.LOW)
 
 zones = signal('zone_change')
 zones.connect(notify_zone_change)

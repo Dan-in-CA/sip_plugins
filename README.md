@@ -2,7 +2,7 @@ SIP Plugins
 ============
 ###A collection of user contributed plugins for the Raspberry Pi based irrigation controll software  [SIP](https://github.com/Dan-in-CA/SIP).
 
-To ask questions and learn more about SIP and plugins please visit the **[SIP Forum](http://nosack.com/sipforum/index.php)**
+####To ask questions and learn more about SIP and plugins please visit the **[SIP Forum](http://nosack.com/sipforum/index.php)**
 
 **Please note:** Unless otherwise stated:  
 This is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.

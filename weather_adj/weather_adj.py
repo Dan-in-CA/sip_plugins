@@ -42,8 +42,11 @@ def weather_to_delay(run_loop=False):
             elif delay == 0:
                 print("No rain detected: " + weather["text"] + ". No action.")
             elif delay < 0:
-                print("Good weather detected: " + weather["text"] + ". Removing rain delay.")
-                gv.sd['rdst'] = gv.now
+                if data["reset_delay"] == "off":
+                  print("Good weather detected: " + weather["text"] + ". Ignoring change to rain delay.")
+                else:
+                  print("Good weather detected: " + weather["text"] + ". Removing rain delay.")
+                  gv.sd['rdst'] = gv.now
 
         if not run_loop:
             break
@@ -52,12 +55,14 @@ def weather_to_delay(run_loop=False):
 
 def get_weather_options():
     try:
-        with open('./data/weather_adj.json', 'r') as f:  # Read the monthly percentages from file
+        with open('./data/weather_adj.json', 'r') as f:  # Read the rain delay configuration from json
             data = json.load(f)
     except Exception, e:
-        data = {'auto_delay': 'off', 'delay_duration': 24, 'weather_provider': 'yahoo', 'wapikey': ''}
-
+        data = {'auto_delay': 'off', 'delay_duration': 24, 'weather_provider': 'yahoo', 'wapikey': '', 'reset_delay': 'on' }
+    if 'reset_delay' not in data:
+      data['reset_delay'] = 'on'
     return data
+
 
 
 # Resolve location to LID
@@ -104,6 +109,7 @@ def get_wunderground_weather_data():
     if lid == "":
         return []
     data = urllib2.urlopen("http://api.wunderground.com/api/" + options['wapikey'] + "/conditions/q/" + lid + ".json")
+    #print "http://api.wunderground.com/api/" + options['wapikey'] + "/conditions/q/" + lid + ".json"
     data = json.load(data)
     if data is None:
         return {}
@@ -171,7 +177,9 @@ class update(ProtectedPage):
         qdict = web.input()
         if 'auto_delay' not in qdict:
             qdict['auto_delay'] = 'off'
-        with open('./data/weather_adj.json', 'w') as f:  # write the monthly percentages to file
+        if 'reset_delay' not in qdict:
+            qdict['reset_delay'] = 'off'
+        with open('./data/weather_adj.json', 'w') as f:  # write the rain delay configuration to json
             json.dump(qdict, f)
         weather_to_delay()
         raise web.seeother('/')

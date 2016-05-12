@@ -135,12 +135,18 @@ def get_temp(data):
 
 def get_now_measure(AD_pin):
     """Return number 0-255 from A/D PCF8591 to webpage"""
-    ADC.write_byte_data(0x48, (0x40 + AD_pin), AD_pin)
-    return ADC.read_byte(0x48)  
+    try:
+        ADC.write_byte_data(0x48, (0x40 + AD_pin), AD_pin)
+        return ADC.read_byte(0x48)
+    except AttributeError:
+        return '0' 
 
 def get_write_DA(Y):  # PCF8591 D/A converter Y=(0-255) for future use
     """Write analog voltage to output"""
-    ADC.write_byte_data(0x48, 0x40, Y)
+    try:
+        ADC.write_byte_data(0x48, 0x40, Y)
+    except AttributeError:
+        return '0'
 
 def get_pcf_options():
     """Returns the data form file."""
@@ -170,6 +176,31 @@ def get_pcf_options():
         for key, value in file_data.iteritems():
             if key in datapcf:
                 datapcf[key] = value
+    except IOError:
+        defaultpcf = {
+            'use_pcf': 'off',
+            'use_log': 'off',
+            'time': '0',
+            'records': '0',
+            'ad0': 'off',
+            'ad1': 'off',
+            'ad2': 'off',
+            'ad3': 'off',
+            'ad0text': 'label_1',
+            'ad1text': 'label_2',
+            'ad2text': 'label_3',
+            'ad3text': 'label_4',
+            'ad0val': 0,
+            'ad1val': 0,
+            'ad2val': 0,
+            'ad3val': 0,
+            'da0val': 0, 
+            'status': ''
+        }
+    
+        with open('./data/pcf_adj.json', 'w') as f:  # write defalult settings to file
+            json.dump(defaultpcf, f) 
+    
     except Exception:
         pass
 

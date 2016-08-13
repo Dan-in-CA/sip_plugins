@@ -322,10 +322,10 @@ def history_info(obj):
     for index, day_info in info.iteritems():
         try:
             result[index] = {
-                'temp_c': float(day_info['maxtempm']) if day_info['maxtempm'].isdigit() else 0,
-                'rain_mm': float(day_info['precipm']) if day_info['precipm'].isdigit() else 0,
-                'wind_ms': float(day_info['meanwindspdm']) / 3.6 if day_info['meanwindspdm'].isdigit() else 0,
-                'humidity': float(day_info['humidity']) if day_info['humidity'].isdigit() else 0
+                'temp_c': float(day_info['maxtempm']) if day_info['maxtempm'].replace(".","").isdigit() else 0,
+                'rain_mm': float(day_info['precipm']) if day_info['precipm'].replace(".","").isdigit() else 0,
+                'wind_ms': float(day_info['meanwindspdm']) / 3.6 if day_info['meanwindspdm'].replace(".","").isdigit() else 0,
+                'humidity': float(day_info['humidity']) if day_info['humidity'].replace(".","").isdigit() else 0
             }
         except ValueError:
             obj.add_status("Skipped wundergound data because of a parsing error for %s" % day_info['date']['pretty'])

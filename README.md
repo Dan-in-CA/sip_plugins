@@ -28,6 +28,10 @@ email_adj
 ----------
 Sends status email to google email account
 
+rf_control
+----------
+For testing only! Sends cli commands on station change.
+
 pressure_adj
 ----------
 Checks water pressure when master station is switched on

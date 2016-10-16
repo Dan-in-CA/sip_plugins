@@ -1,0 +1,13 @@
+Description: Uses MQTT plugin and broadcasts zone status information
+Copyright 2016
+Author: Daniel Casner
+Email: daniel@danielcasner.org
+License: GNU GPL 3.0
+
+Requirements: mqtt
+
+##### List all plugin files below preceded by a blank line [file_name.ext path] relative to OSPi directory #####
+
+mqtt_zones.py plugins
+mqtt_zones.html templates
+mqtt_zones.manifest plugins/manifests

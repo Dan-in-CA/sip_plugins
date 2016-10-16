@@ -1,0 +1,13 @@
+Description: Uses mqtt plugin and allows run once programs to be scheduled over MQTT
+Copyright 2016
+Author: Daniel Casner
+Email: daniel@danielcasner.org
+License: GNU GPL 3.0
+
+Requirements: mqtt
+
+##### List all plugin files below preceded by a blank line [file_name.ext path] relative to OSPi directory #####
+
+mqtt_schedule.py plugins
+mqtt_schedule.html templates
+mqtt_schedule.manifest plugins/manifests

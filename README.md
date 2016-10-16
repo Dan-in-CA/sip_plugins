@@ -16,7 +16,7 @@ Provides automatic monthly adjustment of irrigation times based on historical we
 
 proto
 ---------
-A bare bones plugin for use as a starting point for plugin authoring.  
+A bare bones plugin for use as a starting point for plugin authoring.
 (Installed by default)
 
 system_update
@@ -40,6 +40,21 @@ lcd_adj
 ----------
 Uses I2C for LCD 16x2 char data display  
 Requires pylcd2 library
+
+nqtt
+----------
+This is the base mqtt plugin,
+it provides a shared MQTT client object for other plugins.
+Requires paho mqtt.
+
+mqtt_schedule
+--------------
+Relies on MQTT, subscribes to a control topic and schedules
+run once programs as command by MQTT.
+
+mqtt_zones
+-------------
+Relies on MQTT, broadcasts the current status of all zones.
 
 pcf_8591_adj
 ----------

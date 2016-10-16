@@ -41,7 +41,7 @@ lcd_adj
 Uses I2C for LCD 16x2 char data display  
 Requires pylcd2 library
 
-nqtt
+mqtt
 ----------
 This is the base mqtt plugin,
 it provides a shared MQTT client object for other plugins.

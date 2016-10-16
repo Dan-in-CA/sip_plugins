@@ -1,0 +1,46 @@
+$def with(schedule_topic, error_msg)
+
+$var title: $_('SIP MQTT Schedule Plugin')
+$var page: mqtt_plugin
+<script>
+
+    // Initialize behaviors
+    jQuery(document).ready(function(){
+
+        jQuery("#cSubmit").click(function() {
+            jQuery("#pluginForm").submit();
+        });
+        jQuery("button#cCancel").click(function(){
+            window.location= baseUrl + "/";
+        });
+    });
+</script>
+
+<div id="plugin">
+    <div class="title">MQTT Schedule Plugin</div>
+    <div>
+    <p>Relies on the base MQTT plugin, allows runonce programs to be set over MQTT.
+    </p>
+    </div>
+
+    <div id="errorMessage">${error_msg}</div>
+
+    <form id="pluginForm" action="${app_path('/mr1-save')}" method="get"> <!--Edit: Replace "proto-save" with URL of plugin's class for saving settings-->
+
+        <table class="optionList">
+
+            <!--Text fields-->
+            <tr>
+                <td style='text-transform: none;'>$_('Scheduling topic'):</td>
+                <td>The topic subscribe to for run once commands.<br />
+                  <input type="text" name="schedule_topic" value="${schedule_topic}">
+                </td>
+            </tr>
+        </table>
+    </form>
+
+<div id="controls">
+    <button id="cSubmit" class="submit"><b>$_('Submit')</b></button>
+    <button id="cCancel" class="cancel danger">$_('Cancel')</button>
+</div>
+</div>

@@ -1,0 +1,14 @@
+Description: A plugin which adds a shared MQTT client to SIP
+Copyright 2016
+Author: Daniel Casner
+Email: daniel@danielcasner.org
+License: GNU GPL 3.0
+
+Requirements: none
+
+##### List all plugin files below preceded by a blank line [file_name.ext path] relative to OSPi directory #####
+
+mqtt.py plugins
+mqtt.html templates
+mqtt.json data (generated)
+mqtt.manifest plugins/manifests

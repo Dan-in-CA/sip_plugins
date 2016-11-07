@@ -1,0 +1,94 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+	<meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+	<title>telegramBot-docs.html</title>
+	<meta name="generator" content="LibreOffice 5.0.4.2 (Linux)"/>
+	<meta name="created" content="00:00:00"/>
+	<meta name="changed" content="2016-01-27T11:51:51.298733285"/>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+	<meta name="created" content="00:00:00">
+	<meta name="changed" content="2016-01-27T11:36:36.500206669">
+	<style type="text/css">
+		h1 { color: #000000 }
+		p { color: #000000; font-family: "Lucida Grande", "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", "Lucida Sans Unicode", "Helvetica", "Arial", sans-serif }
+		h2 { color: #000000 }
+		h2.cjk { font-family: "SimSun" }
+		h2.ctl { font-family: "Mangal" }
+		pre { color: #000000 }
+		pre.cjk { font-family: "NSimSun", monospace }
+	</style>
+</head>
+<body lang="en-US" text="#000000" bgcolor="#ffffff" dir="ltr" style="border: none; padding: 0cm">
+<h1>telegramBot Plugin Documentation</h1>
+<h2 class="western"><a name="about-the-telegramBot-plugin"></a>About
+the telegramBot Plugin</h2>
+<p>The telegramBot plugin enables SIP to communicate the change of
+status via a telegram (<a href="http://www.telegram.org/">www.telegram.org</a>)
+bot. 
+</p>
+<p>The plugin includes the folowing files:</p>
+<ul>
+	<li/>
+<p style="margin-bottom: 0cm"><strong>telegramBot.py</strong><br/>
+The
+	python program that does the actual work of the plugin. Location:
+	<strong>SIP/plugins</strong></p>
+	<li/>
+<p style="margin-bottom: 0cm"><strong>telegramBot.html</strong><br/>
+A
+	web.py template that provides a user interface for the plugin. It
+	includes both Python code and web page markup. Location:
+	<strong>SIP/templates</strong></p>
+	<li/>
+<p style="margin-bottom: 0cm"><strong>telegramBot-docs.html</strong><br/>
+This
+	file. Provides documentation for the plugin including any special
+	hardware needed and set up instructions. Location:
+	<strong>SIP/static/docs/plugins</strong></p>
+	<li/>
+<p style="margin-bottom: 0cm"><strong>telegramBot.manifest</strong><br/>
+A
+	simple text file containing a list of each of the plugin’s files
+	with the path to it’s location. The manifest is used by the plugin
+	manager to install and uninstall the plugin. The file can also
+	contain information about the plugin such as author, brief
+	description, requirements, etc. Location: <strong>SIP/plugins/manifest</strong></p>
+	<li/>
+<p><strong>telegramBot.json</strong><br/>
+An optional file
+	used for persistant storage of plugin settings. It is created by the
+	plugin the first time it is run and is not installed with the other
+	files. This allows for software updates without overwriting existing
+	settings. Location: <strong>SIP/data</strong></p>
+</ul>
+<h2 class="western"><a name="using-the-telegramBot-plugin"></a>Using
+the telegramBot plugin</h2>
+<p>As a first step you must install the Telagram API python modules
+(<a href="https://github.com/python-telegram-bot/python-telegram-bot">python-telegram-bot</a>):</p>
+<ol>
+	<li/>
+<p>Log-in to your PI as root</p>
+	<li/>
+<p>Install the libraries as using:</p>
+	<pre class="western" style="font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal"><font color="#333333"><font face="Consolas, Liberation Mono, Menlo, Courier, monospace"><font size="2" style="font-size: 9pt"># apt-get install python-pip</font></font></font>
+<font color="#333333"><font face="Consolas, Liberation Mono, Menlo, Courier, monospace"><font size="2" style="font-size: 9pt"># pip install python-telegram-bot</font></font></font></pre>
+	<li/>
+<p>Reboot your PI</p>
+</ol>
+<p>Then you must provide a “token” to enable the bot to talk to
+telegram, follow the instructions <a href="https://core.telegram.org/bots#botfather">Here</a></p>
+<p>This plugin is disabled by default. If you are reading this, the
+telegramBot plugin is probably enabled on your system. Otherwise you
+can enable it using the plugin manager or by setting the group
+permissions of the <strong>telegramBot.py</strong> file to
+<strong>executable</strong>. Once it is enabled, and the sip program
+has been restarted, You can verify it is working by selecting it from
+the PLUGINS drop down menu of the main program’s web interface. You
+should be taken to the plugin’s Settings page.</p>
+<p><br/>
+<br/>
+
+</p>
+</body>
+</html>

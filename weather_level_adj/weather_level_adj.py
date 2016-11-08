@@ -19,6 +19,11 @@ from urls import urls  # Get access to ospi's URLs
 from ospi import template_render
 from webpages import ProtectedPage
 
+def safe_float(s):
+  try:
+    return float(s)
+  except:
+    return 0
 
 def mkdir_p(path):
     try:
@@ -132,7 +137,7 @@ class WeatherLevelChecker(Thread):
 
                     water_adjustment = round((water_left / (4 * len(info))) * 100, 1)
 
-                    water_adjustment = max(float(options['wl_min']), min(float(options['wl_max']), water_adjustment))
+                    water_adjustment = max(safe_float(options['wl_min']), min(safe_float(options['wl_max']), water_adjustment))
 
                     self.add_status('Water needed (%d days): %.1fmm' % (len(info), water_needed))
                     self.add_status('Total rainfall       : %.1fmm' % total_info['rain_mm'])
@@ -322,10 +327,10 @@ def history_info(obj):
     for index, day_info in info.iteritems():
         try:
             result[index] = {
-                'temp_c': float(day_info['maxtempm']) if day_info['maxtempm'].replace(".","").isdigit() else 0,
-                'rain_mm': float(day_info['precipm']) if day_info['precipm'].replace(".","").isdigit() else 0,
-                'wind_ms': float(day_info['meanwindspdm']) / 3.6 if day_info['meanwindspdm'].replace(".","").isdigit() else 0,
-                'humidity': float(day_info['humidity']) if day_info['humidity'].replace(".","").isdigit() else 0
+                'temp_c': safe_float(day_info['maxtempm']) if day_info['maxtempm'].replace(".","").isdigit() else 0,
+                'rain_mm': safe_float(day_info['precipm']) if day_info['precipm'].replace(".","").isdigit() else 0,
+                'wind_ms': safe_float(day_info['meanwindspdm']) / 3.6 if day_info['meanwindspdm'].replace(".","").isdigit() else 0,
+                'humidity': safe_float(day_info['humidity']) if day_info['humidity'].replace(".","").isdigit() else 0
             }
         except ValueError:
             obj.add_status("Skipped wundergound data because of a parsing error for %s" % day_info['date']['pretty'])
@@ -350,10 +355,10 @@ def today_info(obj):
     result = []
     try:
         result = {
-            'temp_c': float(day_info['temp_c']),
-            'rain_mm': float(day_info['precip_today_metric']),
-            'wind_ms': float(day_info['wind_kph']) / 3.6,
-            'humidity': float(day_info['relative_humidity'].replace('%', ''))
+            'temp_c': safe_float(day_info['temp_c']),
+            'rain_mm': safe_float(day_info['precip_today_metric']),
+            'wind_ms': safe_float(day_info['wind_kph']) / 3.6,
+            'humidity': safe_float(day_info['relative_humidity'].replace('%', ''))
         }
     except ValueError:
         obj.add_status("Skipped wundergound data because of a parsing error for today")
@@ -383,10 +388,10 @@ def forecast_info(obj):
         if index <= int(options['days_forecast']):
             try:
                 result[index] = {
-                    'temp_c': float(day_info['high']['celsius']),
-                    'rain_mm': float(day_info['qpf_allday']['mm']),
-                    'wind_ms': float(day_info['avewind']['kph']) / 3.6,
-                    'humidity': float(day_info['avehumidity'])
+                    'temp_c': safe_float(day_info['high']['celsius']),
+                    'rain_mm': safe_float(day_info['qpf_allday']['mm']),
+                    'wind_ms': safe_float(day_info['avewind']['kph']) / 3.6,
+                    'humidity': safe_float(day_info['avehumidity'])
                 }
             except ValueError:
                 obj.add_status("Skipped wundergound data because of a parsing error for forecast day %s" % index)

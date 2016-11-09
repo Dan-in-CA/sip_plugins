@@ -140,7 +140,7 @@ class WeatherLevelChecker(Thread):
                     water_adjustment = max(safe_float(options['wl_min']), min(safe_float(options['wl_max']), water_adjustment))
 
                     #Do not run if the current temperature is below the cutoff temperature and the option is enabled
-                    if (today['temp_c'] <= options['temp_cutoff']) and options['temp_cutoff_enable']:
+                    if (safe_float(today['temp_c']) <= safe_float(options['temp_cutoff'])) and options["temp_cutoff_enable"] == "on":
                         water_adjustment = 0
 
                     self.add_status('Current temp in C    : %.1f' % today['temp_c'])

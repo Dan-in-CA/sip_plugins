@@ -19,7 +19,7 @@ $var page: plugins
 <div id="plugin">
     <div class="title">$_('Weather-based Water Level')</div>
     <p>$_('When weather-based water level is enabled, the weather will be checked every hour and the water level will be adjusted accordingly.')</p>
-    <p>$_('If the low temperature cutoff is enabled, the the sprinklers will not run when the temperature is below the set temperature.')</p>
+    <p>$_('Additionally, when the low temperature cutoff is enabled the the sprinklers will not run when the temperature at the last hourly check was below the set temperature.')</p>
     <form id="pluginForm" action="/luwa" method="get">
         <table class="optionList">
             <tr>

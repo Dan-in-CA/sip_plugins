@@ -139,9 +139,15 @@ class WeatherLevelChecker(Thread):
 
                     water_adjustment = max(safe_float(options['wl_min']), min(safe_float(options['wl_max']), water_adjustment))
 
+                    #Do not run if the current temperature is below the cutoff temperature and the option is enabled
+                    if (safe_float(today['temp_c']) <= safe_float(options['temp_cutoff'])) and options["temp_cutoff_enable"] == "on":
+                        water_adjustment = 0
+
+                    self.add_status('Current temp in C    : %.1f' % today['temp_c'])
+                    self.add_status('________________________________')
                     self.add_status('Water needed (%d days): %.1fmm' % (len(info), water_needed))
                     self.add_status('Total rainfall       : %.1fmm' % total_info['rain_mm'])
-                    self.add_status('_______________________________-')
+                    self.add_status('________________________________')
                     self.add_status('Irrigation needed    : %.1fmm' % water_left)
                     self.add_status('Weather Adjustment   : %.1f%%' % water_adjustment)
 
@@ -199,6 +205,8 @@ def options_data():
     # Defaults:
     result = {
         'auto_wl': 'off',
+        'temp_cutoff_enable': 'off',
+        'temp_cutoff': 4,
         'wl_min': 0,
         'wl_max': 200,
         'days_history': 3,

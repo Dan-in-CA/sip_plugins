@@ -19,12 +19,25 @@ $var page: plugins
 <div id="plugin">
     <div class="title">$_('Weather-based Water Level')</div>
     <p>$_('When weather-based water level is enabled, the weather will be checked every hour and the water level will be adjusted accordingly.')</p>
+    <p>$_('Additionally, when the low temperature cutoff is enabled the the sprinklers will not run when the temperature at the last hourly check was below the set temperature.')</p>
     <form id="pluginForm" action="/luwa" method="get">
         <table class="optionList">
             <tr>
                 <td style='text-transform: none;'>$_('Use Automatic Water Level Adjustment'):</td>
                 <td>
                     <input name='auto_wl' type='checkbox'${" checked" if m_vals['auto_wl'] == "on" else ""}>
+                </td>
+            </tr>
+            <tr>
+                <td style='text-transform: none;'>$_('Use low temperature cutoff'):</td>
+                <td>
+                    <input name='temp_cutoff_enable' type='checkbox'${" checked" if m_vals['temp_cutoff_enable'] == "on" else ""}>
+                </td>
+            </tr>
+            <tr>
+                <td style='text-transform: none;'>$_('Low temperature cutoff in Celsius'):</td>
+                <td>
+                    <input name='temp_cutoff' type='number' min="0" max="100" value=$m_vals["temp_cutoff"]>
                 </td>
             </tr>
             <tr>

@@ -6,11 +6,12 @@ from urls import urls  # Get access to sip's URLs
 from sip import template_render  #  Needed for working with web.py templates
 from webpages import ProtectedPage  # Needed for security
 import json  # for working with data file
-from telegram import Updater
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 from threading import Thread
 from random import randint
 import time
 from blinker import signal
+import traceback
 import sys
 
 
@@ -33,7 +34,6 @@ class SipBot(Thread):
     def __init__(self, globals):
         Thread.__init__(self)
         self.daemon = True
-#        self.data = get_telegramBot_options()
         self.gv = globals
         self.bot = None
         self._currentChats = set([])
@@ -46,16 +46,10 @@ class SipBot(Thread):
 
     @currentChats.setter
     def currentChats(self, chatSet):
-        self.data['currentChats'] = list(chatSet)
-        #d['currentChats'] = list(chatSet)
-        #self.data = d
+        d = self.data
+        d['currentChats'] = list(chatSet)
         self._currentChats = chatSet
-        # Now we make the change Persistent
-        #data = get_telegramBot_options()
-        #
-        #with open('./data/telegramBot.json', 'w') as f:
-        #    print data
-        #    json.dump(data, f) # save to file
+        self.data = d
 
     @property
     def data(self):
@@ -63,13 +57,7 @@ class SipBot(Thread):
 
     @data.setter
     def data(self, new_data):
-        d = get_telegramBot_options()
-        for k in new_data.keys():
-            d[k] =  new_data[k]
-        with open('./data/telegramBot.json', 'w') as f:
-            print d
-            json.dump(d, f) # save to file
-        print "save done! inside bot"
+        set_telegramBot_options(new_data)
         return
 
 
@@ -96,10 +84,10 @@ class SipBot(Thread):
         updater = Updater(self.data['botToken'])
         self._currentChats = set(self.data['currentChats'])
         dp = updater.dispatcher
-        dp.addErrorHandler(self._botError)
-        dp.addTelegramCommandHandler("start", self._botCmd_start)
-        dp.addTelegramCommandHandler("subscribe", self._botCmd_subscribe)
-        dp.addTelegramMessageHandler(self._echo)
+        dp.add_error_handler(self._botError)
+        dp.add_handler(CommandHandler("start", self._botCmd_start))
+        dp.add_handler(CommandHandler("subscribe", self._botCmd_subscribe))
+        dp.add_handler(MessageHandler(Filters.text, self._echo))
         return updater
 
     def _announce(self, text):
@@ -120,7 +108,7 @@ class SipBot(Thread):
                 self.bot = self._initBot()
                 # Lets Start the bot
                 self.bot.start_polling()
-              #  self.bot.idle()
+               # self.bot.idle()
         except Exception:
             exc_type, exc_value, exc_traceback = sys.exc_info()
             err_string = ''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))

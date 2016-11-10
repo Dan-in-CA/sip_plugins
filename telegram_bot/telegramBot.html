@@ -59,11 +59,11 @@ $var page: telegramBot_plugin  <!--Edit: page name, used internally-->
             </thead>
             <tr>
                 <td style='text-transform: none;'>$_('Zone Change'):</td>  <!--Edit-->
-                <td><input type="checkbox" name="zoneChange"  ${"checked" if  settings['zoneChange'] in settings else ""}></td>
+                <td><input type="checkbox" name="zoneChange"  ${"checked" if  settings['zoneChange']  else ""}></td>
             </tr>
            <tr>
                 <td style='text-transform: none;'>$_('Program Toggled'):</td>  <!--Edit-->
-                <td><input type="checkbox" name="programToggled" ${"checked" if  settings['programToggled'] in settings else ""}></td>
+                <td><input type="checkbox" name="programToggled" ${"checked" if  settings['programToggled']  else ""}></td>
             </tr>
 
         </table></br>

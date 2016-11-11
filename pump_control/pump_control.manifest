@@ -1,9 +1,16 @@
-A bare bones plugin designed to be used as a starting point for writing plugins.
+A plugin to interface with an arduino pump controller
+- Configure safe operating pressure (min and max)
+- Configure waiting time to reach operating pressure
+- Get the controller status
+
+See pumpControlv2.ino for the arduino code.
+ The controller interfaces via I2C with the raspberry to report the pressure on the pipe and configure the parametes
+ To control the pump relay, just connect the statuin pin to the arduino, see the code.
 
 ##### List all plugin files below preceded by a blank line [file_name.ext path] relative to OSPi directory #####
 
-proto.py plugins
-proto.html templates
-proto-docs.html static/docs/plugins
-proto.json data (generated)
-proto.manifest plugins/manifests
+pump_control.py plugins
+pump_control.html templates
+pump_control-docs.html static/docs/plugins
+pump_control.json data (generated)
+pump_control.manifest plugins/manifests

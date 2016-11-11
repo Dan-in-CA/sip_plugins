@@ -435,39 +435,37 @@ void loop() {
   commsTable.pressure = analogRead(SENSOR_PIN);
   inputState = digitalRead(IN_PIN);
 
-  if (( commsTable.pressure != lastSensorData ) || (inputState != lastInputState) || (commsTable.pumpControlStatus == PUMP_STARTING )) { // Something has changed or we are waiting for the working pressure
-    if (inputState != lastInputState) { // The input pin changed
-      lastInputState =  inputState;
-      if (inputState == HIGH) {
-        commsTable.pumpControlStatus = PUMP_STARTING ;
-        lowPressureStart = millis();
-        delay(1);
-      } else {
-        commsTable.pumpControlStatus = PUMP_OFF;
-      }
-    }
 
-    if ( commsTable.pressure > maxSensorValue ) {
-      inputState = LOW;
-      commsTable.pumpControlStatus = ALARM_OVERPRESSURE;
-    } else if (commsTable.pressure < minSensorValue ) {
-      if (commsTable.pumpControlStatus == PUMP_STARTING ) {
-        enlapsed = millis() - lowPressureStart;
-        if (enlapsed > waitTimeForPressure) {
-          inputState = LOW;
-          commsTable.pumpControlStatus = ALARM_UNDERPRESSURE  ;
-        }
-      } else if ( commsTable.relay == 1) {
-        commsTable.pumpControlStatus = PUMP_STARTING;
-      }
-    } else { // between threshold
-      if (commsTable.pumpControlStatus == PUMP_STARTING ) {
-        commsTable.pumpControlStatus = PUMP_WORKING ;
-      }
+
+
+  if (inputState == LOW) {
+    commsTable.pumpControlStatus = PUMP_OFF;
+  } else if ( commsTable.pressure > maxSensorValue ) {
+    commsTable.pumpControlStatus = ALARM_OVERPRESSURE;
+  } else if ( lastInputState == LOW )  {
+    commsTable.pumpControlStatus = PUMP_STARTING ;
+    lowPressureStart = millis();
+  } else if (commsTable.pumpControlStatus == PUMP_STARTING ) {
+    enlapsed = millis() - lowPressureStart;
+    if ((enlapsed > waitTimeForPressure) && (commsTable.pressure < minSensorValue )) {
+      commsTable.pumpControlStatus = ALARM_UNDERPRESSURE  ;
+    } else if (commsTable.pressure > minSensorValue ) {
+      commsTable.pumpControlStatus = PUMP_WORKING ;
     }
-    setRelay(inputState) ;
-    lastSensorData = commsTable.pressure ;
+  } else if ((commsTable.pumpControlStatus == PUMP_WORKING ) && (commsTable.pressure < minSensorValue )) {
+    commsTable.pumpControlStatus = PUMP_STARTING ;
+    lowPressureStart = millis();
   }
+
+  switch (commsTable.pumpControlStatus) {
+    case PUMP_WORKING: setRelay(HIGH); break;
+    case PUMP_STARTING: setRelay(HIGH); break;
+    default: setRelay(LOW) ; break;
+  }
+  lastSensorData = commsTable.pressure ;
+  lastInputState = inputState ;
+
+
   switch (commsTable.pumpControlStatus) {
     case ALARM_UNDERPRESSURE: tone( BUZZ_PIN, 1000, 30); break;
     case ALARM_OVERPRESSURE: tone( BUZZ_PIN, 3000, 70); break;
@@ -487,5 +485,4 @@ void loop() {
 
   delay(100);                  // stop the program for some time
 }
-
 

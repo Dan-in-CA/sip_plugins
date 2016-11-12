@@ -12,6 +12,7 @@ from urls import urls  # Get access to ospi's URLs
 from ospi import template_render
 from webpages import ProtectedPage
 from helpers import get_rpi_revision
+from blinker import signal
 
 # I2C bus Rev Raspi RPI=1 rev1 RPI=0 rev0
 try:
@@ -30,6 +31,8 @@ urls.extend(['/pcontrol', 'plugins.pump_control.settings',
 # Add this plugin to the home page plugins menu
 gv.plugin_menu.append(['Pump Control settings', '/pcontrol'])
 
+# Define Alarm Signal
+alarm = signal('alarm_toggled')
 
 ################################################################################
 # Main function loop:                                                          #
@@ -85,6 +88,8 @@ class PumpControlSender(Thread):
                                    ' Pump Control Status=' + str(pc_status)
                             self.add_status(TEXT)
                             write_log(pressure, pc_status)
+                            if "ALARM" in pc_status:
+                                alarm.send("pump_control", txt=pc_status)
                 self._sleep(1)
 
             except Exception:

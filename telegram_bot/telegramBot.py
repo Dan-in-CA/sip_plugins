@@ -7,6 +7,7 @@ from sip import template_render  #  Needed for working with web.py templates
 from webpages import ProtectedPage  # Needed for security
 import json  # for working with data file
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+
 from threading import Thread
 from random import randint
 import time
@@ -68,17 +69,16 @@ class SipBot(Thread):
         b.sendMessage(update.message.chat_id, text='Hi! Im a Bot to interface with ' + gv.sd[u'name'])
 
     def _botCmd_subscribe(self, bot, update):
-        b = self.bot.bot
         if self.data['botAccessKey'] in update.message.text:
             chats = self.currentChats
             chats.add(update.message.chat_id)
             self.currentChats = chats
-            b.sendMessage(update.message.chat_id, text='Hi! you are now added to the ' + gv.sd[u'name'] +' announcement ')
+            bot.sendMessage(update.message.chat_id, text='Hi! you are now added to the *' + gv.sd[u'name'] +'* announcement ',
+            parse_mode = 'Markdown' )
         else:
-            b.sendMessage(update.message.chat_id, text='Please enter the correct AccessKey ')
+            bot.sendMessage(update.message.chat_id, text="I'm sorry Dave I'm afraid I can't do that, Please enter the correct AccessKey" )
 
     def _botCmd_info(self, bot, update):
-        b = self.bot.bot
         chat_id = update.message.chat_id
         if chat_id in self.currentChats:
             if gv.lrun[1] == 98:
@@ -97,63 +97,60 @@ class SipBot(Thread):
             datastr = ('On ' + time.strftime("%d.%m.%Y at %H:%M:%S", time.localtime(
                 time.time())) + '. Run time: ' + uptime() + ' IP: ' + get_ip() + logline + revision)
         else:
-            datastr = "Not Allowed"
+            datastr = "I'm sorry Dave I'm afraid I can't do that."
 
-        b.sendMessage(chat_id, datastr)
+        bot.sendMessage(chat_id, datastr)
 
     def _botCmd_help(self, bot, update):
-        b = self.bot.bot
         chat_id = update.message.chat_id
         if chat_id in self.currentChats:
             txt = """Help:
-            /subscribe: Subscribe to the Announcement list, need an access Key
-            {}: Info Command
-            {}: Enable Command
-            {}: Disable Command
-            {}: Run Once Command, use program number as argument""".format(self.data['info_cmd'],
+            */subscribe*: Subscribe to the Announcement list, need an access Key
+            */{}*: Info Command
+            */{}*: Enable Command
+            */{}*: Disable Command
+            */{}*: Run Once Command, use program number as argument""".format(self.data['info_cmd'],
                                                                            self.data['enable_cmd'],
                                                                            self.data['disable_cmd'],
                                                                            self.data['runOnce_cmd'])
         else:
-            txt = "Not Allowed"
-        b.sendMessage(chat_id, txt)
+            txt = "I'm sorry Dave I'm afraid I can't do that."
+
+        bot.sendMessage(chat_id, text=txt,  parse_mode='Markdown')
 
     def _botCmd_enable(self, bot, update):
-        b = self.bot.bot
         chat_id = update.message.chat_id
         if chat_id in self.currentChats:
-            txt = "{} System ON".format(gv.sd[u'name'])
+            txt = "{} System <b>ON</b>".format(gv.sd[u'name'])
             gv.sd['en'] = 1  # enable system OSPi
             gv.sd['mm'] = 0 # Disable Manual Mode
             jsave(gv.sd, 'sd')  # save en = 1
         else:
-            txt = "Not Allowed"
-        b.sendMessage(chat_id, txt)
+            txt = "I'm sorry Dave I'm afraid I can't do that."
+        bot.sendMessage(chat_id, text=txt, parse_mode='HTML')
 
     def _botCmd_disable(self, bot, update):
-        b = self.bot.bot
         chat_id = update.message.chat_id
         if chat_id in self.currentChats:
-            txt = "{} System OFF".format(gv.sd[u'name'])
+            txt = "{} System <b>OFF</b>".format(gv.sd[u'name'])
             gv.sd['en'] = 0  # disable system SIP
             jsave(gv.sd, 'sd')  # save en = 0
             stop_stations()
         else:
-            txt = "Not Allowed"
+            txt = "I'm sorry Dave I'm afraid I can't do that."
 
-        b.sendMessage(chat_id, txt)
+        bot.sendMessage(chat_id, text=txt, parse_mode='HTML')
 
     def _botCmd_runOnce(self, bot, update, args):
-        b = self.bot.bot
         chat_id = update.message.chat_id
         if chat_id in self.currentChats:
             txt = "{} RunOnce: program {} Not yet Implemented!!!!!".format(gv.sd[u'name'], args)
 #               gv.sd['en'] = 0  # disable system OSPi
 #               jsave(gv.sd, 'sd')  # save en = 0
         else:
-            txt = "Not Allowed"
+            txt = "I'm sorry Dave I'm afraid I can't do that."
 
-        b.sendMessage(chat_id, txt)
+        bot.sendMessage(chat_id, text=txt)
 
 
     def _initBot(self):
@@ -171,12 +168,13 @@ class SipBot(Thread):
         dp.add_handler(MessageHandler(Filters.text, self._echo))
         return updater
 
-    def _announce(self, text):
-        for id in self.currentChats:
-            try:
-                self.bot.bot.sendMessage(id, text=text)
-            except:
-                pass
+    def _announce(self, text, parse_mode=None ):
+        bot= self.bot.bot
+        for chat_id in self.currentChats:
+            if parse_mode is None:
+                bot.sendMessage(chat_id, text=text)
+            else:
+                bot.sendMessage(chat_id, text=text, parse_mode=parse_mode)
 
     def _echo(self, bot, update):
         bot.sendMessage(update.message.chat_id, text=update.message.text)
@@ -187,7 +185,7 @@ class SipBot(Thread):
                 time.sleep(randint(3, 10))  # Sleep some time to prevent printing before startup information
                 print "telegramBot plugin is active"
                 self.bot = self._initBot()
-                self._announce('Bot on ' + gv.sd[u'name'] + ' has just started!')
+                self._announce('Bot on *' + gv.sd[u'name'] + '* has just started!', parse_mode='Markdown')
                 # Lets Start the bot
                 self.bot.start_polling()
 
@@ -199,19 +197,17 @@ class SipBot(Thread):
     def notifyZoneChange(self,name,  **kw):
         if self.data['zoneChange'] == 'on':
             txt = 'There has been a Zone Change: ' +  str(gv.srvals)
-            # print 'notify: ', txt
             self._announce(txt)
 
     def notifyProgram_toggled(self, name,  **kw):
         if self.data['programToggled'] == 'on':
             txt = 'A program has been toggled: ' +  str(gv.pd)
-            # print 'notify: ', txt
             self._announce(txt)
 
     def notifyAlarmToggled(self, name,  **kw):
-        txt = 'An ALARM has been toggled: ' +  str(kw)
-        # print 'notify: ', txt
-        self._announce(txt)
+        txt = '''<b>ALARM!!!</b> from <i>{}</i>:
+<pre>{}</pre>'''.format(name, kw["txt"])
+        self._announce(txt, parse_mode='HTML')
 
 
 
@@ -242,16 +238,15 @@ def set_telegramBot_options(new_data):
         for k in new_data.keys():
             data[k] =  new_data[k]
         with open('./data/telegramBot.json', 'w') as f:
-            print data
             json.dump(data, f) # save to file
-        print "save done!"
         return
 
 
 def run_bot():
     bot = SipBot(gv)
+    # wait to the bot to start
+    time.sleep(10)
     # Connect Signals
-    print "Connecting Signals"
     program_toggled = signal('program_toggled')
     program_toggled.connect(bot.notifyProgram_toggled)
 
@@ -279,7 +274,6 @@ class save_settings(ProtectedPage):
 
     def GET(self):
         qdict = web.input()
-        print qdict
         if 'zoneChange' not in qdict:
             qdict['zoneChange'] = 'off'
         if 'programToggled' not in qdict:

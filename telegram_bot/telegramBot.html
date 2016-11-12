@@ -44,8 +44,11 @@ $var page: telegramBot_plugin  <!--Edit: page name, used internally-->
             <tr>
                 <td style='text-transform: none;'>$_('Bot Access Key - to Subscribe'):</td>  <!--Edit-->
                 <td><input type="text" name="botAccessKey" value="${settings['botAccessKey']}"></td>
-            </tr></table></br>
-        $_('Please restart SIP if this options are changed!')
+            </tr>
+             <tr>
+                <td style='text-transform: none;'>$_('Please restart SIP if this options are changed!')</td>  <!--Edit-->
+            </tr>
+        </table></br>
         </table>
        <table class="optionList">
 
@@ -62,7 +65,7 @@ $var page: telegramBot_plugin  <!--Edit: page name, used internally-->
                 <td><input type="checkbox" name="programToggled" ${" checked" if  settings['programToggled'] == "on"  else ""}></td>
             </tr>
 
-        </table>
+        </table></br>
         <table class="optionList">
 
             <!--Check boxes-->

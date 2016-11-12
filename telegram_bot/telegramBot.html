@@ -38,18 +38,14 @@ $var page: telegramBot_plugin  <!--Edit: page name, used internally-->
                 <th class="stationNumber">$_('General Options')</th>  <!--Edit: Optional-->
             </thead>
             <tr>
-                <td style='text-transform: none;'>$_('Enable Notifier'):</td>  <!--Edit-->
-                <td><input type="checkbox" name="use_telegram"  ${"checked" if settings['use_telegram'] else ""}></td>
-            </tr>
-            <tr>
                 <td style='text-transform: none;'>$_('Bot Token'):</td>  <!--Edit-->
                 <td><input type="text" name="botToken" value="${settings['botToken']}"></td>
             </tr>
             <tr>
                 <td style='text-transform: none;'>$_('Bot Access Key - to Subscribe'):</td>  <!--Edit-->
                 <td><input type="text" name="botAccessKey" value="${settings['botAccessKey']}"></td>
-            </tr>
-
+            </tr></table></br>
+        $_('Please restart SIP if this options are changed!')
         </table>
        <table class="optionList">
 
@@ -59,13 +55,36 @@ $var page: telegramBot_plugin  <!--Edit: page name, used internally-->
             </thead>
             <tr>
                 <td style='text-transform: none;'>$_('Zone Change'):</td>  <!--Edit-->
-                <td><input type="checkbox" name="zoneChange"  ${"checked" if  settings['zoneChange']  else ""}></td>
+                <td><input type="checkbox" name="zoneChange"  ${" checked" if  settings['zoneChange'] == "on"  else ""}></td>
             </tr>
            <tr>
                 <td style='text-transform: none;'>$_('Program Toggled'):</td>  <!--Edit-->
-                <td><input type="checkbox" name="programToggled" ${"checked" if  settings['programToggled']  else ""}></td>
+                <td><input type="checkbox" name="programToggled" ${" checked" if  settings['programToggled'] == "on"  else ""}></td>
             </tr>
 
+        </table>
+        <table class="optionList">
+
+            <!--Check boxes-->
+            <thead>
+                <th class="stationNumber">$_('Commands')</th>
+            </thead>
+            <tr>
+                <td style='text-transform: none;'>$_('Info Command'):</td>  <!--Edit-->
+                <td><input type="text" name="info_cmd" value="${settings['info_cmd']}"></td>
+            </tr>
+            <tr>
+                <td style='text-transform: none;'>$_('Start Command'):</td>  <!--Edit-->
+                <td><input type="text" name="enable_cmd" value="${settings['enable_cmd']}"></td>
+            </tr>
+            <tr>
+                <td style='text-transform: none;'>$_('Stop Command'):</td>  <!--Edit-->
+                <td><input type="text" name="disable_cmd" value="${settings['disable_cmd']}"></td>
+            </tr>
+            <tr>
+                <td style='text-transform: none;'>$_('RunOnce Command'):</td>  <!--Edit-->
+                <td><input type="text" name="runOnce_cmd" value="${settings['runOnce_cmd']}"></td>
+            </tr>
         </table></br>
     </form>
 

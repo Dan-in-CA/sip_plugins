@@ -11,10 +11,10 @@ from threading import Thread
 from random import randint
 import time
 from blinker import signal
+import gv
 import traceback
 import sys
-
-
+from helpers import get_ip, uptime, reboot, poweroff, timestr, jsave, restart, clear_mm, stop_stations
 
 
 
@@ -24,7 +24,6 @@ json_data = './data/telegramBot.json'
 urls.extend([
     '/telegramBot-sp', 'plugins.telegramBot.settings',
     '/telegramBot-save', 'plugins.telegramBot.save_settings'
-
     ])
 
 gv.plugin_menu.append(['telegram Bot', '/telegramBot-sp'])
@@ -64,9 +63,9 @@ class SipBot(Thread):
     def _botError(self, bot, update, error):
         print 'Update "%s" caused error "%s"' % (update, error)
 
-    def _botCmd_start(self, bot, update):
+    def _botCmd_start_chat(self, bot, update):
         b = self.bot.bot
-        b.sendMessage(update.message.chat_id, text='Hi! Im a  ')
+        b.sendMessage(update.message.chat_id, text='Hi! Im a Bot to interface with ' + gv.sd[u'name'])
 
     def _botCmd_subscribe(self, bot, update):
         b = self.bot.bot
@@ -74,10 +73,87 @@ class SipBot(Thread):
             chats = self.currentChats
             chats.add(update.message.chat_id)
             self.currentChats = chats
-
-            b.sendMessage(update.message.chat_id, text='Hi! you are now added to the SIP announcement ')
+            b.sendMessage(update.message.chat_id, text='Hi! you are now added to the ' + gv.sd[u'name'] +' announcement ')
         else:
             b.sendMessage(update.message.chat_id, text='Please enter the correct AccessKey ')
+
+    def _botCmd_info(self, bot, update):
+        b = self.bot.bot
+        chat_id = update.message.chat_id
+        if chat_id in self.currentChats:
+            if gv.lrun[1] == 98:
+                pgr = 'Run-once'
+            elif gv.lrun[1] == 99:
+                pgr = 'Manual'
+            else:
+                pgr = str(gv.lrun[1])
+            start = time.gmtime(gv.now - gv.lrun[2])
+            if pgr != '0':
+                logline = ' {program: ' + pgr + ',station: ' + str(gv.lrun[0]) + ',duration: ' + timestr(
+                    gv.lrun[2]) + ',start: ' + time.strftime("%H:%M:%S - %Y-%m-%d", start) + '}'
+            else:
+                logline = ' Last program none'
+            revision = ' Rev: ' + gv.ver_date
+            datastr = ('On ' + time.strftime("%d.%m.%Y at %H:%M:%S", time.localtime(
+                time.time())) + '. Run time: ' + uptime() + ' IP: ' + get_ip() + logline + revision)
+        else:
+            datastr = "Not Allowed"
+
+        b.sendMessage(chat_id, datastr)
+
+    def _botCmd_help(self, bot, update):
+        b = self.bot.bot
+        chat_id = update.message.chat_id
+        if chat_id in self.currentChats:
+            txt = """Help:
+            /subscribe: Subscribe to the Announcement list, need an access Key
+            {}: Info Command
+            {}: Enable Command
+            {}: Disable Command
+            {}: Run Once Command, use program number as argument""".format(self.data['info_cmd'],
+                                                                           self.data['enable_cmd'],
+                                                                           self.data['disable_cmd'],
+                                                                           self.data['runOnce_cmd'])
+        else:
+            txt = "Not Allowed"
+        b.sendMessage(chat_id, txt)
+
+    def _botCmd_enable(self, bot, update):
+        b = self.bot.bot
+        chat_id = update.message.chat_id
+        if chat_id in self.currentChats:
+            txt = "{} System ON".format(gv.sd[u'name'])
+            gv.sd['en'] = 1  # enable system OSPi
+            gv.sd['mm'] = 0 # Disable Manual Mode
+            jsave(gv.sd, 'sd')  # save en = 1
+        else:
+            txt = "Not Allowed"
+        b.sendMessage(chat_id, txt)
+
+    def _botCmd_disable(self, bot, update):
+        b = self.bot.bot
+        chat_id = update.message.chat_id
+        if chat_id in self.currentChats:
+            txt = "{} System OFF".format(gv.sd[u'name'])
+            gv.sd['en'] = 0  # disable system SIP
+            jsave(gv.sd, 'sd')  # save en = 0
+            stop_stations()
+        else:
+            txt = "Not Allowed"
+
+        b.sendMessage(chat_id, txt)
+
+    def _botCmd_runOnce(self, bot, update, args):
+        b = self.bot.bot
+        chat_id = update.message.chat_id
+        if chat_id in self.currentChats:
+            txt = "{} RunOnce: program {} Not yet Implemented!!!!!".format(gv.sd[u'name'], args)
+#               gv.sd['en'] = 0  # disable system OSPi
+#               jsave(gv.sd, 'sd')  # save en = 0
+        else:
+            txt = "Not Allowed"
+
+        b.sendMessage(chat_id, txt)
 
 
     def _initBot(self):
@@ -85,8 +161,13 @@ class SipBot(Thread):
         self._currentChats = set(self.data['currentChats'])
         dp = updater.dispatcher
         dp.add_error_handler(self._botError)
-        dp.add_handler(CommandHandler("start", self._botCmd_start))
+        dp.add_handler(CommandHandler("start", self._botCmd_start_chat))
         dp.add_handler(CommandHandler("subscribe", self._botCmd_subscribe))
+        dp.add_handler(CommandHandler("help", self._botCmd_help))
+        dp.add_handler(CommandHandler(self.data['info_cmd'], self._botCmd_info))
+        dp.add_handler(CommandHandler(self.data['enable_cmd'], self._botCmd_enable))
+        dp.add_handler(CommandHandler(self.data['disable_cmd'], self._botCmd_disable))
+        dp.add_handler(CommandHandler(self.data['runOnce_cmd'], self._botCmd_runOnce, pass_args=True))
         dp.add_handler(MessageHandler(Filters.text, self._echo))
         return updater
 
@@ -101,26 +182,34 @@ class SipBot(Thread):
         bot.sendMessage(update.message.chat_id, text=update.message.text)
 
     def run(self):
-        time.sleep(randint(3, 10))  # Sleep some time to prevent printing before startup information
-        print "telegramBot plugin is active"
         try:
-            if self.data['use_telegram'] and self.data['botToken'] != '':
+            if  self.data['botToken'] != '':
+                time.sleep(randint(3, 10))  # Sleep some time to prevent printing before startup information
+                print "telegramBot plugin is active"
                 self.bot = self._initBot()
+                self._announce('Bot on ' + gv.sd[u'name'] + ' has just started!')
                 # Lets Start the bot
                 self.bot.start_polling()
-               # self.bot.idle()
+
         except Exception:
             exc_type, exc_value, exc_traceback = sys.exc_info()
             err_string = ''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))
             print ('telegramBot plugin encountered error: ' + err_string)
 
     def notifyZoneChange(self,name,  **kw):
-        txt = 'There has been a Zone Change: ' +  str(gv.srvals)
-        # print 'notify: ', txt
-        self._announce(txt)
+        if self.data['zoneChange'] == 'on':
+            txt = 'There has been a Zone Change: ' +  str(gv.srvals)
+            # print 'notify: ', txt
+            self._announce(txt)
 
     def notifyProgram_toggled(self, name,  **kw):
-        txt = 'A program has been toggled: ' +  str(gv.pd)
+        if self.data['programToggled'] == 'on':
+            txt = 'A program has been toggled: ' +  str(gv.pd)
+            # print 'notify: ', txt
+            self._announce(txt)
+
+    def notifyAlarmToggled(self, name,  **kw):
+        txt = 'An ALARM has been toggled: ' +  str(kw)
         # print 'notify: ', txt
         self._announce(txt)
 
@@ -130,9 +219,12 @@ def get_telegramBot_options():
     data = {
         'botToken': '',
         'botAccessKey' : 'SIP',
-        'use_telegram': False,
-        'zoneChange': False,
-        'programToggled': True,
+        'zoneChange': 'off',
+        'programToggled': 'off',
+        'info_cmd': 'info',
+        'disable_cmd': 'disable',
+        'enable_cmd': 'enable',
+        'runOnce_cmd': 'runOnce',
         'currentChats' : []
         }
     try:
@@ -165,6 +257,8 @@ def run_bot():
 
     zoneChange = signal('zone_change')
     zoneChange.connect(bot.notifyZoneChange)
+    alarm = signal('alarm_toggled')
+    alarm.connect(bot.notifyAlarmToggled)
 
 
 
@@ -186,13 +280,12 @@ class save_settings(ProtectedPage):
     def GET(self):
         qdict = web.input()
         print qdict
-        for k in qdict.keys():
-            if k in ('use_telegram', 'zoneChange', 'programToggled'):
-                v = qdict[k]
-                if  v == "on":
-                    qdict[k] = True
-                else:
-                    qdict[k] = False
+        if 'zoneChange' not in qdict:
+            qdict['zoneChange'] = 'off'
+        if 'programToggled' not in qdict:
+            qdict['programToggled'] = 'off'
+
+
         set_telegramBot_options(qdict)
         raise web.seeother('/')  # Return user to home page.
 

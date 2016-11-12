@@ -1,0 +1,98 @@
+$def with(m_vals)
+
+$var title: SIP Pump Control Settings
+$var page: plugins
+
+$code:
+	opts = m_vals
+	languages = i18n.languages
+	langKeys = i18n.languages.keys()
+	langKeys.sort()
+
+
+
+<script>
+    // Initialize behaviors
+    jQuery(document).ready(function(){
+
+        jQuery("#cSubmit").click(function() {
+            jQuery("#pluginForm").submit();
+        });
+        jQuery("button#cCancel").click(function(){
+            window.location="/";
+        });
+ });
+
+</script>
+
+
+<div id="plugin">
+    <div class="title">Pump Control adjustments</div>
+    <p>For this plugin is needed enabled I2C bus and connected I2C the Arduino Pump Control</p>
+    <p>Download log as <a href="/pcontroll">csv</a>. <a href="/pcontrolr">Delete</a> log file.</p>
+    <form id="pluginForm" action="/pcontrola" method="get">
+        <table class="optionList">
+            <tr>
+                <td style='text-transform: none;'>Use Pump Control:</td>
+                <td>
+                    <input name='use_pc' type='checkbox'${" checked" if m_vals['use_pc'] == "on" else ""}>
+                </td>
+            </tr>
+            <tr>
+                <td style='text-transform: none;'>Enable logging:</td>
+                <td>
+                    <input name='use_log' type='checkbox'${" checked" if m_vals['use_log'] == "on" else ""}>
+                </td>
+            </tr>
+            <tr>
+                <td style='text-transform: none;'>Maximum number of records:</td>
+                <td>
+                    <input name='records' type='number' value=$m_vals["records"]> (0 = unlimited)
+                </td>
+            </tr>
+            <tr>
+                <td style='text-transform: none;'>Time loop for logging:</td>
+                <td>
+                    <input name='time' type='number' value=$m_vals["time"]> seconds (0 = logging disabled)
+                </td>
+            </tr>
+            <tr>
+                <td style='text-transform: none;'>Max Working Pressure:</td>
+                <td>
+                    <input name='max_pressure' type='text' size='31' maxlength='31' value=$m_vals["pump_control_config"]["max_pressure"]>
+                </td>
+            </tr>
+            <tr>
+                <td style='text-transform: none;'>Min Working Pressure:</td>
+                <td>
+                    <input name='min_pressure' type='text' size='31' maxlength='31' value=$m_vals["pump_control_config"]["min_pressure"]>
+                </td>
+            </tr>
+            <tr>
+                <td style='text-transform: none;'>Max Wait-time for min Pressure:</td>
+                <td>
+                    <input name='max_wait' type='text' size='31' maxlength='31' value=$m_vals["pump_control_config"]["max_wait"]>
+                </td>
+            </tr>
+            <tr>
+                <td style='text-transform: none; vertical-align: top;'>Read value:</td>
+                <td style="background-color: rgb(220, 220, 220);text-align: left;">
+                    Pressure: $m_vals['pressure_val'] <br>
+                    Status: $m_vals['pump_status_val'] <br>
+                </td>
+            </tr>
+            <tr>
+                <td style='text-transform: none;'>Status:</td>
+                <td>
+                    <textarea style="font-family: monospace;" rows="7" cols="35" readonly>$m_vals['status']</textarea>
+                </td>
+            </tr>
+
+        </table>
+    </form>
+</div>
+<div id="controls">
+    <button id="cSubmit" class="submit"><b>Submit</b></button>
+    <button id="cCancel" class="cancel danger">Cancel</button>
+</div>
+

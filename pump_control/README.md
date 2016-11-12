@@ -7,3 +7,4 @@ The arduino monitors that the pump is working correctly via some sensors and con
 
 The current version only checks for the pressure in the pipe.
 
+It uses a Blinker alarm signal when detects some alarm on the pump

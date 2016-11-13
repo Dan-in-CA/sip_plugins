@@ -79,8 +79,10 @@ class SipBot(Thread):
             bot.sendMessage(update.message.chat_id, text="I'm sorry Dave I'm afraid I can't do that, Please enter the correct AccessKey" )
 
     def _botCmd_info(self, bot, update):
+        print "INFO!"
         chat_id = update.message.chat_id
         if chat_id in self.currentChats:
+            txt = "<b>Info:</b>\n"
             if gv.lrun[1] == 98:
                 pgr = 'Run-once'
             elif gv.lrun[1] == 99:
@@ -89,17 +91,16 @@ class SipBot(Thread):
                 pgr = str(gv.lrun[1])
             start = time.gmtime(gv.now - gv.lrun[2])
             if pgr != '0':
-                logline = ' {program: ' + pgr + ',station: ' + str(gv.lrun[0]) + ',duration: ' + timestr(
-                    gv.lrun[2]) + ',start: ' + time.strftime("%H:%M:%S - %Y-%m-%d", start) + '}'
+                txt += (' {program: <b>' + pgr + '</b>,station: <b>' + str(gv.lrun[0]) + '</b>,duration: <b>' + timestr(
+                    gv.lrun[2]) + '</b>,start: <b>' + time.strftime("%H:%M:%S - %Y-%m-%d", start) + '</b>}\n')
             else:
-                logline = ' Last program none'
-            revision = ' Rev: ' + gv.ver_date
-            datastr = ('On ' + time.strftime("%d.%m.%Y at %H:%M:%S", time.localtime(
-                time.time())) + '. Run time: ' + uptime() + ' IP: ' + get_ip() + logline + revision)
+                txt += ' Last program <b>none</b>\n'
+            txt += ('On ' + time.strftime("%d.%m.%Y at %H:%M:%S", time.localtime(
+                time.time())) + '. Run time: ' + uptime() + ' IP: ' + get_ip())
         else:
-            datastr = "I'm sorry Dave I'm afraid I can't do that."
-
-        bot.sendMessage(chat_id, datastr)
+            txt = "I'm sorry Dave I'm afraid I can't do that."
+        print txt
+        bot.sendMessage(chat_id, text=txt,  parse_mode='HTML')
 
     def _botCmd_help(self, bot, update):
         chat_id = update.message.chat_id

@@ -147,7 +147,7 @@ def get_LCD_print(self, report, txt=None):
 
     if report == 0:
         lcd.lcd_clear()
-        lcd.lcd_puts("SIP", 1)
+        lcd.lcd_puts(gv.sd['name'], 1)
         lcd.lcd_puts("Irrigation syst.", 2)
         self.add_status('SIP. / Irrigation syst.')
     elif report == 1:

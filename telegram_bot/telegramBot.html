@@ -1,0 +1,98 @@
+$def with(settings)
+<!-- Edit: Replace "telegramBot_vals" with settings values for your plugin if used-->
+
+$var title: $_('SIP telegramBot Plugin') <!--Edit: Title to show on browser tab-->
+$var page: telegramBot_plugin  <!--Edit: page name, used internally-->
+<script>
+    // Initialize behaviors
+    jQuery(document).ready(function(){
+
+        jQuery("#cSubmit").click(function() {
+            jQuery("#pluginForm").submit();
+        });
+        jQuery("button#cCancel").click(function(){
+            window.location="/";
+        });
+
+        jQuery("button#docButton").click(function(){
+            window.open("/static/docs/plugins/telegramBot-docs.html", "_blank");
+        });
+
+    });
+</script>
+
+<div id="plugin">
+    <div class="title">telegramBot Plugin  <!--Edit: User page heading, Make relevant to your plugin-->
+    <button class="execute" id="docButton" type="button" >$_('Help')</button>
+    </div>
+
+    <form id="pluginForm" action="/telegramBot-save" method="get"> <!--Edit: Replace "telegramBot-save" with URL of plugin's class for saving settings-->
+
+
+
+        <p>$_('Telegram Bot Options')</p>  <!--Edit-->
+        <table class="optionList">
+
+            <!--Text fields-->
+            <thead>
+                <th class="stationNumber">$_('General Options')</th>  <!--Edit: Optional-->
+            </thead>
+            <tr>
+                <td style='text-transform: none;'>$_('Bot Token'):</td>  <!--Edit-->
+                <td><input type="text" name="botToken" value="${settings['botToken']}"></td>
+            </tr>
+            <tr>
+                <td style='text-transform: none;'>$_('Bot Access Key - to Subscribe'):</td>  <!--Edit-->
+                <td><input type="text" name="botAccessKey" value="${settings['botAccessKey']}"></td>
+            </tr>
+             <tr>
+                <td style='text-transform: none;'>$_('Please restart SIP if this options are changed!')</td>  <!--Edit-->
+            </tr>
+        </table></br>
+        </table>
+       <table class="optionList">
+
+            <!--Check boxes-->
+            <thead>
+                <th class="stationNumber">$_('Signals to connect')</th>
+            </thead>
+            <tr>
+                <td style='text-transform: none;'>$_('Zone Change'):</td>  <!--Edit-->
+                <td><input type="checkbox" name="zoneChange"  ${" checked" if  settings['zoneChange'] == "on"  else ""}></td>
+            </tr>
+           <tr>
+                <td style='text-transform: none;'>$_('Program Toggled'):</td>  <!--Edit-->
+                <td><input type="checkbox" name="programToggled" ${" checked" if  settings['programToggled'] == "on"  else ""}></td>
+            </tr>
+
+        </table></br>
+        <table class="optionList">
+
+            <!--Check boxes-->
+            <thead>
+                <th class="stationNumber">$_('Commands')</th>
+            </thead>
+            <tr>
+                <td style='text-transform: none;'>$_('Info Command'):</td>  <!--Edit-->
+                <td><input type="text" name="info_cmd" value="${settings['info_cmd']}"></td>
+            </tr>
+            <tr>
+                <td style='text-transform: none;'>$_('Start Command'):</td>  <!--Edit-->
+                <td><input type="text" name="enable_cmd" value="${settings['enable_cmd']}"></td>
+            </tr>
+            <tr>
+                <td style='text-transform: none;'>$_('Stop Command'):</td>  <!--Edit-->
+                <td><input type="text" name="disable_cmd" value="${settings['disable_cmd']}"></td>
+            </tr>
+            <tr>
+                <td style='text-transform: none;'>$_('RunOnce Command'):</td>  <!--Edit-->
+                <td><input type="text" name="runOnce_cmd" value="${settings['runOnce_cmd']}"></td>
+            </tr>
+        </table></br>
+    </form>
+
+<div id="controls">
+    <button id="cSubmit" class="submit"><b>$_('Submit')</b></button>
+    <button id="cCancel" class="cancel danger">$_('Cancel')</button>
+</div>
+</div>

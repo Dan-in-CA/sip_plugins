@@ -14,32 +14,18 @@ california_monthly
 ---------
 Provides automatic monthly adjustment of irrigation times based on historical weather data.
 
-proto
----------
-A bare bones plugin for use as a starting point for plugin authoring.
-(Installed by default)
-
-system_update
-----------
-Allows updating OSPi software from integrated UI  
-(Installed by default)
-
 email_adj
 ----------
 Sends status email to google email account
-
-rf_control
-----------
-For testing only! Sends cli commands on station change.
-
-pressure_adj
-----------
-Checks water pressure when master station is switched on
 
 lcd_adj
 ----------
 Uses I2C for LCD 16x2 char data display  
 Requires pylcd2 library
+
+monthly_adj
+----------
+Adjust irrigation time each month
 
 mqtt
 ----------
@@ -60,26 +46,53 @@ pcf_8591_adj
 ----------
 Read sensor data (temp or voltage) from I2C PCF8591 ADC/DAC
 
+pressure_adj
+----------
+Checks water pressure when master station is switched on
+
+proto
+---------
+A bare bones plugin for use as a starting point for plugin authoring.
+(Installed by default)
+
 pulse_cct
 ----------
 Pulses a selected circuit with a 2.5 Hz signal for 30 sec
 to discover the location of a valve
 
-sms_adj
-----------
-Control your ospi using SMS (Short Message Service)
-
-monthly_adj
-----------
-Adjust irrigation time each month
+pump_control
+------------
+Controls a pump relay via an Arduino over i2C.
+Checks pressure in pipe ensuring proper operation.
 
 relay
 ----------
 Example plugin to demonstrate OSPi on-board relay
 
+relay_board
+----------
+A plugin for using relay boards to control sprinkler valves, etc
+
+rf_control
+----------
+For testing only! Sends cli commands on station change.
+
 signaling_examples
 ----------
 Example plugin provides functions triggered by signals from core program (installed by default)
+
+sms_adj
+----------
+Control your ospi using SMS (Short Message Service)
+
+system_update
+----------
+Allows updating OSPi software from integrated UI  
+(Installed by default)
+
+telegram_bot
+-------------
+A simple telegram.org bot to interface with a SIP installation.
 
 weather_adj
 ----------
@@ -89,6 +102,3 @@ weather_level_adj
 ----------
 Adjust irrigation time based on weather forecast
 
-relay_board
-----------
-A plugin for using relay boards to control sprinkler valves, etc

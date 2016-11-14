@@ -93,6 +93,7 @@ Allows updating OSPi software from integrated UI
 telegram_bot
 -------------
 A simple telegram.org bot to interface with a SIP installation.
+Run "pip install python-telegram-bot --upgrade" before installing this plugin.
 
 weather_adj
 ----------

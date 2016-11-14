@@ -87,12 +87,13 @@ Control your ospi using SMS (Short Message Service)
 
 system_update
 ----------
-Allows updating OSPi software from integrated UI  
+Allows updating OSPi software from integrated UI<br>
 (Installed by default)
 
 telegram_bot
 -------------
-A simple telegram.org bot to interface with a SIP installation.  
+A simple telegram.org bot to interface with a SIP installation.<br>
+
 Run "pip install python-telegram-bot --upgrade" before installing this plugin.
 
 weather_adj

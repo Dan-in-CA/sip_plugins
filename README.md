@@ -92,7 +92,8 @@ Allows updating OSPi software from integrated UI<br>
 
 telegram_bot
 -------------
-A simple telegram.org bot to interface with a SIP installation.<br>
+A simple telegram.org bot to interface with a SIP installation.
+_ _ _
 
 Run "pip install python-telegram-bot --upgrade" before installing this plugin.
 

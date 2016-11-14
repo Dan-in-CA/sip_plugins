@@ -12,10 +12,11 @@ import traceback
 
 import web
 import gv  # Get access to ospi's settings
-from urls import urls  # Get access to ospi's URLs
+from urls import urls  # Get access to sip's URLs
 from ospi import template_render
 from webpages import ProtectedPage
 from helpers import uptime, get_ip, get_cpu_temp, get_rpi_revision
+from blinker import signal
 
 
 # Add a new url to open the data entry page.
@@ -37,6 +38,7 @@ class LCDSender(Thread):
         self.daemon = True
         self.start()
         self.status = ''
+        self.alarm_mode = False
 
         self._sleep_time = 0
 
@@ -56,6 +58,12 @@ class LCDSender(Thread):
             time.sleep(1)
             self._sleep_time -= 1
 
+    def alarm(self, name,  **kw):
+        datalcd = get_lcd_options()
+        if datalcd['use_lcd'] != 'off' and not self.alarm_mode:  # if LCD plugin is enabled
+            self.alarm_mode = True
+            get_LCD_print(self, 9999, txt=kw["txt"])  # Print to LCD 16x2
+
     def run(self):
         time.sleep(randint(3, 10))  # Sleep some time to prevent printing before startup information
         print "LCD plugin is active"
@@ -65,13 +73,16 @@ class LCDSender(Thread):
             try:
                 datalcd = get_lcd_options()                          # load data from file
                 if datalcd['use_lcd'] != 'off':                      # if LCD plugin is enabled
-                    if text_shift > 7:  # Print 0-7 messages to LCD
+                    if (text_shift > 7):  # Print 0-7 messages to LCD
                         text_shift = 0
                         self.status = ''
 
-                    get_LCD_print(self, text_shift)   # Print to LCD 16x2
-                    text_shift += 1  # Increment text_shift value
-
+                    if not self.alarm_mode:
+                        get_LCD_print(self, text_shift)   # Print to LCD 16x2
+                        text_shift += 1  # Increment text_shift value
+                    else:
+                        self._sleep(20)
+                        self.alarm_mode = False
                 self._sleep(4)
 
             except Exception:
@@ -82,13 +93,14 @@ class LCDSender(Thread):
 
 
 checker = LCDSender()
-
+alarm = signal('alarm_toggled')
+alarm.connect(checker.alarm)
 ################################################################################
 # Helper functions:                                                            #
 ################################################################################
 
 
-def get_LCD_print(self, report):
+def get_LCD_print(self, report, txt=None):
     """Print messages to LCD 16x2"""
     datalcd = get_lcd_options()
     adr = 0x20
@@ -135,14 +147,14 @@ def get_LCD_print(self, report):
 
     if report == 0:
         lcd.lcd_clear()
-        lcd.lcd_puts("Open Sprinkler", 1)
+        lcd.lcd_puts(gv.sd['name'], 1)
         lcd.lcd_puts("Irrigation syst.", 2)
-        self.add_status('Open Sprinkler. / Irrigation syst.')
+        self.add_status('SIP. / Irrigation syst.')
     elif report == 1:
         lcd.lcd_clear()
-        lcd.lcd_puts("Software ospi:", 1)
+        lcd.lcd_puts("Software SIP:", 1)
         lcd.lcd_puts(gv.ver_date, 2)
-        self.add_status('Software ospi: / ' + gv.ver_date)
+        self.add_status('Software SIP: / ' + gv.ver_date)
     elif report == 2:
         lcd.lcd_clear()
         ip = get_ip()
@@ -152,8 +164,8 @@ def get_LCD_print(self, report):
     elif report == 3:
         lcd.lcd_clear()
         lcd.lcd_puts("Port IP:", 1)
-        lcd.lcd_puts("8080", 2)
-        self.add_status('Port IP: / 8080')
+        lcd.lcd_puts(str(gv.sd['htp']), 2)
+        self.add_status('Port IP: / {}'.format(gv.sd['htp']))
     elif report == 4:
         lcd.lcd_clear()
         temp = get_cpu_temp(gv.sd['tu']) + ' ' + gv.sd['tu']
@@ -182,6 +194,11 @@ def get_LCD_print(self, report):
         lcd.lcd_puts("Rain sensor:", 1)
         lcd.lcd_puts(rain_sensor, 2)
         self.add_status('Rain sensor: / ' + rain_sensor)
+    elif report == 9999: # ALARM!!!!
+        lcd.lcd_clear()
+        lcd.lcd_puts("ALARM", 1)
+        lcd.lcd_puts(txt, 2)
+        self.add_status('Alarm!!!! / ' + txt)
 
 
 def get_lcd_options():

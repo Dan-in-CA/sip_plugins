@@ -73,7 +73,7 @@ class LCDSender(Thread):
             try:
                 datalcd = get_lcd_options()                          # load data from file
                 if datalcd['use_lcd'] != 'off':                      # if LCD plugin is enabled
-                    if (text_shift > 7):  # Print 0-7 messages to LCD
+                    if (text_shift > 8):  # Print 0-8 messages to LCD
                         text_shift = 0
                         self.status = ''
 
@@ -185,7 +185,7 @@ def get_LCD_print(self, report, txt=None):
         lcd.lcd_puts("System run time:", 1)
         lcd.lcd_puts(up, 2)
         self.add_status('System run time: / ' + up)
-    elif report == 7:
+    elif report == 7 and gv.sd['urs'] == 1:
         lcd.lcd_clear()
         if gv.sd['rs']:
             rain_sensor = "Active"
@@ -194,11 +194,41 @@ def get_LCD_print(self, report, txt=None):
         lcd.lcd_puts("Rain sensor:", 1)
         lcd.lcd_puts(rain_sensor, 2)
         self.add_status('Rain sensor: / ' + rain_sensor)
+    elif report == 8: # Report running Stations
+        lcd.lcd_clear()
+        if gv.srvals != [0] * gv.sd['nst']: # something is running
+            if gv.lrun[1] == 98:
+                pgr = 'Run-once Program'
+                lcd.lcd_puts(prg, 1)
+            elif gv.lrun[1] == 99:
+                pgr = 'Manual Mode'
+                lcd.lcd_puts(prg, 1)
+            else:
+                pgr = str(gv.lrun[1])
+                lcd.lcd_puts("Program: {}".format(prg), 1)
+            
+            # Now print the stations
+            s = ''
+            p = 0
+            l = gv.srvals
+            for i in range(len(l)):
+                if l[i] != p:
+                    if l[i] == 1:
+                        s += str(i)
+                    else:
+                        s += str(i-1)
+                elif i == len(l) and l[i] == 1:  # Its the last one and is on
+                    s += str(i)
+                elif i > 3 and l[i-3:i] == [0,1,1]:
+                        s += "-"
+                p = l[i]
+            lcd.lcd_puts(s, 2)
+
     elif report == 9999: # ALARM!!!!
         lcd.lcd_clear()
         lcd.lcd_puts("ALARM", 1)
         lcd.lcd_puts(txt, 2)
-        self.add_status('Alarm!!!! / ' + txt)
+        self.add_status('Alarm! / ' + txt)
 
 
 def get_lcd_options():

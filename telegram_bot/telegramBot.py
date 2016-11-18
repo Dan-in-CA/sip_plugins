@@ -15,7 +15,7 @@ from blinker import signal
 import gv
 import traceback
 import sys
-from helpers import get_ip, uptime, reboot, poweroff, timestr, jsave, restart, clear_mm, stop_stations
+from helpers import get_ip, uptime, reboot, poweroff, timestr, jsave, restart, clear_mm, stop_stations, read_log
 
 
 
@@ -82,24 +82,44 @@ class SipBot(Thread):
         print "INFO!"
         chat_id = update.message.chat_id
         if chat_id in self.currentChats:
-            txt = "<b>Info:</b>\n"
-            if gv.lrun[1] == 98:
-                pgr = 'Run-once'
-            elif gv.lrun[1] == 99:
-                pgr = 'Manual'
+            txt = "<b>Info:</b>"
+            if gv.sd['en'] == 1:
+                txt += "\n{} System <b>ON</b>".format(gv.sd[u'name'])
             else:
-                pgr = str(gv.lrun[1])
-            start = time.gmtime(gv.now - gv.lrun[2])
-            if pgr != '0':
-                txt += (' {program: <b>' + pgr + '</b>,station: <b>' + str(gv.lrun[0]) + '</b>,duration: <b>' + timestr(
-                    gv.lrun[2]) + '</b>,start: <b>' + time.strftime("%H:%M:%S - %Y-%m-%d", start) + '</b>}\n')
+                txt += "\n{} System <b>OFF</b>".format(gv.sd[u'name'])
+            if gv.sd['mm'] == 1:
+                txt += " - Manual Mode"
             else:
-                txt += ' Last program <b>none</b>\n'
-            txt += ('On ' + time.strftime("%d.%m.%Y at %H:%M:%S", time.localtime(
-                time.time())) + '. Run time: ' + uptime() + ' IP: ' + get_ip())
+                txt += " - Auto Mode"
+            txt += get_running_programs_pon()
+            txt += '\n--------------------------------------------'
+
+            if gv.sd['lg']:
+                # Log is enabled, lets get the data from there
+                log = read_log()
+                if len(log) > 0:
+                    txt += '\nLast {} Programs:'.format(str(len(log[:5])))
+                    for l in log[:5]:
+                        l['station'] = gv.snames[l['station']]
+                        txt += "\n  <b>{station}</b> - Program: <i>{program}</i>".format(**l)
+                        txt += "\n      {date} {start} Duration: <i>{duration}</i>  ".format(**l)
+                else:
+                    txt += '\nLast program <b>none</b>'
+            else:
+                if gv.lrun[1] == 98:
+                    pgr = 'Run-once'
+                elif gv.lrun[1] == 99:
+                    pgr = 'Manual'
+                else:
+                    pgr = str(gv.lrun[1])
+                start = time.gmtime(gv.now - gv.lrun[2])
+                if pgr != '0':
+                    txt += ('\nLast program: <b>' + pgr + '</b>,station: <b>' + str(gv.lrun[0]) + '</b>,duration: <b>' + timestr(
+                        gv.lrun[2]) + '</b>,start: <b>' + time.strftime("%H:%M:%S - %Y-%m-%d", start) + '</b>')
+                else:
+                    txt += '\nLast program <b>none</b>'
         else:
             txt = "I'm sorry Dave I'm afraid I can't do that."
-        print txt
         bot.sendMessage(chat_id, text=txt,  parse_mode='HTML')
 
     def _botCmd_help(self, bot, update):
@@ -197,27 +217,90 @@ class SipBot(Thread):
 
     def notifyZoneChange(self,name,  **kw):
         if self.data['zoneChange'] == 'on':
-            txt = 'There has been a Zone Change: ' +  str(gv.srvals)
+            txt = 'There has been a Zone Change: ' + str(gv.srvals)
             self._announce(txt)
 
-    def notifyProgram_toggled(self, name,  **kw):
-        if self.data['programToggled'] == 'on':
-            txt = 'A program has been toggled: ' +  str(gv.pd)
-            self._announce(txt)
+    def notifyStationScheduled(self, name,  **kw):
+        if self.data['stationScheduled'] == 'on':
+            time.sleep(2) # Sleep a couple of seconds to let SIP finish setting the gv variables
+            txt = 'New Stations had been scheduled'
+            txt += get_running_programs_rs()
+            self._announce(txt, parse_mode='HTML')
 
     def notifyAlarmToggled(self, name,  **kw):
         txt = '''<b>ALARM!!!</b> from <i>{}</i>:
 <pre>{}</pre>'''.format(name, kw["txt"])
         self._announce(txt, parse_mode='HTML')
 
+def get_running_programs_rs(): # From the running schedule info
+    txt = ''
+    for i in range(len(gv.rs)):
+        d = gv.rs[i]
+        sname = gv.snames[i]
+        start_time = time.strftime("%H:%M:%S", time.gmtime(d[0]))
+#        stop_time = time.strftime("%H:%M:%S", time.gmtime(d[1]))
+        program = str(d[3])
+        if d[2] == 0:
+            duration = "forever"
+        else:
+            min = int(round(d[2] / 60))
+            sec = int(round(d[2] - 60 * min))
+            if sec < 10:
+                sec = 0
+            duration = '{}:{}'.format(str(min).zfill(2), str(sec).zfill(2))
 
+        if program != '0': # We have a running Station!
+            txt += '\n<b>{}</b> - '.format(sname)
+            if program == '99':
+                # Run Once is running!
+                txt += "<i>Run Once </i>"
+            elif program == '98':
+                # Manual Mode is running
+                txt += "<i>Manual Program </i>"
+            else:
+                # a Program is Running
+                txt += " Program: <i>{}</i>".format(program)
+
+            if program != 98:
+                txt += '\n  Start: <i>{}</i>'.format(start_time)
+                txt += '\n  Duration: <i>{}</i>'.format(duration)
+    return txt
+
+
+def get_running_programs_pon(): # From the GUI info
+    txt = ''
+    if gv.pon == 99:
+        # Run Once is running!
+        txt += "\n<b>Run Once </b>"
+    elif gv.pon == 98:
+        # Manual Mode is running
+        txt += "\n<b>Manual Program </b>"
+    elif gv.pon is not None:
+        # a Program is Running
+        txt += "\nRunning Program: <b>{}</b>".format(str(gv.pon))
+
+    if gv.pon is not None:
+        for i in range(len(gv.ps)):
+            p, d = gv.ps[i]
+            if p != 0:
+                sname = gv.snames[i]
+                if d == 0:
+                    duration = "forever"
+                else:
+                    min = int(round(d / 60))
+                    sec = int(round(d - 60 * min))
+                    if sec < 10:
+                        sec = 0
+                    duration = '{}:{}'.format(str(min).zfill(2), str(sec).zfill(2))
+                txt += '\n  <b>{}</b> - Duration: <b>{}</b>'.format(sname, duration)
+    return txt
 
 def get_telegramBot_options():
     data = {
         'botToken': '',
         'botAccessKey' : 'SIP',
         'zoneChange': 'off',
-        'programToggled': 'off',
+        'stationScheduled': 'off',
         'info_cmd': 'info',
         'disable_cmd': 'disable',
         'enable_cmd': 'enable',
@@ -234,6 +317,7 @@ def get_telegramBot_options():
         pass
     return data
 
+
 def set_telegramBot_options(new_data):
         data = get_telegramBot_options()
         for k in new_data.keys():
@@ -242,17 +326,17 @@ def set_telegramBot_options(new_data):
             json.dump(data, f) # save to file
         return
 
-
 def run_bot():
     bot = SipBot(gv)
     # wait to the bot to start
     time.sleep(10)
     # Connect Signals
-    program_toggled = signal('program_toggled')
-    program_toggled.connect(bot.notifyProgram_toggled)
+    program_started = signal('stations_scheduled')
+    program_started.connect(bot.notifyStationScheduled)
 
     zoneChange = signal('zone_change')
     zoneChange.connect(bot.notifyZoneChange)
+
     alarm = signal('alarm_toggled')
     alarm.connect(bot.notifyAlarmToggled)
 

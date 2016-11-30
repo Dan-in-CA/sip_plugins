@@ -127,21 +127,31 @@ checker = StatusChecker()
 # Helper functions:                                                            #
 ################################################################################
 
-
 def perform_update():
-    # ignore local chmod permission
-    command = "git config core.filemode false"  # http://superuser.com/questions/204757/git-chmod-problem-checkout-screws-exec-bit
+
+    command = "git config user.email 'user@sip.email'"
+    subprocess.call(command.split())
+    
+    command = "git config user.name 'SIP user'"
+    subprocess.call(command.split())
+    
+    command = "git config core.filemode true"
     subprocess.call(command.split())
 
-    #command = "git pull"
-    command = "git fetch"
-    subprocess.call(command.split())
-
-    command = "git reset –hard origin/master"
+    command = "git checkout master"  # Make sure we are on the master branch
     output = subprocess.check_output(command.split())
 
-    print 'Update result:', output
-    restart(3)
+    command = "git stash"  # stash any local changes
+    output = subprocess.check_output(command.split())
+
+    command = "git fetch --prune"
+    output = subprocess.check_output(command.split())
+    
+    command = "git reset --hard origin/master"
+    output = subprocess.check_output(command.split())
+    
+    command = "rm sessions/*"
+    subprocess.call(command.split())
 
 ################################################################################
 # Web pages:                                                                   #

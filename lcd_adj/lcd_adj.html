@@ -1,6 +1,6 @@
 $def with(m_vals)
 
-$var title: OpenSprinkler Pi LCD settings
+$var title: SIP LCD settings
 $var page: plugins
 
 <script>
@@ -29,16 +29,46 @@ $var page: plugins
                 </td>
             </tr>
             <tr>
-                <td style='text-transform: none;'>Adress for PCF8574:</td>
+                <td style='text-transform: none;'>Adress for PCF8574:<br>(default 0x20)</td>
                 <td>
-                    <input name='adress' type='text' value=$m_vals["adress"]> (default 0x20)
+                    <input name='adress' type='text' value=$m_vals["adress"]>
                 </td>
             </tr>
             <tr>
-                <td style='text-transform: none;'>Range adress: </td>
+                <td style='text-transform: none;'>Range address: </td>
                 <td>
-                    PCF8574 = 0x20-0x27, PCF8574A = 0x38-0x3F
+                    PCF8574 = 0x20-0x27
                 </td>
+                <td>
+                    PCF8574A = 0x38-0x3F
+                </td>
+            </tr>
+             <tr>
+                <td style='text-transform: none;' rowspan="8" >Display</td>
+                <td>
+                    SW Version:</td><td> <input name='d_sw_version' type='checkbox'${" checked" if m_vals['d_sw_version'] == "on" else ""}>
+                </td>
+                <tr><td>
+                    IP: </td><td><input name='d_ip' type='checkbox'${" checked" if m_vals['d_ip'] == "on" else ""}>
+                </td></tr>
+                <tr><td>
+                    Port: </td><td><input name='d_port' type='checkbox'${" checked" if m_vals['d_port'] == "on" else ""}>
+                </td></tr>
+                <tr><td>
+                    CPU Temp: </td><td><input name='d_cpu_temp' type='checkbox'${" checked" if m_vals['d_cpu_temp'] == "on" else ""}>
+                </td></tr>
+                <tr><td>
+                    Time and Date: </td><td><input name='d_date_time' type='checkbox'${" checked" if m_vals['d_date_time'] == "on" else ""}>
+                </td></tr>
+                 <tr><td>
+                    Uptime: </td><td><input name='d_uptime' type='checkbox'${" checked" if m_vals['d_uptime'] == "on" else ""}>
+                </td></tr>
+                <tr><td>
+                    Rain Sensor: </td><td><input name='d_rain_sensor' type='checkbox'${" checked" if m_vals['d_rain_sensor'] == "on" else ""}>
+                </td></tr>
+                <tr><td>
+                    Running Stations: </td><td><input name='d_running_stations' type='checkbox'${" checked" if m_vals['d_running_stations'] == "on" else ""}>
+                </td></tr>
             </tr>
             <tr>
                 <td style='text-transform: none;'>Status:</td>

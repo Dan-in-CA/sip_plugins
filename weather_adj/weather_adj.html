@@ -28,6 +28,12 @@ $var page: plugins
                 </td>
             </tr>
             <tr>
+                <td style='text-transform: none;'>$_('Reset Delay On Good Weather'):</td>
+                <td>
+                    <input name='reset_delay' type='checkbox'${" checked" if m_vals['reset_delay'] == "on" else ""}>
+                </td>
+            </tr>
+            <tr>
                 <td style='text-transform: none;'>$_('Delay Duration (hours)'):</td>
                 <td>
                     <input name='delay_duration' type='number' min="0" max="96" value=$m_vals["delay_duration"]>

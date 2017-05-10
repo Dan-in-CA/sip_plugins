@@ -1,38 +1,30 @@
 # !/usr/bin/env python
-# this plugin check sha on github and update ospi file from github
 
-from threading import Thread, Event, Condition
-from random import randint
+# this plugin checks sha on github and updates SIP from github
+
 import time
 import subprocess
 import sys
 import traceback
 
 import web
-import gv  # Get access to ospi's settings
-from urls import urls  # Get access to ospi's URLsimport errno
-from ospi import template_render
+import gv  # Get access to SIP's settings
+from urls import urls  # Get access to SIP's URLsimport errno
+from sip import template_render
 from webpages import ProtectedPage
 from helpers import restart
 
-
 # Add a new url to open the data entry page.
 urls.extend(['/UPs', 'plugins.system_update.status_page',
-             '/UPsr', 'plugins.system_update.refresh_page',
-             '/UPu', 'plugins.system_update.update_page',
-             '/UPr', 'plugins.system_update.restart_page'])
+             '/UPu', 'plugins.system_update.update_page'
+             ])
 
 # Add this plugin to the home page plugins menu
 gv.plugin_menu.append(['System update', '/UPs'])
 
 
-class StatusChecker(Thread):
+class StatusChecker():
     def __init__(self):
-        Thread.__init__(self)
-        self.daemon = True
-        self.start()
-        self.started = Event()
-        self._done = Condition()
 
         self.status = {
             'ver_str': gv.ver_str,
@@ -48,13 +40,7 @@ class StatusChecker(Thread):
             self.status['status'] += '\n' + msg
         else:
             self.status['status'] = msg
-        print msg
-
-    def update_wait(self):
-        self._done.acquire()
-        self._sleep_time = 0
-        self._done.wait(10)
-        self._done.release()
+#        print msg #  For testing
 
     def update(self):
         self._sleep_time = 0
@@ -65,7 +51,7 @@ class StatusChecker(Thread):
             time.sleep(1)
             self._sleep_time -= 1
 
-    def _update_rev_data(self):
+    def update_rev_data(self):
         """Returns the update revision data."""
 
         command = 'git remote update'
@@ -79,47 +65,34 @@ class StatusChecker(Thread):
         command = 'git log -1 origin/master --format=%cd --date=short'
         new_date = subprocess.check_output(command.split()).strip()
 
-        command = 'git rev-list origin/master --count --first-parent'
+        command = 'git rev-list origin/master --count'
         new_revision = int(subprocess.check_output(command.split()))
 
         command = 'git log HEAD..origin/master --oneline'
         changes = '  ' + '\n  '.join(subprocess.check_output(command.split()).split('\n'))
 
         if new_revision == gv.revision and new_date == gv.ver_date:
-            self.add_status('Up-to-date.')
+            self.add_status(_('Up-to-date.'))
             self.status['can_update'] = False
         elif new_revision > gv.revision:
-            self.add_status('New version is available!')
-            self.add_status('Currently running revision: %d (%s)' % ((gv.revision - gv.old_count), gv.ver_date))
-            self.add_status('Available revision: %d (%s)' % (new_revision, new_date))
-            self.add_status('Changes:\n' + changes)
+            self.add_status(_('New version is available!'))
+            self.add_status(_('Available revision')+': %d.%d.%d (%s)' % (gv.major_ver, gv.minor_ver, new_revision - gv.old_count, new_date))
+            self.add_status(_('Changes')+':\n' + changes)
             self.status['can_update'] = True
         else:
-            #  self.add_status('Running unknown version!')
-            self.add_status('Currently running revision: %d (%s)' % ((gv.revision - gv.old_count), gv.ver_date))
-            self.add_status('Available revision: %d (%s)' % ((new_revision - gv.old_count), new_date))
+            self.add_status(_('Currently running revision')+': %d (%s)' % ((gv.revision - gv.old_count), gv.ver_date))
+            self.add_status(_('Available revision')+': %d (%s)' % ((new_revision - gv.old_count), new_date))
             self.status['can_update'] = False
 
-        self._done.acquire()
-        self._done.notify_all()
-        self._done.release()
-
     def run(self):
-        self._sleep(randint(3, 10))  # Sleep some time to prevent printing before startup information
 
-        while True:
-            try:
-                self.status['status'] = ''
-                self._update_rev_data()
-                self.started.set()
-                self._sleep(3600)
+        try:
+            self.status['status'] = ''
 
-            except Exception:
-                self.started.set()
-                exc_type, exc_value, exc_traceback = sys.exc_info()
-                err_string = ''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))
-                self.add_status('System update plug-in encountered error:\n' + err_string)
-                self._sleep(60)
+        except Exception:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            err_string = ''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))
+            self.add_status(_('System update plug-in encountered error')+':\n' + err_string)
 
 checker = StatusChecker()
 
@@ -129,19 +102,27 @@ checker = StatusChecker()
 
 
 def perform_update():
-    # ignore local chmod permission
-    command = "git config core.filemode false"  # http://superuser.com/questions/204757/git-chmod-problem-checkout-screws-exec-bit
+
+    command = "git config core.filemode true"
     subprocess.call(command.split())
 
-    #command = "git pull"
-    command = "git fetch"
-    subprocess.call(command.split())
-
-    command = "git reset –hard origin/master"
+    command = "git checkout master"  # Make sure we are on the master branch
     output = subprocess.check_output(command.split())
 
-    print 'Update result:', output
-    restart(3)
+    command = "git stash"  # stash any local changes
+    output = subprocess.check_output(command.split())
+
+    command = "git fetch --prune"
+    output = subprocess.check_output(command.split())
+
+    command = "git merge -X theirs origin/master"
+    output = subprocess.check_output(command.split())
+
+    command = "rm sessions/*"
+    subprocess.call(command.split())
+
+
+#    print 'Update result:', output #  For testing
 
 ################################################################################
 # Web pages:                                                                   #
@@ -149,32 +130,16 @@ def perform_update():
 
 
 class status_page(ProtectedPage):
-    """Load an html page rev data."""
+    """Load an html page with rev data."""
 
     def GET(self):
-        checker.started.wait(10)    # Make sure we are initialized
+        checker.update_rev_data()
         return template_render.system_update(checker.status)
 
-
-class refresh_page(ProtectedPage):
-    """Refresh status and show it."""
-
-    def GET(self):
-        checker.update_wait()
-        raise web.seeother('/UPs')
-
-
 class update_page(ProtectedPage):
-    """Update OSPi from github and return text message from comm line."""
+    """Update SIP from github and return text message from command line."""
 
     def GET(self):
         perform_update()
-        return template_render.restarting('/UPs')
+        raise web.seeother('/restart')
 
-
-class restart_page(ProtectedPage):
-    """Restart system."""
-
-    def GET(self):
-        restart(3)
-        return template_render.restarting('/UPs')

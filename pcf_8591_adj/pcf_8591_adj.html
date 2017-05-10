@@ -5,12 +5,12 @@ $var page: plugins
 
 $code:
    def meas(ad_text, ad_value, ad_unit):
-       volt = ad_value * 5.0 / 255
-       temp = volt * 100.0        
+       volt = float(ad_value) * 5.0 / 255
+       temp = volt * 100.0    
 
        if ad_text != '':
            if ad_unit == 'on':
-               return '%s: %.1f V' % (ad_text, volt) 
+               return u'%s: %.1f V' % (ad_text, volt) 
            else:
                return u'%s: %.1f \N{DEGREE SIGN}C' % (ad_text, temp)
 

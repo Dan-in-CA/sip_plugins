@@ -1,8 +1,9 @@
 # !/usr/bin/env python
-from random import randint
-import thread
+
+import threading
 import json
 import time
+
 import re
 import urllib
 import urllib2
@@ -10,10 +11,12 @@ import urllib2
 import web
 import gv  # Get access to ospi's settings
 from urls import urls  # Get access to ospi's URLs
-from gpio_pins import set_output
 from ospi import template_render
 from webpages import ProtectedPage
+from helpers import stop_onrain
 
+#  For testing only. Keeping this enabled will shorten the life of your SD card.
+do_log = True #  Change to True to enable, False to disable logging
 
 # Add a new url to open the data entry page.
 urls.extend(['/wa', 'plugins.weather_adj.settings',
@@ -26,38 +29,56 @@ gv.plugin_menu.append(['Weather-based Rain Delay', '/wa'])
 
 def weather_to_delay(run_loop=False):
     if run_loop:
-        time.sleep(randint(3, 10))  # Sleep some time to prevent printing before startup information
-
+        t_start = gv.w_loop
+        time.sleep(3)  # Sleep some time to prevent printing before startup information
     while True:
         data = get_weather_options()
         if data["auto_delay"] != "off":
             print("Checking rain status...")
             weather = get_weather_data() if data['weather_provider'] == "yahoo" else get_wunderground_weather_data()
-            delay = code_to_delay(weather["code"])
-            if delay > 0:
-                print("Rain detected: " + weather["text"] + ". Adding delay of " + str(delay))
-                gv.sd['rd'] = float(delay)
-                gv.sd['rdst'] = gv.now + gv.sd['rd'] * 3600 + 1  # +1 adds a smidge just so after a round trip the display hasn't already counted down by a minute.
-                stop_onrain()
-            elif delay == 0:
-                print("No rain detected: " + weather["text"] + ". No action.")
-            elif delay < 0:
-                print("Good weather detected: " + weather["text"] + ". Removing rain delay.")
-                gv.sd['rdst'] = gv.now
+            if weather:
+                delay = code_to_delay(weather["code"])
+                if delay > 0:
+                    print("Rain detected: " + weather["text"] + ". Adding delay of " + str(delay))
+                    gv.sd['rd'] = float(delay)
+                    gv.sd['rdst'] = gv.now + gv.sd['rd'] * 3600 + 1  # +1 adds a smidge just so after a round trip the display hasn't already counted down by a minute.
+                    stop_onrain()
+                elif delay == 0:
+                    print("No rain detected: " + weather["text"] + ". No action.")
+                elif delay < 0:
+                    if data["reset_delay"] == "off":
+                      print("Good weather detected: " + weather["text"] + ". Ignoring change to rain delay.")
+                    else:
+                      print("Good weather detected: " + weather["text"] + ". Removing rain delay.")
+                      gv.sd['rdst'] = gv.now
 
         if not run_loop:
-            break
-        time.sleep(3600)
+            return
+
+        for i in range(3600):     
+            if not t_start == gv.w_loop:  #  Should stop thread after program restart
+                if do_log:
+                    with open("data/weather_log.txt", 'a') as wl:
+                        wl.write(time.strftime("%c") + ", Exiting Thread\n") 
+                return
+            time.sleep(1)
 
 
 def get_weather_options():
     try:
-        with open('./data/weather_adj.json', 'r') as f:  # Read the monthly percentages from file
+        with open('./data/weather_adj.json', 'r') as f:  # Read the rain delay configuration from json
             data = json.load(f)
-    except Exception, e:
-        data = {'auto_delay': 'off', 'delay_duration': 24, 'weather_provider': 'yahoo', 'wapikey': ''}
-
+    except IOError:
+        data = {
+                'auto_delay': 'off', 
+                'delay_duration': 24, 
+                'weather_provider': 'yahoo', 
+                'wapikey': '', 
+                'reset_delay': 'on' }
+    if 'reset_delay' not in data:
+      data['reset_delay'] = 'on'
     return data
+
 
 
 # Resolve location to LID
@@ -65,19 +86,34 @@ def get_wunderground_lid():
     if re.search("pws:", gv.sd['loc']):
         lid = gv.sd['loc']
     else:
-        data = urllib2.urlopen("http://autocomplete.wunderground.com/aq?h=0&query=" + urllib.quote_plus(gv.sd['loc']))
-        data = json.load(data)
+        req = urllib2.Request("http://autocomplete.wunderground.com/aq?h=0&query=" + urllib.quote_plus(gv.sd['loc']))
+        try:
+            response = urllib2.urlopen(req, timeout = 10)
+        except urllib2.URLError as e:
+            print "Error getting wundergound LID: ", e
+            if do_log:
+                with open("data/weather_log.txt", 'a') as wl:
+                    wl.write(time.strftime("%c") + ", Error: " + e + '\n')
+            return ""
+        data = json.load(response)
         if data is None:
             return ""
         lid = "zmw:" + data['RESULTS'][0]['zmw']
-
     return lid
 
 
 def get_woeid():
-    data = urllib2.urlopen(
-        "http://query.yahooapis.com/v1/public/yql?q=select%20woeid%20from%20geo.placefinder%20where%20text=%22" +
-        urllib.quote_plus(gv.sd["loc"]) + "%22").read()
+    req = urllib2.Request("http://query.yahooapis.com/v1/public/yql?q=select%20woeid%20from%20geo.placefinder%20where%20text=%22" +
+        urllib.quote_plus(gv.sd["loc"]) + "%22")  
+    try:
+        response = urllib2.urlopen(req, timeout = 10)
+    except urllib2.URLError as e:
+        print 'Error getting woeid: ', e
+        if do_log:
+            with open("data/weather_log.txt", 'a') as wl:
+                wl.write(time.strftime("%c") + ", Error: " + e + '\n')       
+        return 0
+    data = response.read()
     woeid = re.search("<woeid>(\d+)</woeid>", data)
     if woeid is None:
         return 0
@@ -88,13 +124,25 @@ def get_weather_data():
     woeid = get_woeid()
     if woeid == 0:
         return {}
-    data = urllib2.urlopen("http://weather.yahooapis.com/forecastrss?w=" + woeid).read()
+    req = urllib2.Request("http://weather.yahooapis.com/forecastrss?w=" + woeid)
+    try:
+        response = urllib2.urlopen(req, timeout = 10)
+    except urllib2.URLError as e:
+        print "Error getting weather data: ", e
+        if do_log:
+            with open("data/weather_log.txt", 'a') as wl:
+                wl.write(time.strftime("%c") + ", Error: " + e + '\n')         
+        return {}
+    data = response.read()
     if data is None:
         return {}
     newdata = re.search("<yweather:condition\s+text=\"([\w|\s]+)\"\s+code=\"(\d+)\"\s+temp=\"(\d+)\"\s+date=\"(.*)\"",
                         data)
     weather = {"text": newdata.group(1),
                "code": newdata.group(2)}
+    if do_log:
+        with open("data/weather_log.txt", 'a') as wl:
+            wl.write(time.strftime("%c") + ", " + weather["text"] + '\n')
     return weather
 
 
@@ -102,15 +150,27 @@ def get_wunderground_weather_data():
     options = get_weather_options()
     lid = get_wunderground_lid()
     if lid == "":
-        return []
-    data = urllib2.urlopen("http://api.wunderground.com/api/" + options['wapikey'] + "/conditions/q/" + lid + ".json")
-    data = json.load(data)
+        return {}
+    req = urllib2.Request("http://api.wunderground.com/api/" + options['wapikey'] + "/conditions/q/" + lid + ".json")   
+    try:
+        response = urllib2.urlopen(req, timeout=10)
+    except urllib2.URLError as e:
+        print "Error getting WU data: ", e
+        if do_log:
+            with open("data/weather_log.txt", 'a') as wl:
+                wl.write(time.strftime("%c") + ", Error: " + e + '\n')         
+        return {}
+    data = json.load(response)
     if data is None:
         return {}
     if 'error' in data['response']:
         return {}
     weather = {"text": data['current_observation']['weather'],
                "code": data['current_observation']['icon']}
+    print 'weather: ', weather
+    if do_log:
+        with open("data/weather_log.txt", "a") as wl:
+            wl.write(time.strftime("%c") + ", " + weather["text"]+ '\n')  
     return weather
 
 
@@ -122,7 +182,7 @@ def code_to_delay(code):
                          43, 44, 45, 46, 47]
         reset_codes = [36]
     else:
-        adverse_codes = ["flurries", "sleet", "rain", "sleet", "snow", "tstorms"]
+        adverse_codes = ["flurries", "rain", "sleet", "snow", "tstorms"]
         adverse_codes += ["chance" + code_name for code_name in adverse_codes]
         reset_codes = ["sunny", "clear", "mostlysunny", "partlycloudy"]
     if code in adverse_codes:
@@ -130,22 +190,6 @@ def code_to_delay(code):
     if code in reset_codes:
         return -1
     return 0
-
-
-def stop_onrain():
-    """Stop stations that do not ignore rain."""
-    for b in range(gv.sd['nbrd']):
-        for s in range(8):
-            sid = b * 8 + s  # station index
-            if gv.sd['ir'][b] & 1 << s:  # if station ignores rain...
-                continue
-            elif not all(v == 0 for v in gv.rs[sid]):
-                gv.srvals[sid] = 0
-                set_output()
-                gv.sbits[b] &= ~1 << s  # Clears stopped stations from display
-                gv.ps[sid] = [0, 0]
-                gv.rs[sid] = [0, 0, 0, 0]
-    return
 
 
 class settings(ProtectedPage):
@@ -157,7 +201,7 @@ class settings(ProtectedPage):
 
 class settings_json(ProtectedPage):
     """Returns plugin settings in JSON format"""
-
+ 
     def GET(self):
         web.header('Access-Control-Allow-Origin', '*')
         web.header('Content-Type', 'application/json')
@@ -169,11 +213,17 @@ class update(ProtectedPage):
 
     def GET(self):
         qdict = web.input()
+        print 'qdict: ', qdict
         if 'auto_delay' not in qdict:
             qdict['auto_delay'] = 'off'
-        with open('./data/weather_adj.json', 'w') as f:  # write the monthly percentages to file
+        if 'reset_delay' not in qdict:
+            qdict['reset_delay'] = 'off'
+        with open('./data/weather_adj.json', 'w') as f:  # write the rain delay configuration to json
             json.dump(qdict, f)
         weather_to_delay()
         raise web.seeother('/')
 
-thread.start_new_thread(weather_to_delay, (True,))
+gv.w_loop = time.time()
+tw = threading.Thread(target=weather_to_delay, args=(True,))
+tw.daemon = True
+tw.start()

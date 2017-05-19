@@ -57,6 +57,7 @@ $var page: keypad_plugin
                 <td style='text-transform: none;'>$_('Default Function'):</td>
                 <td>
                 <select name="defaultfn">
+				  <option value="-1" ${"selected" if 'defaultfn' in settings and settings['defaultfn'] == '-1' else ""}>None</option>
                   <option value="0" ${"selected" if 'defaultfn' not in settings or settings['defaultfn'] == '0' else ""}>Start Manual Station</option>
                   <option value="1" ${"selected" if 'defaultfn' in settings and settings['defaultfn'] == '1' else ""}>Start Manual Program</option>
                   <option value="2" ${"selected" if 'defaultfn' in settings and settings['defaultfn'] == '2' else ""}>Set Water Level</option>

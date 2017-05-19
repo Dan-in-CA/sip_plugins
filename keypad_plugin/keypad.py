@@ -632,6 +632,8 @@ class KeypadPlugin:
                 else:
                     self.buzzer.buzz(self.cancel_beep) # Nack for invalid station or exception
                 function_value = []
+                # reset selected function to default
+                self.selected_function = self.default_function
                 break
             elif (KeypadPlugin.CANCEL_KEY in c):
                 # Canceled
@@ -652,10 +654,12 @@ class KeypadPlugin:
                         valid_key = False
                         break
                 if valid_key:
-                    self.buzzer.buzz(self.button_pressed_beep) # Acknowledge press
-                    # append pressed key(s)
-                    for v in c:
-                        function_value.append(v)
+                    # Only save number and sound buzzer if function selected
+                    if self.selected_function != KeypadPlugin.FN_NONE:
+                        self.buzzer.buzz(self.button_pressed_beep) # Acknowledge press
+                        # append pressed key(s)
+                        for v in c:
+                            function_value.append(v)
                 else:
                     # Invalid key
                     print "Invalid key! Canceling..."
@@ -675,10 +679,10 @@ class KeypadPlugin:
     def __keypad_plugin_task(self):
         # Load settings from file
         keypad_plugin.load_keypad_settings()
-        # set selected function to default
-        self.selected_function = self.default_function
         # Ring startup beep
         self.buzzer.buzz(self.startup_beep)
+        # set selected function to default
+        self.selected_function = self.default_function
         while (self.running):
             # Wait for hardware
             if (not self.__wait_for_ready()):
@@ -703,7 +707,14 @@ class KeypadPlugin:
                     # Reset command and go to next iteration
                     function_value = []
                 else:
-                    self.__handle_value(c, down_keys)
+                    hasNumberKey = False
+                    for v in c:
+                        if v in KeypadPlugin.NUMBER_KEYS: # Only number keys are valid here
+                            # invlaid key!
+                            hasNumberKey = True
+                            break
+                    if ( not hasNumberKey ) or ( self.selected_function != KeypadPlugin.FN_NONE ):
+                        self.__handle_value(c, down_keys)
         print "Exiting keypad task"
         return
     

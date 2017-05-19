@@ -20,7 +20,7 @@ Sends status email to google email account
 
 keypad_plugin
 ----------
-A plugin for using an 8X8 scanning keypad and buzzer to execute simple functions without the use of an external peripheral
+A plugin for using an 4X4 scanning keypad and buzzer to execute simple functions without the use of an external peripheral
 
 lcd_adj
 ----------

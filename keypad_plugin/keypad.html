@@ -46,7 +46,7 @@ $var page: keypad_plugin
                 <td><input class="numbersonly" type="text" name="keyholdtime" value="${settings['keyholdtime'] if 'keyholdtime' in settings else '1' }"></td>
             </tr>
             <tr>
-                <td style='text-transform: none;'>$_('Manual Station Time (seconds)'):</td>
+                <td style='text-transform: none;'>$_('Manual Station Time (minutes)'):</td>
                 <td><input class="numbersonly" type="text" name="mstationtime" value="${settings['mstationtime'] if 'mstationtime' in settings else '300' }"></td>
             </tr>
             <tr>
@@ -60,7 +60,7 @@ $var page: keypad_plugin
                   <option value="0" ${"selected" if 'defaultfn' not in settings or settings['defaultfn'] == '0' else ""}>Start Manual Station</option>
                   <option value="1" ${"selected" if 'defaultfn' in settings and settings['defaultfn'] == '1' else ""}>Start Manual Program</option>
                   <option value="2" ${"selected" if 'defaultfn' in settings and settings['defaultfn'] == '2' else ""}>Set Water Level</option>
-                  <option value="3" ${"selected" if 'defaultfn' in settings and settings['defaultfn'] == '3' else ""}>Set Manual Station Time (Seconds)</option>
+                  <option value="3" ${"selected" if 'defaultfn' in settings and settings['defaultfn'] == '3' else ""}>Set Manual Station Time (minutes)</option>
                   <option value="4" ${"selected" if 'defaultfn' in settings and settings['defaultfn'] == '4' else ""}>Set Rain Delay Time (hours)</option>
                 </select>
                 </td>
@@ -78,7 +78,7 @@ $var page: keypad_plugin
                   <option value="0" ${"selected" if 'akeyfn' not in settings or settings['akeyfn'] == '0' else ""}>Start Manual Station</option>
                   <option value="1" ${"selected" if 'akeyfn' in settings and settings['akeyfn'] == '1' else ""}>Start Manual Program</option>
                   <option value="2" ${"selected" if 'akeyfn' in settings and settings['akeyfn'] == '2' else ""}>Set Water Level</option>
-                  <option value="3" ${"selected" if 'akeyfn' in settings and settings['akeyfn'] == '3' else ""}>Set Manual Station Time (Seconds)</option>
+                  <option value="3" ${"selected" if 'akeyfn' in settings and settings['akeyfn'] == '3' else ""}>Set Manual Station Time (minutes)</option>
                   <option value="4" ${"selected" if 'akeyfn' in settings and settings['akeyfn'] == '4' else ""}>Set Rain Delay Time (hours)</option>
                 </select>
                 </td>
@@ -91,7 +91,7 @@ $var page: keypad_plugin
                   <option value="0" ${"selected" if 'bkeyfn' in settings and settings['bkeyfn'] == '0' else ""}>Start Manual Station</option>
                   <option value="1" ${"selected" if 'bkeyfn' not in settings or settings['bkeyfn'] == '1' else ""}>Start Manual Program</option>
                   <option value="2" ${"selected" if 'bkeyfn' in settings and settings['bkeyfn'] == '2' else ""}>Set Water Level</option>
-                  <option value="3" ${"selected" if 'bkeyfn' in settings and settings['bkeyfn'] == '3' else ""}>Set Manual Station Time (Seconds)</option>
+                  <option value="3" ${"selected" if 'bkeyfn' in settings and settings['bkeyfn'] == '3' else ""}>Set Manual Station Time (minutes)</option>
                   <option value="4" ${"selected" if 'bkeyfn' in settings and settings['bkeyfn'] == '4' else ""}>Set Rain Delay Time (hours)</option>
                 </select>
                 </td>
@@ -104,7 +104,7 @@ $var page: keypad_plugin
                   <option value="0" ${"selected" if 'ckeyfn' in settings and settings['ckeyfn'] == '0' else ""}>Start Manual Station</option>
                   <option value="1" ${"selected" if 'ckeyfn' in settings and settings['ckeyfn'] == '1' else ""}>Start Manual Program</option>
                   <option value="2" ${"selected" if 'ckeyfn' not in settings or settings['ckeyfn'] == '2' else ""}>Set Water Level</option>
-                  <option value="3" ${"selected" if 'ckeyfn' in settings and settings['ckeyfn'] == '3' else ""}>Set Manual Station Time (Seconds)</option>
+                  <option value="3" ${"selected" if 'ckeyfn' in settings and settings['ckeyfn'] == '3' else ""}>Set Manual Station Time (minutes)</option>
                   <option value="4" ${"selected" if 'ckeyfn' in settings and settings['ckeyfn'] == '4' else ""}>Set Rain Delay Time (hours)</option>
                 </select>
                 </td>
@@ -117,7 +117,7 @@ $var page: keypad_plugin
                   <option value="0" ${"selected" if 'dkeyfn' in settings and settings['dkeyfn'] == '0' else ""}>Start Manual Station</option>
                   <option value="1" ${"selected" if 'dkeyfn' in settings and settings['dkeyfn'] == '1' else ""}>Start Manual Program</option>
                   <option value="2" ${"selected" if 'dkeyfn' in settings and settings['dkeyfn'] == '2' else ""}>Set Water Level</option>
-                  <option value="3" ${"selected" if 'dkeyfn' not in settings or settings['dkeyfn'] == '3' else ""}>Set Manual Station Time (Seconds)</option>
+                  <option value="3" ${"selected" if 'dkeyfn' not in settings or settings['dkeyfn'] == '3' else ""}>Set Manual Station Time (minutes)</option>
                   <option value="4" ${"selected" if 'dkeyfn' in settings and settings['dkeyfn'] == '4' else ""}>Set Rain Delay Time (hours)</option>
                 </select>
                 </td>

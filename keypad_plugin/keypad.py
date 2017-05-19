@@ -759,7 +759,7 @@ class KeypadPlugin:
         if settings is None:
             return
         if settings.has_key("mstationtime"):
-            self.keypad_manual_station_time_s = int(settings["mstationtime"])
+            self.keypad_manual_station_time_s = int(settings["mstationtime"]) * 60
         if settings.has_key("keytimeout"):
             self.keypad_press_timeout_s = int(settings["keytimeout"])
         if settings.has_key("hrraindelay"):
@@ -804,7 +804,7 @@ class KeypadPlugin:
         
     def save_keypad_settings(self):
         settings = {
-            "mstationtime": str(self.keypad_manual_station_time_s),
+            "mstationtime": str(self.keypad_manual_station_time_s / 60),
             "keytimeout": str(self.keypad_press_timeout_s),
             "hrraindelay": str(self.rain_delay_hrs),
             "keyholdtime": str(self.key_hold_time_s),

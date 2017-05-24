@@ -301,6 +301,7 @@ class KeypadPlugin:
     HLDFN_SYSTEM_OFF = 20
     HLDFN_RESTART_SYSTEM = 21
     HLDFN_REBOOT_OS = 22
+    HLDFN_RESET_WATER_LEVEL = 23
     
     # Types of keys
     FUNCTION_KEYS = ['A', 'B', 'C', 'D']
@@ -547,6 +548,10 @@ class KeypadPlugin:
             self.buzzer.buzz(self.hold_function_executed_beep)
             reboot()
             return True
+        elif (hold_function == KeypadPlugin.HLDFN_RESET_WATER_LEVEL):
+            # Reset water level to 100%
+            print "Resetting water level to 100%"
+            KeypadPlugin.__set_water_level(100)
         else:
             print "Hold function not implemented"
             return False

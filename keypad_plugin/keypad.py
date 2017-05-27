@@ -566,6 +566,11 @@ class KeypadPlugin:
             value = -1
         # If function set to manual station or none, run manual station
         if (self.selected_function == KeypadPlugin.FN_MANUAL_STATION or self.selected_function == KeypadPlugin.FN_NONE):
+            if( gv.sd['rd'] > 0 ):
+                print "Deactivating rain delay"
+                gv.sd['rd'] = 0
+                gv.sd['rdst'] = 0
+                jsave(gv.sd, 'sd')
             stationID = value
             # Start station and provide feedback
             return stationID >= 0 and KeypadPlugin.__set_runonce_station(stationID, self.keypad_manual_station_time_s)

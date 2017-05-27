@@ -577,7 +577,7 @@ class KeypadPlugin:
             water_level = value
             return water_level >= 0 and KeypadPlugin.__set_water_level(water_level)
         elif (self.selected_function == KeypadPlugin.FN_MANUAL_STATION_TIME):
-            manual_station_time = value
+            manual_station_time = value * 60
             return manual_station_time > 0 and self.__set_manual_station_time(manual_station_time)
         elif (self.selected_function == KeypadPlugin.FN_RAIN_DELAY_TIME):
             rain_delay_time = value

@@ -355,6 +355,8 @@ class Lcd:
     def write_line(self, str, row_start, text_size_multiplier = 1, justification = 0):
         if row_start < Lcd.MINIMUM_ROW or row_start > Lcd.MAXIMUM_ROW:
             return 0
+        if len(str) <= 0:
+            str = ' '
         seq = []
         for c in str:
             seqChar = self._generate_char_sequence(c, text_size_multiplier)
@@ -417,6 +419,7 @@ class LCDSender(Thread):
         Thread.__init__(self)
         self.daemon = True
         self.alarmSignaled = False
+        self.alarmText = ''
         self.lastWrite = ''
         self.lastSubVal = ''
         self.lcd = Lcd()
@@ -486,24 +489,28 @@ class LCDSender(Thread):
                     if gv.pon == 98:
                         aboutToWrite = "RunningRun-onceProgram"
                         if( self.lastWrite != aboutToWrite ):
-                            self.lcd.clear();
                             self.lcd.write_line("Running", 0, 2, Lcd.JUSTIFY_CENTER)
+                            self.lcd.write_line("", 2, 1, Lcd.JUSTIFY_LEFT)
                             self.lcd.write_line("Run-once", 3, 2, Lcd.JUSTIFY_CENTER)
+                            self.lcd.write_line("", 5, 1, Lcd.JUSTIFY_LEFT)
                             self.lcd.write_line("Program", 6, 2, Lcd.JUSTIFY_CENTER)
                             self.lastWrite = aboutToWrite
                     elif gv.pon == 99:
                         aboutToWrite = "ManualMode"
                         if( self.lastWrite != aboutToWrite ):
-                            self.lcd.clear();
+                            self.lcd.write_line("", 0, 1, Lcd.JUSTIFY_LEFT)
                             self.lcd.write_line("Manual", 1, 2, Lcd.JUSTIFY_CENTER)
+                            self.lcd.write_line("", 3, 1, Lcd.JUSTIFY_LEFT)
                             self.lcd.write_line("Mode", 4, 2, Lcd.JUSTIFY_CENTER)
+                            self.lcd.write_line("", 6, 2, Lcd.JUSTIFY_LEFT)
                             self.lastWrite = aboutToWrite
                     else:
                         aboutToWrite = "RunningProgram{}".format(prg)
                         if( self.lastWrite != aboutToWrite ):
-                            self.lcd.clear()
                             self.lcd.write_line("Running", 0, 2, Lcd.JUSTIFY_CENTER)
+                            self.lcd.write_line("", 2, 1, Lcd.JUSTIFY_LEFT)
                             self.lcd.write_line("Program", 3, 2, Lcd.JUSTIFY_CENTER)
+                            self.lcd.write_line("", 5, 1, Lcd.JUSTIFY_LEFT)
                             self.lcd.write_line(prg, 6, 2, Lcd.JUSTIFY_CENTER)
                             self.lastWrite = aboutToWrite
                 else:
@@ -511,7 +518,6 @@ class LCDSender(Thread):
                     prg = "Idle"
             else:
                 if( self.lastWrite != s ):
-                    #self.lcd.clear()
                     self.lcd.write_line(s, 0, 5, Lcd.JUSTIFY_CENTER)
                     self.lcd.write_line(' ', 5, 1, Lcd.JUSTIFY_CENTER)
                     self.lastWrite = s
@@ -532,17 +538,18 @@ class LCDSender(Thread):
             if( gv.sd['mm'] ):
                 aboutToWrite = "IdleManualMode"
                 if( self.lastWrite != aboutToWrite ):
-                    self.lcd.clear()
                     self.lcd.write_line("Idle", 0, 3, Lcd.JUSTIFY_CENTER)
+                    self.lcd.write_line("", 3, 1, Lcd.JUSTIFY_LEFT)
                     self.lcd.write_line("Manual", 4, 2, Lcd.JUSTIFY_CENTER)
                     self.lcd.write_line("Mode", 6, 2, Lcd.JUSTIFY_CENTER)
                     self.lastWrite = aboutToWrite
             elif( gv.sd['rd'] ):
                 aboutToWrite = "RainDelay"
                 if( self.lastWrite != aboutToWrite ):
-                    self.lcd.clear()
                     self.lcd.write_line("Rain", 0, 2, Lcd.JUSTIFY_CENTER)
+                    self.lcd.write_line("", 2, 1, Lcd.JUSTIFY_LEFT)
                     self.lcd.write_line("Delay", 3, 2, Lcd.JUSTIFY_CENTER)
+                    self.lcd.write_line("", 5, 1, Lcd.JUSTIFY_LEFT)
                     self.lastWrite = aboutToWrite
                     self.lastSubVal = ''
                 remainingHrs = (gv.sd['rdst'] - gv.now) / 60 / 60
@@ -559,15 +566,16 @@ class LCDSender(Thread):
                 waterLevel = str(gv.sd['wl'])
                 aboutToWrite = "IdleWaterLevel" + waterLevel
                 if( self.lastWrite != aboutToWrite ):
-                    self.lcd.clear()
                     self.lcd.write_line("Idle", 0, 3, Lcd.JUSTIFY_CENTER)
+                    self.lcd.write_line("", 3, 1, Lcd.JUSTIFY_LEFT)
                     self.lcd.write_line("Water Lvl", 4, 2, Lcd.JUSTIFY_CENTER)
                     self.lcd.write_line(waterLevel + "%", 6, 2, Lcd.JUSTIFY_CENTER)
                     self.lastWrite = aboutToWrite
             else:
                 if( self.lastWrite != prg ):
-                    self.lcd.clear()
+                    self.lcd.write_line("", 0, 1, Lcd.JUSTIFY_LEFT)
                     self.lcd.write_line(prg, 1, 3, Lcd.JUSTIFY_CENTER)
+                    self.lcd.write_line("", 4, 2, Lcd.JUSTIFY_LEFT)
                     self.lastWrite = prg
                     self.lastSubVal = ''
                 isPm = False
@@ -588,12 +596,14 @@ class LCDSender(Thread):
                     self.lastSubVal = aboutToWrite
 
     def __display_alarm(self):
-        self.lcd.clear()
         self.lcd.write_line("ALARM!", 0, 3, Lcd.JUSTIFY_CENTER)
-        self.lcd.write_line(txt, 4, 2, Lcd.JUSTIFY_CENTER)
+        self.lcd.write_line("", 3, 1, Lcd.JUSTIFY_LEFT)
+        self.lcd.write_line(self.alarmText, 4, 2, Lcd.JUSTIFY_CENTER)
+        self.lcd.write_line("", 6, 2, Lcd.JUSTIFY_LEFT)
         self.lastWrite = ''
 
     def alarm(self, name,  **kw):
+        self.alarmText = kw['txt']
         self.alarmSignaled = True
 
     def run(self):
@@ -604,6 +614,7 @@ class LCDSender(Thread):
                 if self.alarmSignaled:
                     self.__display_alarm()
                     sleep(20)
+                    self.alarmText = ''
                     self.alarmSignaled = False
                 else:
                     self.__display_normal()

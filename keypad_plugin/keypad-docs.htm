@@ -12,16 +12,16 @@ plugin may cause. Use this plugin and these instructions at your own risk.</p>
 <h2>About the Keypad Plugin</h2>
 
 <p class=MsoNormal>This plugin has been created to provide a simple user input
-for the Open Sprinkler. A 4X4 scanning keypad is used to handle user input and
-a buzzer is used to provide feedback. A total of 9 GPIO pins are used on the Raspberry
+for the Open Sprinkler. A 4X4 scanning keypad is used to handle user input. 
+A total of 8 GPIO pins are used on the Raspberry
 Pi for this plugin. Using this keypad, functionality such as manually running a
 station can be done from the hardware.</p>
 
 <h2>Installing the Hardware</h2>
 
-<p class=MsoNormal>These instructions assume that you are using B+ or Raspberry
-Pi version 2 hardware. To use other models of the Raspberry Pi, keypad.py may
-need to be modified to do so.</p>
+<p class=MsoNormal>These instructions assume that you are using B+, version 2, 
+version 3, or pi zero hardware. To use other models of the Raspberry Pi, 
+keypad.py may need to be modified to do so.</p>
 
 <p class=MsoNormal>A 4X4 scanning keypad is needed. This plugin assumes that
 the keypad has the following key layout, but the layout may be modified within
@@ -315,13 +315,6 @@ follows the table below.</p>
 
 <p class=MsoNormal><span style='mso-spacerun:yes'> </span></p>
 
-<p class=MsoNormal>Connect the buzzer so that pin 32 of the Raspberry Pi goes to
-the positive terminal of the buzzer and the negative terminal of the buzzer
-goes to one of the ground pins of the Raspberry Pi (one of 6, 9, 14, 25, 30,
-34, or 39). Note that the total current that may be supplied to all pins of the
-Raspberry Pi is 50 mA. It is up to the reader to make sure that the selected
-buzzer does not draw too much current from the Raspberry Pi. </p>
-
 <h2>Keypad Keys</h2>
 
 <p class=MsoNormal>The letter keys A through D are used to select different
@@ -333,10 +326,12 @@ immediately execute a function that does not require a value to be entered.</p>
 
 <h2>Buzzer</h2>
 
+<p class=MsoNormal>This keypad plugin uses the buzzer plugin when it is 
+installed and enabled. The buzzer is used to provide audio feedback when keys 
+are pressed and functions are executed. </p>
+
 <p class=MsoNormal>The buzzer profiles may be changed from the keypad settings
 page. By default, the following beeps are used.</p>
-
-<p class=MsoNormal>Four beeps: The keypad plugin has started</p>
 
 <p class=MsoNormal>Click (25 <span class=SpellE>ms</span> beep): Used to
 acknowledge button press</p>

@@ -1,7 +1,7 @@
 $def with(settings)
 <!-- Edit: Replace "proto_vals" with settings values for your plugin if used-->
 
-$var title: $_('OSPi Keypad Plugin')
+$var title: $_('SIP Keypad Plugin')
 $var page: keypad_plugin 
 <script>
     // Initialize behaviors
@@ -198,10 +198,6 @@ $var page: keypad_plugin
         <p>$_('Feedback Beeps (on time, off time, on time, ...)')</p>
         <table class="optionList">
             <tr>
-                <td style='text-transform: none;'>$_('Startup Beep List (milliseconds)'):</td>
-                <td><input class="listonly" type="text" name="startup_beep" value="${settings['startup_beep'] if 'startup_beep' in settings else '50, 50, 50, 50, 50, 50, 100' }"></td>
-            </tr>
-            <tr>
                 <td style='text-transform: none;'>$_('Value Acknowledge Beep List (milliseconds)'):</td>
                 <td><input class="listonly" type="text" name="acknowledge_command_beep" value="${settings['acknowledge_command_beep'] if 'acknowledge_command_beep' in settings else '100' }"></td>
             </tr>
@@ -214,6 +210,8 @@ $var page: keypad_plugin
                 <td><input class="listonly" type="text" name="cancel_beep" value="${settings['cancel_beep'] if 'cancel_beep' in settings else '100, 100, 500' }"></td>
             </tr>
         </table>
+        
+        <br>
     </form>
 
 <div id="controls">

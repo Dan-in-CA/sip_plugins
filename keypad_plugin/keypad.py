@@ -43,11 +43,6 @@ import traceback
 # to determine how much time as elapsed (for timeout purposes)
 import time
 
-# BUZZER VARIABLES
-# Board pin where the buzzer is located (set to -1 to disable)
-BUZZER_PIN = 32
-# True if buzzer sounds when pin is HIGH; False if buzzer sounds when pin is LOW
-BUZZER_ACTIVE_HIGH = True
 # KEYPAD VARIABLES
 # Keypad column pins
 KEYPAD_PIN_COLUMNS = [
@@ -232,57 +227,6 @@ class ScanningKeypad:
                 key_index = i
                 break
         return self.wait_for_key_index_up(key_index, timeout_s, running)
-       
-# This class handles the buzzer hardware       
-class Buzzer:
-    def __init__(self, pin, active_high):
-        # set to true when buzzer pin is initialized
-        self.pin_initialized = False
-        # Board pin where buzzer is located (-1 to disable)
-        self.pin = pin
-        # True if buzzer sounds when pin is HIGH; False if buzzer sounds when pin is LOW
-        self.active_high = active_high
-        return
-        
-    def isReady(self):
-        return (self.pin < 0 or self.pin_initialized)
-    
-    def init_pins(self):
-        try:
-            if (self.pin >= 0):
-                GPIO.setmode(GPIO.BOARD)
-                GPIO.setup(self.pin, GPIO.OUT)
-                GPIO.output(self.pin, not self.active_high)
-                self.pin_initialized = True
-            else: 
-                self.pin_initialized = False
-        except:
-            self.pin_initialized = False
-            return False
-        return True
-        
-    # time: Time value(s) in seconds
-    #       If single value, on time for buzzer 
-    #       If array, time values in the format [on time, off time, on time, ...]
-    def buzz(self, time = 0.010):
-        try:
-            if (self.pin >= 0 and self.pin_initialized and time is not None):
-                timelist = []
-                if isinstance(time, list):
-                    timelist = time
-                else:
-                    timelist.append(time)
-                buzzon = True
-                for v in timelist:
-                    if buzzon:
-                        GPIO.output(self.pin, self.active_high)
-                    sleep(v)
-                    GPIO.output(self.pin, not self.active_high)
-                    buzzon = not buzzon
-        except:
-            self.pin_initialized = False
-            return False
-        return True
         
 # This class contains the functionality for this plugin
 class KeypadPlugin:
@@ -312,30 +256,11 @@ class KeypadPlugin:
     # Allow up to 9999 station/program
     MAX_NUMBER_ENTRY = 4
     
-    # Buzzer tunes (just for fun)
-    SHAVE_AND_A_HAIRCUT_BEEP = [
-        0.100, 0.100, # Shave
-        0.050, 0.050, # And
-        0.050, 0.050, # A
-        0.100, 0.100, 0.100, 0.300, # Haircut
-        0.100, 0.100, # Two
-        0.100, 0.100  # Bits
-    ]
-    GREEN_ACRES_BEEP = [
-        0.0625, 0.0625, 
-        0.0625, 0.125, 
-        0.0625, 0.0625, 
-        0.125, 0.125, 
-        0.125, 0.375, 
-        0.125, 0.125, 
-        0.125, 0.375
-    ] 
-    
     def __init__(self):
         # Keypad object to get key presses
         self.keypad = ScanningKeypad(KEYPAD_PIN_COLUMNS, KEYPAD_PIN_ROWS, KEYPAD_INDICIES, KEYPAD_KEY_LIST)
-        # Buzzer object for feedback
-        self.buzzer = Buzzer(BUZZER_PIN, BUZZER_ACTIVE_HIGH)
+        # Buzzer signal for feedback
+        self.buzzerSignal = signal('buzzer_beep')
         
         # Set all default settings
         self.__set_default_settings()
@@ -370,14 +295,13 @@ class KeypadPlugin:
         self.default_function = KeypadPlugin.FN_MANUAL_STATION
         
         # Beeps
-        self.startup_beep = [0.050, 0.050, 0.050, 0.050, 0.050, 0.050, 0.100]
         self.acknowledge_command_beep = 0.100
         self.cancel_beep = [0.100, 0.100, 0.500] 
         self.hold_function_executed_beep = [0.100, 0.050, 0.100]
         self.button_pressed_beep = 0.025
     
     def init_pins(self):
-        return (self.keypad.init_pins() and self.buzzer.init_pins())
+        return (self.keypad.init_pins())
 
     # This function is based on change_runonce class in webpages.py
     @staticmethod
@@ -478,8 +402,8 @@ class KeypadPlugin:
             return False
         MAX_INIT_RETRY = 3
         retry = 0
-        # Wait for keypad and buzzer to be ready
-        while (self.running and (not self.keypad.isReady() or not self.buzzer.isReady()) and retry < MAX_INIT_RETRY):
+        # Wait for keypad to be ready
+        while (self.running and (not self.keypad.isReady()) and retry < MAX_INIT_RETRY):
             if (retry == 0):
                 print "keypad or button not ready"
             #sleep for a moment and try to reinit
@@ -538,14 +462,14 @@ class KeypadPlugin:
             # Restart system
             print "Restarting system"
             # Beep now because we won't get a chance to later
-            self.buzzer.buzz(self.hold_function_executed_beep)
+            self.buzzerSignal.send(self.hold_function_executed_beep)
             restart()
             return True
         elif (hold_function == KeypadPlugin.HLDFN_REBOOT_OS):
             # Reboot operating system
             print "Rebooting system"
             # Beep now because we won't get a chance to later
-            self.buzzer.buzz(self.hold_function_executed_beep)
+            self.buzzerSignal.send(self.hold_function_executed_beep)
             reboot()
             return True
         elif (hold_function == KeypadPlugin.HLDFN_RESET_WATER_LEVEL):
@@ -596,7 +520,7 @@ class KeypadPlugin:
         if (self.hold_functions.has_key(function_key) and self.hold_functions[function_key] != KeypadPlugin.HLDFN_NONE) or \
                 (self.selectable_functions.has_key(function_key) and self.selectable_functions[function_key] != KeypadPlugin.FN_NONE):
             # This key has either a value function or a hold function!
-            self.buzzer.buzz(self.button_pressed_beep) # Acknowledge press
+            self.buzzerSignal.send(self.button_pressed_beep) # Acknowledge press
             use_hold_fn = False
             if self.hold_functions.has_key(function_key) and self.hold_functions[function_key] != KeypadPlugin.HLDFN_NONE:
                 # There is a hold function assinged to this key; wait for up before deciding what to do
@@ -606,16 +530,16 @@ class KeypadPlugin:
             if use_hold_fn:
                 # execute hold function
                 if self.__execute_hold_function(function_key):
-                    self.buzzer.buzz(self.hold_function_executed_beep)
+                    self.buzzerSignal.send(self.hold_function_executed_beep)
                 else:
-                    self.buzzer.buzz(self.cancel_beep)
+                    self.buzzerSignal.send(self.cancel_beep)
             else:
                 # Set value function
                 if not self.__set_value_function(function_key):
-                    self.buzzer.buzz(self.cancel_beep)
+                    self.buzzerSignal.send(self.cancel_beep)
         else:
             print "Nothing assigned to this key"
-            self.buzzer.buzz(self.cancel_beep)
+            self.buzzerSignal.send(self.cancel_beep)
             
     def __handle_value(self, first_key_down, down_keys):
         # copy first button(s) pressed
@@ -623,7 +547,7 @@ class KeypadPlugin:
         if first_key_down is not None:
             function_value = list(first_key_down)
         if (len(function_value) > 0):
-            self.buzzer.buzz(self.button_pressed_beep) # Acknowledge first press
+            self.buzzerSignal.send(self.button_pressed_beep) # Acknowledge first press
         while (self.running):
             # wait for up to timeout value for next key
             c = self.keypad.getc(down_keys, self.keypad_press_timeout_s, self.running) 
@@ -632,28 +556,28 @@ class KeypadPlugin:
                 return False
             elif (len(c) == 0):
                 # Timeout occurred with no command
-                self.buzzer.buzz(self.cancel_beep) # Nack for timeout
+                self.buzzerSignal.send(self.cancel_beep) # Nack for timeout
                 function_value = []
                 break
             elif (KeypadPlugin.ENTER_KEY in c):
                 # Execute command
                 if self.__execute_value_function(function_value):
-                    self.buzzer.buzz(self.acknowledge_command_beep) # Acknowledge execution
+                    self.buzzerSignal.send(self.acknowledge_command_beep) # Acknowledge execution
                 else:
-                    self.buzzer.buzz(self.cancel_beep) # Nack for invalid station or exception
+                    self.buzzerSignal.send(self.cancel_beep) # Nack for invalid station or exception
                 function_value = []
                 # reset selected function to default
                 self.selected_function = self.default_function
                 break
             elif (KeypadPlugin.CANCEL_KEY in c):
                 # Canceled
-                self.buzzer.buzz(self.cancel_beep) # Nack for canceled
+                self.buzzerSignal.send(self.cancel_beep) # Nack for canceled
                 function_value = []
                 break;
             elif (len(function_value) + len(c) > KeypadPlugin.MAX_NUMBER_ENTRY):
                 # Too many numbers entered
                 print "Entered value is too large! Canceling..."
-                self.buzzer.buzz(self.cancel_beep) # Error
+                self.buzzerSignal.send(self.cancel_beep) # Error
                 function_value = []
                 break
             else:
@@ -666,14 +590,14 @@ class KeypadPlugin:
                 if valid_key:
                     # Only save number and sound buzzer if function selected
                     if self.selected_function != KeypadPlugin.FN_NONE:
-                        self.buzzer.buzz(self.button_pressed_beep) # Acknowledge press
+                        self.buzzerSignal.send(self.button_pressed_beep) # Acknowledge press
                         # append pressed key(s)
                         for v in c:
                             function_value.append(v)
                 else:
                     # Invalid key
                     print "Invalid key! Canceling..."
-                    self.buzzer.buzz(self.cancel_beep)
+                    self.buzzerSignal.send(self.cancel_beep)
                     function_value = []
                     break
         return True
@@ -689,14 +613,13 @@ class KeypadPlugin:
     def __keypad_plugin_task(self):
         # Load settings from file
         keypad_plugin.load_keypad_settings()
-        # Ring startup beep
-        self.buzzer.buzz(self.startup_beep)
         # set selected function to default
         self.selected_function = self.default_function
         while (self.running):
             # Wait for hardware
             if (not self.__wait_for_ready()):
                 break
+            #
             function_value = []
             down_keys = []
             # First button press
@@ -707,7 +630,7 @@ class KeypadPlugin:
             elif (KeypadPlugin.ENTER_KEY in c or KeypadPlugin.CANCEL_KEY in c):
                 # No command or cancel received
                 # buzz for cancel, reset, and go to next iteration
-                self.buzzer.buzz(self.cancel_beep) # Nack for no command or cancel
+                self.buzzerSignal.send(self.cancel_beep) # Nack for no command or cancel
                 function_value = []
             else:
                 # Check if function key was pressed
@@ -804,8 +727,6 @@ class KeypadPlugin:
         if settings.has_key("defaultfn"):
             self.default_function = int(settings["defaultfn"])
             self.selected_function = self.default_function
-        if settings.has_key("startup_beep"):
-            self.startup_beep = KeypadPlugin.__string_to_button_list(settings["startup_beep"])
         if settings.has_key("acknowledge_command_beep"):
             self.acknowledge_command_beep = KeypadPlugin.__string_to_button_list(settings["acknowledge_command_beep"])
         if settings.has_key("cancel_beep"):
@@ -838,7 +759,6 @@ class KeypadPlugin:
             "choldfn": str(self.hold_functions['C']),
             "dholdfn": str(self.hold_functions['D']),
             "defaultfn": str(self.default_function),
-            "startup_beep": KeypadPlugin.__button_list_to_string(self.startup_beep),
             "acknowledge_command_beep": KeypadPlugin.__button_list_to_string(self.acknowledge_command_beep),
             "cancel_beep": KeypadPlugin.__button_list_to_string(self.cancel_beep),
             "hold_function_executed_beep": KeypadPlugin.__button_list_to_string(self.hold_function_executed_beep),

@@ -1,6 +1,6 @@
-Enables the use of an 8x8 scanning keypad attached to the pi
+Enables the use of an 4x4 scanning keypad attached to the pi
 
-##### List all plugin files below preceded by a blank line [file_name.ext path] relative to OSPi directory #####
+##### List all plugin files below preceded by a blank line [file_name.ext path] relative to SIP directory #####
 
 keypad.py plugins
 keypad.html templates

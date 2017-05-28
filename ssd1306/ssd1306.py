@@ -12,8 +12,6 @@ import json  # for working with data file
 from helpers import *
 # to write to the console
 import sys
-# Pi GPIO
-import RPi.GPIO as GPIO
 # sleep function
 from time import sleep
 # threads
@@ -350,6 +348,67 @@ class Lcd:
             mask = mask >> 1
 
         return retSeq
+        
+    def write_block(self, str, row_start, min_text_size, max_text_size, justification = 0):
+        if( min_text_size > max_text_size or min_text_size <= 0 or max_text_size <= 0):
+            return 0
+        maxWidth = Lcd.MAXIMUM_COLUMN - Lcd.MINIMUM_COLUMN + 1
+        words = str.split(" ")
+        wordSizes = [0] * len(words)
+        # I am assuming that each character is 5 pixel width with 1 pixel space 
+        numberOfSpaces = len(words) - 1
+        totalSize = numberOfSpaces * 6
+        for i in range(len(words)):
+            currentSize = 0
+            for j in range(len(words[i])):
+                currentSize += 6
+            wordSizes[i] = currentSize
+            totalSize += currentSize
+        if( totalSize * max_text_size <= maxWidth or min_text_size == max_text_size or len(str) <= 0 ):
+            # It can all fit in one line at max size min = max; we are done
+            return self.write_line(str, row_start, max_text_size, justification)
+        currentTextSize = max_text_size
+        lines = []
+        maxLines = 0
+        while( currentTextSize > min_text_size ):
+            currentTextSize -= 1
+            maxLines = max_text_size / currentTextSize
+            currentLine = 0
+            lines = [ words[0] ]
+            currentSize = wordSizes[0]
+            lineTooLong = False
+            for i in range(1, len(words)):
+                nextSize = currentSize + wordSizes[i] + 6
+                if( nextSize * currentTextSize > maxWidth ):
+                    # Next line
+                    lines.append(words[i])
+                    currentLine += 1
+                    currentSize = wordSizes[i]
+                    # Flag if this word by itself is too long to fit
+                    if( currentSize * currentTextSize > maxWidth ):
+                        lineTooLong = True
+                else:
+                    lines[currentLine] += (" " + words[i])
+                    currentSize += (wordSizes[i] + 6)
+            if( len(lines) <= maxLines and not lineTooLong ):
+                # we are done 
+                break 
+        while( len(lines) + 2 <= maxLines ):
+            temp = ['']
+            temp.extend(lines)
+            lines = temp
+            lines.append('')
+        if( len(lines) > maxLines ):
+            lines = lines[:maxLines]
+        rowNum = row_start
+        printedCount = 0
+        for l in lines:
+            printedCount += self.write_line(l, rowNum, currentTextSize, justification)
+            rowNum += currentTextSize
+        # Clear out the rest
+        for i in range(rowNum, row_start + max_text_size):
+            self.write_line('', i, 1, Lcd.JUSTIFY_LEFT)
+        return printedCount
 
     def write_line(self, str, row_start, text_size_multiplier = 1, justification = 0):
         if row_start < Lcd.MINIMUM_ROW or row_start > Lcd.MAXIMUM_ROW:
@@ -482,6 +541,9 @@ class LcdPlugin(Thread):
                     # not master and currently on
                     if len(s) == 0:
                         s = str(i + 1)
+                    else:
+                        s += (" " + str(i + 1))
+                    if( d > stationDuration ):
                         stationDuration = d
             if( len(s) == 0 ):
                 if programRunning:
@@ -517,18 +579,21 @@ class LcdPlugin(Thread):
                     prg = "Idle"
             else:
                 if( self.lastWrite != s ):
-                    self.lcd.write_line(s, 0, 5, Lcd.JUSTIFY_CENTER)
+                    self.lcd.write_block(s, 0, 1, 5, Lcd.JUSTIFY_CENTER)
                     self.lcd.write_line(' ', 5, 1, Lcd.JUSTIFY_CENTER)
                     self.lastWrite = s
                     self.lastSubVal = ''
-                stationSec = stationDuration % 60
-                stationMin = stationDuration / 60
-                stationHrs = stationMin / 60
-                stationMin = stationMin % 60
-                aboutToWrite = str(stationMin / 10 >> 0) + str(stationMin % 10 >> 0) + ":" + str(stationSec / 10 >> 0) + str(stationSec % 10 >> 0)
-                if( stationHrs > 0 ):
-                    aboutToWrite = str(stationHrs / 10 >> 0) + str(stationHrs % 10 >> 0) + ":" + aboutToWrite
-                print("about to write %s" % aboutToWrite)
+                if gv.pon == 99 and stationDuration <= 0:
+                    # Manual station on forever
+                    aboutToWrite = 'ON'
+                else:
+                    stationSec = stationDuration % 60
+                    stationMin = stationDuration / 60
+                    stationHrs = stationMin / 60
+                    stationMin = stationMin % 60
+                    aboutToWrite = str(stationMin / 10 >> 0) + str(stationMin % 10 >> 0) + ":" + str(stationSec / 10 >> 0) + str(stationSec % 10 >> 0)
+                    if( stationHrs > 0 ):
+                        aboutToWrite = str(stationHrs / 10 >> 0) + str(stationHrs % 10 >> 0) + ":" + aboutToWrite
                 if( self.lastSubVal != aboutToWrite ):
                     self.lcd.write_line(aboutToWrite, 6, 2, Lcd.JUSTIFY_CENTER)
                     self.lastSubVal = aboutToWrite
@@ -609,21 +674,14 @@ class LcdPlugin(Thread):
         sleep(5)
         print "LCD plugin is active"
         while True:
-            #try:
-                if self.alarmSignaled:
-                    self.__display_alarm()
-                    sleep(20)
-                    self.alarmText = ''
-                    self.alarmSignaled = False
-                else:
-                    self.__display_normal()
-                sleep(1)
-
-            #except Exception:
-            #    exc_type, exc_value, exc_traceback = sys.exc_info()
-            #    err_string = ''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))
-            #    print(err_string)
-            #    sleep(60)
+            if self.alarmSignaled:
+                self.__display_alarm()
+                sleep(20)
+                self.alarmText = ''
+                self.alarmSignaled = False
+            else:
+                self.__display_normal()
+            sleep(1)
 
 # Start LCD
 lcd_plugin = LcdPlugin()

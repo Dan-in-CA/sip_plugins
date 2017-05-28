@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+#
+# This plugin handles a 128x64 SSD1306 LCD 
 
 import web  # web.py framework
 import gv  # Get access to ospi's settings
@@ -26,7 +28,7 @@ import time
 # for i2c bus driver
 import smbus
 
-# TODO
+# TODO - if there are any settings I can think of in the future
 # Add new URLs to access classes in this plugin.
 #urls.extend([
 #    '/ssd1306-sp', 'plugins.ssd1306.settings',
@@ -35,21 +37,6 @@ import smbus
 
 # Add this plugin to the PLUGINS menu ['Menu Name', 'URL'], (Optional)
 #gv.plugin_menu.append(['SSD1306 Plugin', '/ssd1306-sp'])
-
-################################################################################
-# Main function loop:                                                          #
-################################################################################
-
-def bitShitftRightByteList(lst, num = 1):
-    for i in range(num):
-        addToNext = False
-        for j in range(len(lst)):
-            addToCurrent = addToNext
-            addToNext = ( ( lst[j] & 0x01 ) > 0 )
-            lst[j] = lst[j] >> 1
-            if addToCurrent:
-                lst[j] = lst[j] | 0x80
-    return lst
 
 class Lcd:
     # Absolute min/max column and row
@@ -323,6 +310,18 @@ class Lcd:
         self.current_row = min_row
         return 1
 
+    @staticmethod
+    def __bitShitftRightByteList(lst, num = 1):
+        for i in range(num):
+            addToNext = False
+            for j in range(len(lst)):
+                addToCurrent = addToNext
+                addToNext = ( ( lst[j] & 0x01 ) > 0 )
+                lst[j] = lst[j] >> 1
+                if addToCurrent:
+                    lst[j] = lst[j] | 0x80
+        return lst
+        
     def _generate_char_sequence(self, char, text_size_multiplier = 1):
         chv = ord(char)
         seq = []
@@ -347,7 +346,7 @@ class Lcd:
                     for k in range(text_size_multiplier):
                         for l in range(text_size_multiplier):
                             retSeq[text_size_multiplier-k-1][(j * text_size_multiplier + l)] = retSeq[text_size_multiplier-k-1][(j * text_size_multiplier + l)] | colMask[k]
-            colMask = bitShitftRightByteList(colMask, text_size_multiplier)
+            colMask = Lcd.__bitShitftRightByteList(colMask, text_size_multiplier)
             mask = mask >> 1
 
         return retSeq
@@ -414,7 +413,7 @@ class Lcd:
             self.lcd_execute_data_sequence(seq[i])
         return 1
 
-class LCDSender(Thread):
+class LcdPlugin(Thread):
     def __init__(self):
         Thread.__init__(self)
         self.daemon = True
@@ -627,11 +626,11 @@ class LCDSender(Thread):
             #    sleep(60)
 
 # Start LCD
-checker = LCDSender()
-if( checker.initialize() ):
-    checker.start()
+lcd_plugin = LcdPlugin()
+if( lcd_plugin.initialize() ):
+    lcd_plugin.start()
     alarm = signal('alarm_toggled')
-    alarm.connect(checker.alarm)
+    alarm.connect(lcd_plugin.alarm)
 
 
 
@@ -663,6 +662,6 @@ class save_settings(ProtectedPage):
 
     def GET(self):
         qdict = web.input()  # Dictionary of values returned as query string from settings page.
-        checker.load_from_dict(qdict) # load settings from dictionary
-        checker.save_settings() # Save keypad settings
+        lcd_plugin.load_from_dict(qdict) # load settings from dictionary
+        lcd_plugin.save_settings() # Save keypad settings
         raise web.seeother('/')  # Return user to home page.

@@ -616,7 +616,12 @@ class LcdPlugin(Thread):
                     self.lastSubVal = aboutToWrite
         # Check again because prg may have changed to Idle in the above if statement
         if prg == "Idle":
-            if( gv.sd['mm'] ):
+            if( not gv.sd['en'] ):
+                if( self.lastWrite != "OFF" ):
+                    self.lcd.write_line("OFF", 0, 3, Lcd.JUSTIFY_CENTER)
+                    self.lcd.write_line("", 3, 3, Lcd.JUSTIFY_LEFT)
+                    self.lastWrite = "OFF"
+            elif( gv.sd['mm'] ):
                 aboutToWrite = "IdleManualMode"
                 if( self.lastWrite != aboutToWrite ):
                     self.lcd.write_line("Idle", 0, 3, Lcd.JUSTIFY_CENTER)
@@ -648,7 +653,7 @@ class LcdPlugin(Thread):
                 aboutToWrite = "IdleWaterLevel" + waterLevel
                 if( self.lastWrite != aboutToWrite ):
                     self.lcd.write_line("Idle", 0, 3, Lcd.JUSTIFY_CENTER)
-                    self.lcd.write_line("WtrLvl " + waterLevel + "%", 3, 2, Lcd.JUSTIFY_CENTER)
+                    self.lcd.write_line(waterLevel + "%", 3, 2, Lcd.JUSTIFY_CENTER)
                     self.lcd.write_line("", 5, 1, Lcd.JUSTIFY_LEFT)
                     self.lastWrite = aboutToWrite
                     self.lastSubVal = ''

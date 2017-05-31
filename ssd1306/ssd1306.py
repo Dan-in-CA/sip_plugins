@@ -517,6 +517,23 @@ class LcdPlugin(Thread):
         #with open('./data/ssd1306.json', 'w') as f:
         #    json.dump(settings, f) # save to file
         return
+        
+    @staticmethod
+    def __get_time_string():
+        isPm = False
+        timeHours = gv.nowt.tm_hour
+        if( timeHours == 0 ):
+            timeHours = 12
+        elif( timeHours == 12 ):
+            isPm = True
+        elif( timeHours > 12 ):
+            timeHours -= 12
+            isPm = True
+        hrString = str(timeHours)
+        minString = str(gv.nowt.tm_min / 10 >> 0) + str(gv.nowt.tm_min % 10 >> 0)
+        ampm =  "PM" if isPm else "AM"
+        timeStr = hrString + ":" + minString + " " + ampm
+        return timeStr
 
     def __display_normal(self):
         if gv.pon is None:
@@ -631,30 +648,21 @@ class LcdPlugin(Thread):
                 aboutToWrite = "IdleWaterLevel" + waterLevel
                 if( self.lastWrite != aboutToWrite ):
                     self.lcd.write_line("Idle", 0, 3, Lcd.JUSTIFY_CENTER)
-                    self.lcd.write_line("", 3, 1, Lcd.JUSTIFY_LEFT)
-                    self.lcd.write_line("Water Lvl", 4, 2, Lcd.JUSTIFY_CENTER)
-                    self.lcd.write_line(waterLevel + "%", 6, 2, Lcd.JUSTIFY_CENTER)
+                    self.lcd.write_line("WtrLvl " + waterLevel + "%", 3, 2, Lcd.JUSTIFY_CENTER)
+                    self.lcd.write_line("", 5, 1, Lcd.JUSTIFY_LEFT)
                     self.lastWrite = aboutToWrite
+                    self.lastSubVal = ''
+                aboutToWrite = LcdPlugin.__get_time_string()
+                if( self.lastSubVal != aboutToWrite ):
+                    self.lcd.write_line(aboutToWrite, 6, 2, Lcd.JUSTIFY_CENTER)
+                    self.lastSubVal = aboutToWrite
             else:
                 if( self.lastWrite != prg ):
-                    self.lcd.write_line("", 0, 1, Lcd.JUSTIFY_LEFT)
-                    self.lcd.write_line(prg, 1, 3, Lcd.JUSTIFY_CENTER)
-                    self.lcd.write_line("", 4, 2, Lcd.JUSTIFY_LEFT)
+                    self.lcd.write_line(prg, 0, 3, Lcd.JUSTIFY_CENTER)
+                    self.lcd.write_line("", 3, 3, Lcd.JUSTIFY_LEFT)
                     self.lastWrite = prg
                     self.lastSubVal = ''
-                isPm = False
-                timeHours = gv.nowt.tm_hour
-                if( timeHours == 0 ):
-                    timeHours = 12
-                elif( timeHours == 12 ):
-                    isPm = True
-                elif( timeHours > 12 ):
-                    timeHours -= 12
-                    isPm = True
-                hrString = str(timeHours)
-                minString = str(gv.nowt.tm_min / 10 >> 0) + str(gv.nowt.tm_min % 10 >> 0)
-                ampm =  "PM" if isPm else "AM"
-                aboutToWrite = hrString + ":" + minString + " " + ampm
+                aboutToWrite = LcdPlugin.__get_time_string()
                 if( self.lastSubVal != aboutToWrite ):
                     self.lcd.write_line(aboutToWrite, 6, 2, Lcd.JUSTIFY_CENTER)
                     self.lastSubVal = aboutToWrite

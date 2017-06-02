@@ -549,7 +549,7 @@ class LcdPlugin(Thread):
         elif gv.pon == 99:
             prg = 'Manual Mode'
         else:
-            prg = "{}".format(gv.pon + 1)
+            prg = "{}".format(gv.pon)
 
         s = ""
         if prg != "Idle":

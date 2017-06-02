@@ -360,7 +360,7 @@ class KeypadPlugin:
             print "Invalid program: %d" % programID
             return False
         else:
-            p = gv.pd[pid]  # program data
+            p = gv.pd[int(pid)]  # program data
             stop_stations()
             extra_adjustment = plugin_adjustment()
             for b in range(len(p[7:7 + gv.sd['nbrd']])):  # check each station
@@ -368,8 +368,10 @@ class KeypadPlugin:
                     sid = b * 8 + s  # station index
                     if sid + 1 == gv.sd['mas']:  # skip if this is master valve
                         continue
-                    if p[7 + b] & 1 << s:  # if this station is scheduled in this program
-                        gv.rs[sid][2] = p[6] * gv.sd['wl'] / 100 * extra_adjustment  # duration scaled by water level
+                    if p[7 + b] & ( 1 << s ):  # if this station is scheduled in this program
+                        gv.rs[sid][2] = p[7 + gv.sd['nbrd']][sid]
+                        if not gv.sd['iw'][b] & 1 << s:
+                            gv.rs[sid][2] = gv.rs[sid][2] * float(gv.sd['wl']) / 100 * extra_adjustment
                         gv.rs[sid][3] = pid + 1  # store program number in schedule
                         gv.ps[sid][0] = pid + 1  # store program number for display
                         gv.ps[sid][1] = gv.rs[sid][2]  # duration

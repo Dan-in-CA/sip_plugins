@@ -520,19 +520,25 @@ class LcdPlugin(Thread):
         
     @staticmethod
     def __get_time_string():
-        isPm = False
-        timeHours = gv.nowt.tm_hour
-        if( timeHours == 0 ):
-            timeHours = 12
-        elif( timeHours == 12 ):
-            isPm = True
-        elif( timeHours > 12 ):
-            timeHours -= 12
-            isPm = True
-        hrString = str(timeHours)
-        minString = str(gv.nowt.tm_min / 10 >> 0) + str(gv.nowt.tm_min % 10 >> 0)
-        ampm =  "PM" if isPm else "AM"
-        timeStr = hrString + ":" + minString + " " + ampm
+        timeStr = ""
+        nowt = gv.nowt
+        timeHours = nowt.tm_hour
+        timeMinutes = nowt.tm_min
+        ampmString = ""
+        if ( not gv.sd['tf'] ):
+            isPm = False
+            timeHours = gv.nowt.tm_hour
+            if( timeHours == 0 ):
+                timeHours = 12
+            elif( timeHours == 12 ):
+                isPm = True
+            elif( timeHours > 12 ):
+                timeHours -= 12
+                isPm = True
+            ampmString =  " PM" if isPm else " AM"
+        hrString = str( timeHours )
+        minString = str( timeMinutes / 10 >> 0 ) + str( timeMinutes % 10 >> 0 )
+        timeStr = hrString + ":" + minString + ampmString
         return timeStr
 
     def __display_normal(self):
@@ -604,13 +610,13 @@ class LcdPlugin(Thread):
                     # Manual station on forever
                     aboutToWrite = 'ON'
                 else:
-                    stationSec = stationDuration % 60
-                    stationMin = stationDuration / 60
+                    stationSec = int(stationDuration) % 60
+                    stationMin = int(stationDuration) / 60
                     stationHrs = stationMin / 60
                     stationMin = stationMin % 60
-                    aboutToWrite = str(stationMin / 10 >> 0) + str(stationMin % 10 >> 0) + ":" + str(stationSec / 10 >> 0) + str(stationSec % 10 >> 0)
+                    aboutToWrite = str(stationMin / 10) + str(stationMin % 10) + ":" + str(stationSec / 10) + str(stationSec % 10)
                     if( stationHrs > 0 ):
-                        aboutToWrite = str(stationHrs / 10 >> 0) + str(stationHrs % 10 >> 0) + ":" + aboutToWrite
+                        aboutToWrite = str(stationHrs / 10) + str(stationHrs % 10) + ":" + aboutToWrite
                 if( self.lastSubVal != aboutToWrite ):
                     self.lcd.write_line(aboutToWrite, 6, 2, Lcd.JUSTIFY_CENTER)
                     self.lastSubVal = aboutToWrite
@@ -619,7 +625,7 @@ class LcdPlugin(Thread):
             if( not gv.sd['en'] ):
                 if( self.lastWrite != "OFF" ):
                     self.lcd.write_line("OFF", 0, 3, Lcd.JUSTIFY_CENTER)
-                    self.lcd.write_line("", 3, 3, Lcd.JUSTIFY_LEFT)
+                    self.lcd.write_line("", 3, 5, Lcd.JUSTIFY_LEFT)
                     self.lastWrite = "OFF"
             elif( gv.sd['mm'] ):
                 aboutToWrite = "IdleManualMode"

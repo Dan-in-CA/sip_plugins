@@ -556,13 +556,16 @@ class KeypadPlugin:
         elif (self.selected_function == KeypadPlugin.FN_RAIN_DELAY_TIME):
             rain_delay_time = value
             return rain_delay_time > 0 and self.__set_rain_delay_time(rain_delay_time)
-            return 
         elif( self.selected_function == KeypadPlugin.FN_START_RAIN_DELAY ):
             # Actvate rain delay
             print "Activating rain delay for %d hours" % value
             gv.sd['rd'] = value
-            gv.sd['rdst'] = int(gv.now + gv.sd['rd'] * 3600) 
+            if gv.sd['rd'] > 0:
+                gv.sd['rdst'] = int(gv.now + gv.sd['rd'] * 3600) 
+            else:
+                gv.sd['rdst'] = 0
             stop_onrain()
+            return True 
         else:
             print "Keypad function not implemented"
             return False

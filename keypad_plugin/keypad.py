@@ -30,8 +30,6 @@ import json  # for working with data file
 from helpers import *
 # to write to the console
 import sys
-# Pi GPIO
-import RPi.GPIO as GPIO
 # sleep function
 from time import sleep
 # threads
@@ -42,6 +40,16 @@ from blinker import signal
 import traceback
 # to determine how much time as elapsed (for timeout purposes)
 import time
+# Load the Raspberry Pi GPIO (General Purpose Input Output) library
+try:
+    if gv.use_pigpio:
+        import pigpio
+        pi = pigpio.pi()
+    else:
+        import RPi.GPIO as GPIO
+        pi = 0
+except IOError:
+    pass
 
 # KEYPAD VARIABLES
 # Keypad column pins
@@ -111,17 +119,29 @@ class ScanningKeypad:
     def isReady(self):
         return self.pins_initialized
 
+    @staticmethod
+    def __set_floating_input(pin):
+        if gv.use_pigpio:
+            pi.set_mode(gv.pin_map[pin], pigpio.INPUT)
+            pi.set_pull_up_down(gv.pin_map[pin], pigpio.PUD_OFF)
+        else:
+            GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_OFF)
+        
     def __set_column(self, col):
         if (not self.pins_initialized):
             return False
         try:
             if (self.keypad_current_column >= 0):
                 # Set old value as floating input so it won't affect anyone else
-                GPIO.setup(self.keypad_current_column, GPIO.IN, pull_up_down=GPIO.PUD_OFF)
+                ScanningKeypad.__set_floating_input(self.keypad_current_column)
             # set current pin and make output HIGH
             self.keypad_current_column = col
-            GPIO.setup(self.keypad_current_column, GPIO.OUT)
-            GPIO.output(self.keypad_current_column, GPIO.HIGH)
+            if gv.use_pigpio:
+                pi.set_mode(gv.pin_map[self.keypad_current_column], pigpio.OUTPUT)
+                pi.write(gv.pin_map[self.keypad_current_column], 1)
+            else:
+                GPIO.setup(self.keypad_current_column, GPIO.OUT)
+                GPIO.output(self.keypad_current_column, GPIO.HIGH)
         except Exception, err:
             print "keypad plugin except"
             print(traceback.format_exc())
@@ -130,14 +150,19 @@ class ScanningKeypad:
     
     def init_pins(self):
         try:
-            GPIO.setmode(GPIO.BOARD)
+            if not gv.use_pigpio:
+                GPIO.setmode(GPIO.BOARD)
             # set column pins as floating to start with
             for v in self.pin_columns:
-                GPIO.setup(v, GPIO.IN, pull_up_down=GPIO.PUD_OFF)
+                ScanningKeypad.__set_floating_input(v)
             self.keypad_current_column = -1
             # row pins will be used as input with pull down resistors
             for v in self.pin_rows:
-                GPIO.setup(v, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+                if gv.use_pigpio:
+                    pi.set_mode(gv.pin_map[v], pigpio.INPUT)
+                    pi.set_pull_up_down(gv.pin_map[v], pigpio.PUD_DOWN)
+                else:
+                    GPIO.setup(v, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
             self.pins_initialized = True
         except Exception, err:
             print "keypad plugin except"
@@ -152,7 +177,10 @@ class ScanningKeypad:
                 sleep(0.001) # just to make sure the output is fully charged
                 try:
                     for row, row_v in enumerate(self.pin_rows):
-                        keys[self.indicies[row][col]] = (GPIO.input(row_v))
+                        if gv.use_pigpio:
+                            keys[self.indicies[row][col]] = (pi.read(gv.pin_map[row_v]))
+                        else:
+                            keys[self.indicies[row][col]] = (GPIO.input(row_v))
                 except Exception, err:
                     print "keypad plugin except"
                     print(traceback.format_exc())

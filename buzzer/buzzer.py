@@ -10,8 +10,6 @@ import json  # for working with data file
 from helpers import *
 # to write to the console
 import sys
-# Pi GPIO
-import RPi.GPIO as GPIO
 # sleep function
 from time import sleep
 # threads
@@ -22,6 +20,16 @@ from blinker import signal
 import traceback
 # to determine how much time as elapsed (for timeout purposes)
 import time
+# Load the Raspberry Pi GPIO (General Purpose Input Output) library
+try:
+    if gv.use_pigpio:
+        import pigpio
+        pi = pigpio.pi()
+    else:
+        import RPi.GPIO as GPIO
+        pi = 0
+except IOError:
+    pass
 
 # BUZZER VARIABLES
 # Board pin where the buzzer is located (set to -1 to disable)
@@ -112,9 +120,13 @@ class Buzzer:
     def init_pins(self):
         try:
             if (self.pin >= 0):
-                GPIO.setmode(GPIO.BOARD)
-                GPIO.setup(self.pin, GPIO.OUT)
-                GPIO.output(self.pin, not self.active_high)
+                if gv.use_pigpio:
+                    pi.set_mode(gv.pin_map[self.pin], pigpio.OUTPUT)
+                    pi.write(gv.pin_map[self.pin], not self.active_high)
+                else:
+                    GPIO.setmode(GPIO.BOARD)
+                    GPIO.setup(self.pin, GPIO.OUT)
+                    GPIO.output(self.pin, not self.active_high)
                 self.pin_initialized = True
             else: 
                 self.pin_initialized = False
@@ -137,10 +149,16 @@ class Buzzer:
                 buzzon = True
                 for v in timelist:
                     if buzzon and v > 0:
-                        GPIO.output(self.pin, self.active_high)
+                        if gv.use_pigpio:
+                            pi.write(gv.pin_map[self.pin], self.active_high)
+                        else:
+                            GPIO.output(self.pin, self.active_high)
                     if v > 0:
                         sleep(v)
-                    GPIO.output(self.pin, not self.active_high)
+                    if gv.use_pigpio:
+                        pi.write(gv.pin_map[self.pin], not self.active_high)
+                    else:
+                        GPIO.output(self.pin, not self.active_high)
                     buzzon = not buzzon
         except:
             self.pin_initialized = False

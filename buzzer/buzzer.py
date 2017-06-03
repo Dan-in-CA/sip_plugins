@@ -22,7 +22,7 @@ import traceback
 import time
 # Load the Raspberry Pi GPIO (General Purpose Input Output) library
 try:
-    if gv.use_pigpio:
+    if (gv.use_pigpio):
         import pigpio
         pi = pigpio.pi()
     else:
@@ -47,8 +47,9 @@ urls.extend([
 gv.plugin_menu.append(['Buzzer Plugin', '/buzzer-sp'])
 
 # This class handles the buzzer hardware       
-class Buzzer:    
+class Buzzer(Thread):    
     def __init__(self, pin, active_high):
+        Thread.__init__(self)
         # set to true when buzzer pin is initialized
         self.pin_initialized = False
         # Board pin where buzzer is located (-1 to disable)
@@ -70,10 +71,10 @@ class Buzzer:
       
     @staticmethod
     def __string_to_button_list(s):
-        strlist = s.split(",")
+        str_list = s.split(",")
         flist = []
         total_time = 0
-        for x in strlist:
+        for x in str_list:
             try:
                 value = (int(x) / 1000.0)
                 # single value cannot be more than 1 second
@@ -91,9 +92,9 @@ class Buzzer:
         
     def load_from_dict(self, settings):
         self.__set_default_settings()
-        if settings is None:
+        if (settings is None):
             return
-        if settings.has_key("startup_beep"):
+        if (settings.has_key("startup_beep")):
             self.startup_beep = Buzzer.__string_to_button_list(settings["startup_beep"])
         return
         
@@ -120,13 +121,15 @@ class Buzzer:
     def init_pins(self):
         try:
             if (self.pin >= 0):
-                if gv.use_pigpio:
+                # Initialize buzzer pin
+                if (gv.use_pigpio):
                     pi.set_mode(gv.pin_map[self.pin], pigpio.OUTPUT)
-                    pi.write(gv.pin_map[self.pin], not self.active_high)
                 else:
                     GPIO.setmode(GPIO.BOARD)
                     GPIO.setup(self.pin, GPIO.OUT)
-                    GPIO.output(self.pin, not self.active_high)
+                # Output OFF
+                self.__set_buzzer_pin(False)
+                # Done!
                 self.pin_initialized = True
             else: 
                 self.pin_initialized = False
@@ -135,31 +138,38 @@ class Buzzer:
             return False
         return True
         
+    def __set_buzzer_pin(self, is_on):
+        pin_value = self.active_high if is_on else not self.active_high
+        if (gv.use_pigpio):
+            pi.write(gv.pin_map[self.pin], pin_value)
+        else:
+            GPIO.output(self.pin, pin_value)
+        
     # time: Time value(s) in seconds
     #       If single value, on time for buzzer 
     #       If array, time values in the format [on time, off time, on time, ...]
     def buzz(self, time = 0.010):
         try:
             if (self.pin >= 0 and self.pin_initialized and time is not None):
-                timelist = []
-                if isinstance(time, list):
-                    timelist = time
+                time_list = []
+                if (isinstance(time, list)):
+                    time_list = time
                 else:
-                    timelist.append(time)
-                buzzon = True
-                for v in timelist:
-                    if buzzon and v > 0:
-                        if gv.use_pigpio:
-                            pi.write(gv.pin_map[self.pin], self.active_high)
-                        else:
-                            GPIO.output(self.pin, self.active_high)
-                    if v > 0:
+                    time_list.append(time)
+                # First value is buzzer on
+                buzz_on = True
+                # Loop through each time in list
+                for v in time_list:
+                    # If this value is on time, turn on the buzzer
+                    if (buzz_on and v > 0):
+                        self.__set_buzzer_pin(True)
+                    # Suspend for the given time
+                    if (v > 0):
                         sleep(v)
-                    if gv.use_pigpio:
-                        pi.write(gv.pin_map[self.pin], not self.active_high)
-                    else:
-                        GPIO.output(self.pin, not self.active_high)
-                    buzzon = not buzzon
+                    # Always shut off buzzer before next iteration
+                    self.__set_buzzer_pin(False)
+                    # Invert 
+                    buzz_on = not buzz_on
         except:
             self.pin_initialized = False
             return False
@@ -168,13 +178,15 @@ class Buzzer:
     def __wait_for_ready(self):
         MAX_INIT_RETRY = 15
         retry = 0
-        # Wait for keypad to be ready
+        # First attempt to initialize pins
+        self.init_pins()
+        # Wait for buzzer to be ready
         while (not self.isReady() and retry < MAX_INIT_RETRY):
             if (retry == 0):
                 print "buzzer not ready yet"
+            print "Attempting to reinitialize buzzer plugin..."
             #sleep for a moment and try to reinit
             sleep(1)
-            print "Attempting to reinitialize buzzer plugin..."
             if (self.init_pins()):
                 print "Done"
             else:
@@ -194,8 +206,7 @@ class Buzzer:
         self.buzz(self.startup_beep)
         
     def run(self):
-        self.init_thread = Thread(target = self.__buzzer_init_task)
-        self.init_thread.start()
+        self.__buzzer_init_task()
 
 buzzer = Buzzer(BUZZER_PIN, BUZZER_ACTIVE_HIGH)
 
@@ -232,4 +243,4 @@ buzzer_beep = signal('buzzer_beep')
 buzzer_beep.connect(notify_buzzer_beep)
 
 # Run to get hardware initialized
-buzzer.run()
+buzzer.start()

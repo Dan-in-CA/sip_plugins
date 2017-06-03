@@ -231,12 +231,16 @@ class ScanningKeypad:
 # This class contains the functionality for this plugin
 class KeypadPlugin:
     # Constants
+    #
+    # Value functions
     FN_NONE = -1
     FN_MANUAL_STATION = 0
     FN_MANUAL_PROGRAM = 1
     FN_WATER_LEVEL = 2
     FN_MANUAL_STATION_TIME = 3
     FN_RAIN_DELAY_TIME = 4
+    FN_START_RAIN_DELAY = 5
+    # Instantaneous functions
     HLDFN_NONE = -1
     HLDFN_STOP_ALL = 16
     HLDFN_ACTIVATE_RAIN_DELAY = 17
@@ -246,6 +250,13 @@ class KeypadPlugin:
     HLDFN_RESTART_SYSTEM = 21
     HLDFN_REBOOT_OS = 22
     HLDFN_RESET_WATER_LEVEL = 23
+    HLDFN_TOGGLE_RAIN_DELAY = 24
+    HLDFN_TOGGLE_SYSTEM_EN = 25
+    # Execution enumeration
+    EXECUTE_FAILED = 0
+    EXECUTE_COMPLETE = 1
+    EXECUTE_TOGGLE_ON = 2
+    EXECUTE_TOGGLE_OFF = 3
     
     # Types of keys
     FUNCTION_KEYS = ['A', 'B', 'C', 'D']
@@ -298,6 +309,8 @@ class KeypadPlugin:
         self.acknowledge_command_beep = 0.100
         self.cancel_beep = [0.100, 0.100, 0.500] 
         self.hold_function_executed_beep = [0.100, 0.050, 0.100]
+        self.hold_function_toggle_on_beep = [0.050, 0.050, 0.200]
+        self.hold_function_toggle_off_beep = [0.200, 0.050, 0.050]
         self.button_pressed_beep = 0.025
     
     def init_pins(self):
@@ -440,53 +453,78 @@ class KeypadPlugin:
             # Stop all stations
             print "Stop all stations"
             stop_stations()
-            return True
+            return KeypadPlugin.EXECUTE_COMPLETE
         elif (hold_function == KeypadPlugin.HLDFN_ACTIVATE_RAIN_DELAY):
             # Activate rain delay
             print "Activating rain delay for %d hours" % self.rain_delay_hrs
             gv.sd['rd'] = self.rain_delay_hrs
             gv.sd['rdst'] = int(gv.now + gv.sd['rd'] * 3600) 
             stop_onrain()
-            return True
+            return KeypadPlugin.EXECUTE_COMPLETE
         elif (hold_function == KeypadPlugin.HLDFN_DEACTIVATE_RAIN_DELAY):
             # Deactivate rain delay
             print "Deactivating rain delay"
             gv.sd['rd'] = 0
             gv.sd['rdst'] = 0
             jsave(gv.sd, 'sd')
-            return True
+            return KeypadPlugin.EXECUTE_COMPLETE
         elif (hold_function == KeypadPlugin.HLDFN_SYSTEM_ON):
             # Enable system
             print "Enabling system"
             gv.sd['en'] = 1
-            return True
+            return KeypadPlugin.EXECUTE_COMPLETE
         elif (hold_function == KeypadPlugin.HLDFN_SYSTEM_OFF):
             # Disable system
             print "Disabling system"
             gv.sd['en'] = 0
-            return True
+            return KeypadPlugin.EXECUTE_COMPLETE
         elif (hold_function == KeypadPlugin.HLDFN_RESTART_SYSTEM):
             # Restart system
             print "Restarting system"
             # Beep now because we won't get a chance to later
             self.buzzerSignal.send(self.hold_function_executed_beep)
             restart()
-            return True
+            return KeypadPlugin.EXECUTE_COMPLETE
         elif (hold_function == KeypadPlugin.HLDFN_REBOOT_OS):
             # Reboot operating system
             print "Rebooting system"
             # Beep now because we won't get a chance to later
             self.buzzerSignal.send(self.hold_function_executed_beep)
             reboot()
-            return True
+            return KeypadPlugin.EXECUTE_COMPLETE
         elif (hold_function == KeypadPlugin.HLDFN_RESET_WATER_LEVEL):
             # Reset water level to 100%
             print "Resetting water level to 100%"
             KeypadPlugin.__set_water_level(100)
+        elif (hold_function == KeypadPlugin.HLDFN_TOGGLE_RAIN_DELAY):
+            if( gv.sd['rd'] > 0 ):
+                # Deactivate rain delay
+                print "Deactivating rain delay"
+                gv.sd['rd'] = 0
+                gv.sd['rdst'] = 0
+                jsave(gv.sd, 'sd')
+                return KeypadPlugin.EXECUTE_TOGGLE_OFF
+            else:
+                # Activate rain delay
+                print "Activating rain delay for %d hours" % self.rain_delay_hrs
+                gv.sd['rd'] = self.rain_delay_hrs
+                gv.sd['rdst'] = int(gv.now + gv.sd['rd'] * 3600) 
+                stop_onrain()
+                return KeypadPlugin.EXECUTE_TOGGLE_ON
+        elif (hold_function == KeypadPlugin.HLDFN_TOGGLE_SYSTEM_EN):
+            if( gv.sd['en'] ):
+                # Disable system
+                print "Disabling system"
+                gv.sd['en'] = 0
+                return KeypadPlugin.EXECUTE_TOGGLE_OFF
+            else:
+                # Enable system
+                print "Enabling system"
+                gv.sd['en'] = 1
+                return KeypadPlugin.EXECUTE_TOGGLE_ON
         else:
             print "Hold function not implemented"
-            return False
-        return True
+            return KeypadPlugin.EXECUTE_FAILED
         
     def __execute_value_function(self, command_value):
         value = -1
@@ -519,6 +557,12 @@ class KeypadPlugin:
             rain_delay_time = value
             return rain_delay_time > 0 and self.__set_rain_delay_time(rain_delay_time)
             return 
+        elif( self.selected_function == KeypadPlugin.FN_START_RAIN_DELAY ):
+            # Actvate rain delay
+            print "Activating rain delay for %d hours" % value
+            gv.sd['rd'] = value
+            gv.sd['rdst'] = int(gv.now + gv.sd['rd'] * 3600) 
+            stop_onrain()
         else:
             print "Keypad function not implemented"
             return False
@@ -536,8 +580,16 @@ class KeypadPlugin:
                     use_hold_fn = True
             if use_hold_fn:
                 # execute hold function
-                if self.__execute_hold_function(function_key):
+                executionValue = self.__execute_hold_function(function_key)
+                if executionValue == KeypadPlugin.EXECUTE_COMPLETE:
+                    # Executed
                     self.buzzerSignal.send(self.hold_function_executed_beep)
+                elif executionValue == KeypadPlugin.EXECUTE_TOGGLE_ON:
+                    # Toggle On
+                    self.buzzerSignal.send(self.hold_function_toggle_on_beep)
+                elif executionValue == KeypadPlugin.EXECUTE_TOGGLE_OFF:
+                    # Toggle Off
+                    self.buzzerSignal.send(self.hold_function_toggle_off_beep)
                 else:
                     self.buzzerSignal.send(self.cancel_beep)
             else:
@@ -740,6 +792,10 @@ class KeypadPlugin:
             self.cancel_beep = KeypadPlugin.__string_to_button_list(settings["cancel_beep"])
         if settings.has_key("hold_function_executed_beep"):
             self.hold_function_executed_beep = KeypadPlugin.__string_to_button_list(settings["hold_function_executed_beep"])
+        if settings.has_key("hold_function_toggle_on_beep"):
+            self.hold_function_toggle_on_beep = KeypadPlugin.__string_to_button_list(settings["hold_function_toggle_on_beep"])
+        if settings.has_key("hold_function_toggle_off_beep"):
+            self.hold_function_toggle_off_beep = KeypadPlugin.__string_to_button_list(settings["hold_function_toggle_off_beep"])
         return
     
     def load_keypad_settings(self):
@@ -769,6 +825,8 @@ class KeypadPlugin:
             "acknowledge_command_beep": KeypadPlugin.__button_list_to_string(self.acknowledge_command_beep),
             "cancel_beep": KeypadPlugin.__button_list_to_string(self.cancel_beep),
             "hold_function_executed_beep": KeypadPlugin.__button_list_to_string(self.hold_function_executed_beep),
+            "hold_function_toggle_on_beep": KeypadPlugin.__button_list_to_string(self.hold_function_toggle_on_beep),
+            "hold_function_toggle_off_beep": KeypadPlugin.__button_list_to_string(self.hold_function_toggle_off_beep),
         }
         with open('./data/keypad.json', 'w') as f:
             json.dump(settings, f) # save to file

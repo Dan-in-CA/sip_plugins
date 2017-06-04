@@ -1,7 +1,7 @@
 # !/usr/bin/env python
 
 # Written by James M Smith 6/14/2015
-# This plugin uses a 8x8 scanning keypad and optionally a buzzer
+# This plugin uses a 4x4 scanning keypad and optionally a buzzer
 # Keypad should have the following layout
 #      (C1) (C2) (C3) (C4)
 # (R1)  1    2    3    A
@@ -9,7 +9,7 @@
 # (R3)  7    8    9    C
 # (R4)  *    0    #    D
 #
-# To enter a value, enter number followed by pound (#)
+# To enter a value under the default function, enter number followed by pound (#)
 #     Example: 1-3-# to enter 13
 #
 # If manual station is selected, the station will run under "Run Once" for 5 minutes by default.
@@ -304,12 +304,14 @@ class KeypadPlugin:
         # Set all default settings
         self.__set_default_settings()
         # Currently selected function
-        self.selected_function = self.default_function
+        self.__reset_selected_function()
         
         # Set to True when running and False to exit task
         self.running = False
         # Handle to the running thread for this plugin
         self.running_thread = None
+        
+        self.function_selected = False
         return
     
     def __set_default_settings(self):
@@ -470,6 +472,7 @@ class KeypadPlugin:
     def __set_value_function(self, function_key):
         if (self.selectable_functions.has_key(function_key) and self.selectable_functions[function_key] != KeypadPlugin.FN_NONE):
             self.selected_function = self.selectable_functions[function_key]
+            self.function_selected = True
             return True
         return False
         
@@ -657,7 +660,7 @@ class KeypadPlugin:
                     self.buzzerSignal.send(self.cancel_beep) # Nack for invalid station or exception
                 function_value = []
                 # reset selected function to default
-                self.selected_function = self.default_function
+                self.__reset_selected_function()
                 break
             elif (KeypadPlugin.CANCEL_KEY in c):
                 # Canceled
@@ -699,12 +702,16 @@ class KeypadPlugin:
                 function_key = v
                 break
         return function_key
+        
+    def __reset_selected_function(self):
+        self.selected_function = self.default_function
+        self.function_selected = False
     
     def __keypad_plugin_task(self):
         # Load settings from file
         keypad_plugin.load_keypad_settings()
         # set selected function to default
-        self.selected_function = self.default_function
+        self.__reset_selected_function()
         while (self.running):
             # Wait for hardware
             if (not self.__wait_for_ready()):
@@ -713,8 +720,17 @@ class KeypadPlugin:
             function_value = []
             down_keys = []
             # First button press
-            c = self.keypad.getc(down_keys, -1, self.running)
-            if (c is None):
+            if (self.function_selected):
+                c = self.keypad.getc(down_keys, self.keypad_press_timeout_s, self.running)
+                if (len(c) == 0):
+                    # Timeout with nothing entered
+                    self.__reset_selected_function()
+                    self.buzzerSignal.send(self.cancel_beep)
+                    continue
+            else:
+                # Wait indefinitely for key
+                c = self.keypad.getc(down_keys, -1, self.running)
+            if (c is None or len(c) == 0):
                 # There was an error; go to top of loop to wait for ready
                 continue
             elif (KeypadPlugin.ENTER_KEY in c or KeypadPlugin.CANCEL_KEY in c):
@@ -816,7 +832,6 @@ class KeypadPlugin:
             }
         if settings.has_key("defaultfn"):
             self.default_function = int(settings["defaultfn"])
-            self.selected_function = self.default_function
         if settings.has_key("acknowledge_command_beep"):
             self.acknowledge_command_beep = KeypadPlugin.__string_to_button_list(settings["acknowledge_command_beep"])
         if settings.has_key("cancel_beep"):

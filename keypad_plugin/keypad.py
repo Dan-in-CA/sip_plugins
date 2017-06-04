@@ -311,6 +311,7 @@ class KeypadPlugin:
         # Handle to the running thread for this plugin
         self.running_thread = None
         
+        # Set to True when function is selected by user
         self.function_selected = False
         return
     
@@ -721,6 +722,7 @@ class KeypadPlugin:
             down_keys = []
             # First button press
             if (self.function_selected):
+                # User has selected a function; wait up until timeout for next key
                 c = self.keypad.getc(down_keys, self.keypad_press_timeout_s, self.running)
                 if (len(c) == 0):
                     # Timeout with nothing entered
@@ -746,12 +748,13 @@ class KeypadPlugin:
                     # Reset command and go to next iteration
                     function_value = []
                 else:
+                    # Check if number key is pressed
                     hasNumberKey = False
                     for v in c:
-                        if v in KeypadPlugin.NUMBER_KEYS: # Only number keys are valid here
-                            # invlaid key!
+                        if v in KeypadPlugin.NUMBER_KEYS:
                             hasNumberKey = True
                             break
+                    # handle value if not number or selected function is not none
                     if ( not hasNumberKey ) or ( self.selected_function != KeypadPlugin.FN_NONE ):
                         self.__handle_value(c, down_keys)
         print "Exiting keypad task"
@@ -832,6 +835,7 @@ class KeypadPlugin:
             }
         if settings.has_key("defaultfn"):
             self.default_function = int(settings["defaultfn"])
+            self.__reset_selected_function()
         if settings.has_key("acknowledge_command_beep"):
             self.acknowledge_command_beep = KeypadPlugin.__string_to_button_list(settings["acknowledge_command_beep"])
         if settings.has_key("cancel_beep"):

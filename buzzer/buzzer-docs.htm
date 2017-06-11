@@ -1,0 +1,60 @@
+<body lang=EN-US style='tab-interval:.5in'>
+
+<div class=WordSection1>
+
+<h1>Buzzer Plugin Documentation</h1>
+
+<h2>Disclaimer</h2>
+
+<p class=MsoNormal>I am not responsible for any damage that the use of this
+plugin may cause. Use this plugin and these instructions at your own risk.</p>
+
+<h2>About the Buzzer Plugin</h2>
+
+<p class=MsoNormal>This plugin has been created to provide simple audio 
+feedback. A total of 1 GPIO pin is used on the Raspberry Pi for this 
+plugin. </p>
+
+<h2>Installing the Hardware</h2>
+
+<p class=MsoNormal>These instructions assume that you are using B+, version 2, 
+version 3, or pi zero hardware. To use other models of the Raspberry Pi, 
+buzzer.py may need to be modified to do so.</p>
+
+<p class=MsoNormal>Connect the buzzer so that pin 32 of the Raspberry Pi goes to
+the positive terminal of the buzzer and the negative terminal of the buzzer
+goes to one of the ground pins of the Raspberry Pi (one of 6, 9, 14, 25, 30,
+34, or 39). Note that the total current that may be supplied to all pins of the
+Raspberry Pi is 50 mA. It is up to the reader to make sure that the selected
+buzzer does not draw too much current from the Raspberry Pi. </p>
+
+<h2>Buzzer</h2>
+
+<p class=MsoNormal>The buzzer profiles may be changed from the keypad settings
+page. By default, the following beeps are used.</p>
+
+<p class=MsoNormal>Four beeps: The buzzer plugin has been enabled</p>
+
+<h2>Using the Plugin</h2>
+
+<p class=MsoNormal>This plugin is intended to be signaled from external plugins. 
+From another plugin, instantiate a 'buzzer_beep' signal, and then send the 
+signal either a single beep length value in seconds or a list of values in the 
+format [on time, off time, ...]. See below for an example of this. </p>
+
+<p class=MsoNormal>
+# get open sprinkler signals <br>
+from blinker import signal <br>
+# instantiate buzzer signal <br>
+buzzerSignal = signal('buzzer_beep') <br>
+# beep for 1.5 seconds <br>
+buzzerSignal.send(1.5) <br>
+# send a series of beeps <br>
+buzzerSignal.send([0.1,0.1,0.1,0.1,0.1]) <br>
+</p>
+
+</div>
+
+</body>
+
+</html>

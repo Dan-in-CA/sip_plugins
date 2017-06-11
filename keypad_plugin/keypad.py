@@ -881,6 +881,15 @@ class KeypadPlugin:
         with open('./data/keypad.json', 'w') as f:
             json.dump(settings, f) # save to file
         return
+    
+    ### Restart ###
+    # Restart signal needs to be handled in 1 second or less
+    def notify_restart(self, name, **kw):
+        print "Keypad plugin received restart signal; stopping keypad task..."
+        if self.stop():
+            print "Keypad task stopped"
+        else:
+            print "Could not stop keypad task"
 
 # Keypad plugin object
 keypad_plugin = KeypadPlugin()
@@ -910,19 +919,11 @@ class save_settings(ProtectedPage):
         keypad_plugin.load_from_dict(qdict) # load settings from dictionary
         keypad_plugin.save_keypad_settings() # Save keypad settings
         raise web.seeother('/')  # Return user to home page.
-        
-### Restart ###
-# Restart signal needs to be handled in 1 second or less
-def keypad_notify_restart(name, **kw):
-    print "Keypad plugin received restart signal; stopping keypad task..."
-    if keypad_plugin.stop():
-        print "Keypad task stopped"
-    else:
-        print "Could not stop keypad task"
+
 
 # Attach to restart signal
 restart = signal('restart')
-restart.connect(keypad_notify_restart)
+restart.connect(keypad_plugin.notify_restart)
 
 #  Run when plugin is loaded
 keypad_plugin.run()

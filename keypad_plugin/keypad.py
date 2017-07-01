@@ -528,6 +528,7 @@ class KeypadPlugin:
             # Reset water level to 100%
             print "Resetting water level to 100%"
             KeypadPlugin.__set_water_level(100)
+            return KeypadPlugin.EXECUTE_COMPLETE
         elif (hold_function == KeypadPlugin.HLDFN_TOGGLE_RAIN_DELAY):
             if( gv.sd['rd'] > 0 ):
                 # Deactivate rain delay

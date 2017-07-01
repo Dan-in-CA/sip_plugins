@@ -29,6 +29,15 @@ $var page: keypad_plugin
     });
 </script>
 
+<style>
+tr.padBottom > td
+{
+  padding-bottom: 10px; <!--or padding-top -->
+}
+input{ width: 100%; }
+select{ width: 100%; }
+</style>
+
 <div id="plugin">
     <div class="title">Keypad Plugin Settings
     </div>
@@ -38,23 +47,36 @@ $var page: keypad_plugin
         <p>$_('Options')</p>
         <table class="optionList">
             <tr>
-                <td style='text-transform: none;'>$_('Key Timeout (seconds)'):</td>
+                <td style='text-transform: none;'>$_('Key Timeout (seconds)')</td>
+            </tr>
+            <tr class="padBottom">
                 <td><input class="numbersonly" type="text" name="keytimeout" value="${settings['keytimeout'] if 'keytimeout' in settings else '5' }"></td>
             </tr>
             <tr>
                 <td style='text-transform: none;'>$_('Key Hold Time for Hold Function (seconds)'):</td>
+            </tr>
+            <tr class="padBottom">
                 <td><input class="numbersonly" type="text" name="keyholdtime" value="${settings['keyholdtime'] if 'keyholdtime' in settings else '1' }"></td>
             </tr>
             <tr>
-                <td style='text-transform: none;'>$_('Manual Station Time (minutes)'):</td>
+                <td style='text-transform: none;'>$_('Manual Station Time (minutes)')</td>
+            </tr>
+            <tr class="padBottom">
                 <td><input class="numbersonly" type="text" name="mstationtime" value="${settings['mstationtime'] if 'mstationtime' in settings else '5' }"></td>
             </tr>
             <tr>
-                <td style='text-transform: none;'>$_('Rain Delay Activation Time (hours)'):</td>
+                <td style='text-transform: none;'>$_('Rain Delay Activation Time (hours)')</td>
+            </tr>
+            <tr class="padBottom">
                 <td><input class="numbersonly" type="text" name="hrraindelay" value="${settings['hrraindelay'] if 'hrraindelay' in settings else '24' }"></td>
             </tr>
             <tr>
-                <td style='text-transform: none;'>$_('Default Function'):</td>
+                <td style='text-transform: none;'>$_('Default Function')</td>
+            </tr>
+            <tr>
+                <td style='text-transform: none;'>$_('(e.g. if this is set to Start Manual Station, entering 12# on the keypad will start station 12)')</td>
+            </tr>
+            <tr>
                 <td>
                 <select name="defaultfn">
 				  <option value="-1" ${"selected" if 'defaultfn' in settings and settings['defaultfn'] == '-1' else ""}>None</option>
@@ -71,6 +93,7 @@ $var page: keypad_plugin
         
         <br>
         <p>$_('Function Keys')</p>
+        <p>$_('(e.g. if A is set to Start Manual Station, entering A12# on the keypad will start station 12)')</p>
         <table class="optionList">
             <tr>
                 <td style='text-transform: none;'>$_('A'):</td>
@@ -132,6 +155,7 @@ $var page: keypad_plugin
 
         <br>
         <p>$_('Press and Hold Functions')</p>
+        <p>$_('(e.g. if A is set to Stop All Stations, pressing and holding A on the keypad will stop all running stations)')</p>
         <table class="optionList">
             <tr>
                 <td style='text-transform: none;'>$_('A'):</td>
@@ -211,23 +235,33 @@ $var page: keypad_plugin
         <p>$_('Feedback Beeps (on time, off time, on time, ...)')</p>
         <table class="optionList">
             <tr>
-                <td style='text-transform: none;'>$_('Value Acknowledge Beep List (milliseconds)'):</td>
+                <td style='text-transform: none;'>$_('Value Acknowledge Beep List (milliseconds)')</td>
+            </tr>
+            <tr class="padBottom">
                 <td><input class="listonly" type="text" name="acknowledge_command_beep" value="${settings['acknowledge_command_beep'] if 'acknowledge_command_beep' in settings else '100' }"></td>
             </tr>
             <tr>
-                <td style='text-transform: none;'>$_('Hold Function Executed Beep List (milliseconds)'):</td>
+                <td style='text-transform: none;'>$_('Hold Function Executed Beep List (milliseconds)')</td>
+            </tr>
+            <tr class="padBottom">
                 <td><input class="listonly" type="text" name="hold_function_executed_beep" value="${settings['hold_function_executed_beep'] if 'hold_function_executed_beep' in settings else '100, 50, 100' }"></td>
             </tr>
             <tr>
-                <td style='text-transform: none;'>$_('Toggle On Beep List (milliseconds)'):</td>
+                <td style='text-transform: none;'>$_('Toggle On Beep List (milliseconds)')</td>
+            </tr>
+            <tr class="padBottom">
                 <td><input class="listonly" type="text" name="hold_function_toggle_on_beep" value="${settings['hold_function_toggle_on_beep'] if 'hold_function_toggle_on_beep' in settings else '50, 50, 200' }"></td>
             </tr>
             <tr>
-                <td style='text-transform: none;'>$_('Toggle Off Beep List (milliseconds)'):</td>
+                <td style='text-transform: none;'>$_('Toggle Off Beep List (milliseconds)')</td>
+            </tr>
+            <tr class="padBottom">
                 <td><input class="listonly" type="text" name="hold_function_toggle_off_beep" value="${settings['hold_function_toggle_off_beep'] if 'hold_function_toggle_off_beep' in settings else '200, 50, 50' }"></td>
             </tr>
             <tr>
-                <td style='text-transform: none;'>$_('Cancel Beep List (milliseconds)'):</td>
+                <td style='text-transform: none;'>$_('Cancel Beep List (milliseconds)')</td>
+            </tr>
+            <tr>
                 <td><input class="listonly" type="text" name="cancel_beep" value="${settings['cancel_beep'] if 'cancel_beep' in settings else '100, 100, 500' }"></td>
             </tr>
         </table>

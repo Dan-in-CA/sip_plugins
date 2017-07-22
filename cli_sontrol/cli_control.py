@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 
 from blinker import signal
+
+# import urllib
+# import urllib2
+
 import subprocess
 import web, json, time
 import gv  # Get access to sip's settings, gv = global variables
@@ -12,12 +16,12 @@ gv.use_gpio_pins = False  # Signal sip to not use GPIO pins
 
 
 # Add a new url to open the data entry page.
-urls.extend(['/rfc', 'plugins.rf_control.settings',
-	'/rfcj', 'plugins.rf_control.settings_json',
-	'/rfcu', 'plugins.rf_control.update']) 
+urls.extend(['/clic', 'plugins.cli_control.settings',
+	'/clicj', 'plugins.cli_control.settings_json',
+	'/clicu', 'plugins.cli_control.update']) 
 
 # Add this plugin to the plugins menu
-gv.plugin_menu.append(['RF Control', '/rfc'])
+gv.plugin_menu.append(['CLI Control', '/clic'])
 
 commands = {}
 prior = [0] * len(gv.srvals)
@@ -26,7 +30,7 @@ prior = [0] * len(gv.srvals)
 def load_params():
     global commands
     try:
-        with open('./data/rf_control.json', 'r') as f:  # Read the settings from file
+        with open('./data/cli_control.json', 'r') as f:  # Read the settings from file
             commands = json.load(f)
     except IOError: #  If file does not exist create file with defaults.
         commands = {
@@ -51,7 +55,7 @@ def load_params():
     	"off command for station 8"     
     ]
 }
-        with open('./data/rf_control.json', 'w') as f:
+        with open('./data/cli_control.json', 'w') as f:
             json.dump(commands, f, indent=4)
     return
 
@@ -67,23 +71,15 @@ def on_zone_change(name, **kw):
     if gv.srvals != prior: # check for a change   
         for i in range(len(gv.srvals)):
             if gv.srvals[i] != prior[i]: #  this station has changed
-                if gv.srvals[i]:
-                	
-# 					print "issue on command for station ", i+1
-# 					command = ['echo'] 
-# 					command.append(commands['on'][i])
-
-#                     command = commands['on'][i])
-					command = "pilight-control -d station{0} -s on".format(str(i))
-					subprocess.call(command)
-                else:
-#                     print "issue off command for station ", i+1
-#                     command = ['echo'] 
-#                     command.append(commands['off'][i])
-
-#                     command = commands['off'][i])
-                    command = "pilight-control -d station{0} -s off".format(str(i))
-                    subprocess.call(command)                   
+                if gv.srvals[i]: # station is on
+# 					command = "wget http://xxx.xxx.xxx.xxx/relay1on"
+                    command = commands['on'][i]
+                    if command:
+                    	subprocess.call(command.split())
+                else:              	
+	                command = commands['off'][i]
+	                if command:	                	
+						subprocess.call(command.split())                 
         prior = gv.srvals[:]
     return
 
@@ -96,12 +92,12 @@ zones.connect(on_zone_change)
 ################################################################################
 
 class settings(ProtectedPage):
-    """Load an html page for entering rf_control adjustments"""
+    """Load an html page for entering cli_control commands"""
 
     def GET(self):
-        with open('./data/rf_control.json', 'r') as f:  # Read the settings from file
+        with open('./data/cli_control.json', 'r') as f:  # Read the settings from file
             commands = json.load(f)
-        return template_render.rf_control(commands)
+        return template_render.cli_control(commands)
 
 
 class settings_json(ProtectedPage):
@@ -114,20 +110,19 @@ class settings_json(ProtectedPage):
 
 
 class update(ProtectedPage):
-    """Save user input to rf_control.json file"""
+    """Save user input to cli_control.json file"""
 
     def GET(self):
         qdict = web.input()
-        changed = False
-        if commands['relays'] != int(qdict['relays']):  # if the number of relay channels changed, update the commands
-           commands['relays'] = int(qdict['relays'])
-           changed = True
-        if commands['active'] != str(qdict['active']):  # if the number of relay channels changed, update the commands
-           commands['active'] = str(qdict['active'])
-           commands['relays'] = 1  # since changing active could turn all the relays on, reduce the relay channels to 1
-           changed = True
-        if changed:
-           init_pins();
-           with open('./data/rf_control.json', 'w') as f:  # write the settings to file
-              json.dump(commands, f)
+#         print 'qdict: ', qdict
+#         print 'commands: ', commands
+		### add code to update commands ###
+        commands = {u'on': [], u'off': [] }
+        for i in range(gv.sd['nst']):
+            commands['on'].append(qdict['con'+str(i)])
+            commands['off'].append(qdict['coff'+str(i)])
+        	
+#         print 'new commands: ', commands
+        with open('./data/cli_control.json', 'w') as f:  # write the settings to file
+          	json.dump(commands, f, indent=4)
         raise web.seeother('/')

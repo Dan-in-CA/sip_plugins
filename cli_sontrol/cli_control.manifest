@@ -1,0 +1,14 @@
+Description: Allows the SIP program to use Linux commands to control remote sprinkler valves etc.
+Copyright 2017
+Author: Dan Kimberling
+Email:
+License: GNU GPL 3.0
+
+Requirements:
+
+##### List all plugin files below preceded by a blank line [file_name.ext path] relative to SIP directory #####
+
+cli_control.py plugins
+cli_control.html templates
+cli_control.json data (generated)
+cli_control.manifest plugins/manifests

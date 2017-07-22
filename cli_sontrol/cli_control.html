@@ -1,0 +1,77 @@
+$def with(commands)
+
+$var title: $_('SIP CLI Plugin') 
+$var page: cli_control
+
+<script>
+
+    // Initialize behaviors
+    jQuery(document).ready(function(){
+
+        jQuery("#cSubmit").click(function() {     	
+        	jQuery("#clic").submit();
+        });
+        jQuery("button#cCancel").click(function(){
+            window.location= baseUrl + "/";
+        });
+
+//         jQuery("button#docButton").click(function(){
+//             window.open(baseUrl + "/static/docs/plugins/cli_control-docs.html", "_blank");
+//         });
+
+    });
+</script>
+
+<style>
+.columnName {
+    text-align: center;
+}
+</style>
+
+<div id="plugin">
+<!--     <div class="title">Command Line Control -->
+<!--     <button class="execute" id="docButton" type="button" >$_('Help')</button> -->
+<!--     </div> -->
+    <div>
+    <p>This plugin can be used to control devices such as remote RF units via Linux commands.</p>
+    <p>Enter command line commands to be issued when a station is to be started or stopped.</p>
+    <p>For example a command might look like: wget http://xxx.xxx.xxx.xxx/relay1on 
+    <p>Leave fields blank for any stations not to be controlled from the command line.</p>
+    </div>
+
+</script>
+<div id="stations">
+    <div class="title">$_('Cl Commands')</div>
+    <form id="clic" name="clic" action="$app_path('/clicu')" method="get">
+        <table id="commandList">
+            <tr>
+                <th class="stationNumber">$_('Station')</th>
+                <th class="columnName">$_('Start Command')</th>
+                <th class="columnName">$_('Stop Command')</th>
+            </tr>
+            $for bid in range(0,gv.sd['nbrd']):
+                $for s in range(0,8):
+                    $ sid = bid*8 + s;
+                    <tr>
+                        <td class="stationNumber">${sid + 1}</td>
+                        <td class="command">                         
+                            <input type="text" size="50" value="${commands['on'][sid] if sid < len(commands['on']) else ''}" id="con${sid}" name="con${sid}">
+                        </td>                       
+                        <td>
+                            <input type="text" size="50" value="${commands['off'][sid] if sid < len(commands['off']) else ''}"  id="coff${sid}" name="coff${sid}">
+                        </td>                       
+                    </tr>
+        </table>
+        
+            $for bid in range(gv.sd['nbrd']):
+            	<input type="hidden" id="i${bid}" name="i${bid}"/>
+        
+    </form>
+            <p></p>
+</div>
+
+<div id="controls">
+    <button id="cSubmit" class="submit"><b>$_('Submit')</b></button>
+    <button id="cCancel" class="cancel danger">$_('Cancel')</button>
+</div>
+</div>

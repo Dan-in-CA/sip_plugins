@@ -35,24 +35,24 @@ def load_params():
     except IOError: #  If file does not exist create file with defaults.
         commands = {
     "on": [
-    	"on command for station 1",
-    	"on command for station 2",
-    	"on command for station 3",
-    	"on command for station 4",
-    	"on command for station 5",
-    	"on command for station 6",
-    	"on command for station 7",
-    	"on command for station 8" 
+    	"echo 'example start command for station1'",
+    	"",
+    	"",
+    	"",
+    	"",
+    	"",
+    	"",
+    	"" 
     ], 
     "off": [
-    	"off command for station 1",
-    	"off command for station 2",
-    	"off command for station 3",
-    	"off command for station 4",
-    	"off command for station 5",
-    	"off command for station 6",
-    	"off command for station 7",
-    	"off command for station 8"     
+    	"echo 'example stop command for station 1'",
+    	"",
+    	"",
+    	"",
+    	"",
+    	"",
+    	"",
+    	""     
     ]
 }
         with open('./data/cli_control.json', 'w') as f:

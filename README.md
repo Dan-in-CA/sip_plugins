@@ -14,6 +14,11 @@ california_monthly
 ---------
 Provides automatic monthly adjustment of irrigation times based on historical weather data.
 
+cli_control
+----------
+Replaces rf_control.  
+Sends command line commands to control remote stations e.g. RF devices.
+
 email_adj
 ----------
 Sends status email to google email account
@@ -72,10 +77,6 @@ Example plugin to demonstrate OSPi on-board relay
 relay_board
 ----------
 A plugin for using relay boards to control sprinkler valves, etc
-
-rf_control
-----------
-For testing only! Sends cli commands on station change.
 
 signaling_examples
 ----------

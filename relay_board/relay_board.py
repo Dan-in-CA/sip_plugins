@@ -11,13 +11,17 @@ gv.use_gpio_pins = False  # Signal OSPi to not use GPIO pins
 
 # Load the Raspberry Pi GPIO (General Purpose Input Output) library
 try:
-    if gv.use_pigpio:
-        import pigpio
-        pi = pigpio.pi()
-    else:
-        import RPi.GPIO as GPIO
-        pi = 0
-except IOError:
+    if gv.platform == 'pi' or gv.platform == 'bo':
+        if gv.use_pigpio:
+            import pigpio
+            pi = pigpio.pi()
+        else:
+            import RPi.GPIO as GPIO
+            pi = 0
+    elif gv.platform == 'odroid-c2':
+        import wiringpi2 as GPIO
+        GPIO.wiringPiSetup() 
+except GPIOError:
     pass
 
 # Add a new url to open the data entry page.
@@ -53,19 +57,27 @@ try:
         if not gv.use_pigpio:
             GPIO.setmode(GPIO.BOARD) #IO channels are identified by header connector pin numbers. Pin numbers are 
         relay_pins = [11,12,13,15,16,18,22,7,3,5,24,26,29,31,32,33,35,36,37,38]
-        for i in range(len(relay_pins)):
-            try:
-                relay_pins[i] = gv.pin_map[relay_pins[i]]
-            except:
-                relay_pins[i] = 0
-        pin_rain_sense = gv.pin_map[8]
-        pin_relay = gv.pin_map[10]
+    elif gv.platform == 'odroid-c2':
+        relay_pins = [11,12,13,15,16,18,22,7,24,26,29,31,32,33,35,36]
     else:
         print 'relay board plugin only supported on pi.'
+        raise ValueError('relay board plugin not compatible with your hardware...')
+    
+    for i in range(len(relay_pins)):
+        try:
+            relay_pins[i] = gv.pin_map[relay_pins[i]]
+        except:
+            relay_pins[i] = 0
+    pin_rain_sense = gv.pin_map[8]
+    pin_relay = gv.pin_map[10]
 except:
   print 'Relay board: GPIO pins not set'
   pass
 
+  
+from gpio_pins import set_pin_mode_output
+from gpio_pins import set_pin_high
+from gpio_pins import set_pin_low
 
 #### setup GPIO pins as output and either high or low ####
 def init_pins():
@@ -73,20 +85,11 @@ def init_pins():
 
   try:
     for i in range(params['relays']):
-        if gv.use_pigpio:
-            pi.set_mode(relay_pins[i], pigpio.OUTPUT)
-        else:
-            GPIO.setup(relay_pins[i], GPIO.OUT)
+        set_pin_mode_output(relay_pins[i])
         if params['active'] == 'low':
-            if gv.use_pigpio:
-                pi.write(relay_pins[i],1)
-            else:
-                GPIO.output(relay_pins[i], GPIO.HIGH)
+            set_pin_high(relay_pins[i])
         else:
-            if gv.use_pigpio:
-                pi.write(relay_pins[i],0)
-            else:
-                GPIO.output(relay_pins[i], GPIO.LOW)
+            set_pin_low(relay_pins[i])
         time.sleep(0.1)
   except:
     pass
@@ -102,27 +105,15 @@ def on_zone_change(arg): #  arg is just a necessary placeholder.
             try:
                 if gv.output_srvals[i]:  # if station is set to on
                     if params['active'] == 'low':  # if the relay type is active low, set the output low
-                        if gv.use_pigpio:
-                            pi.write(relay_pins[i],0)
-                        else:
-                            GPIO.output(relay_pins[i], GPIO.LOW)
+                        set_pin_low(relay_pins[i])
                     else:  # otherwise set it high
-                        if gv.use_pigpio:
-                            pi.write(relay_pins[i],1)
-                        else:
-                            GPIO.output(relay_pins[i], GPIO.HIGH)
+                        set_pin_high(relay_pins[i])
 #                    print 'relay switched on', i + 1, "pin", relay_pins[i]  #  for testing #############
                 else:  # station is set to off
                     if params['active'] == 'low':  # if the relay type is active low, set the output high
-                        if gv.use_pigpio:
-                            pi.write(relay_pins[i],1)
-                        else:
-                            GPIO.output(relay_pins[i], GPIO.HIGH)
+                        set_pin_high(relay_pins[i])
                     else:  # otherwise set it low
-                        if gv.use_pigpio:
-                            pi.write(relay_pins[i],0)
-                        else:
-                            GPIO.output(relay_pins[i], GPIO.LOW)
+                        set_pin_low(relay_pins[i])
 #                    print 'relay switched off', i + 1, "pin", relay_pins[i]  #  for testing ############
             except Exception, e:
                 print "Problem switching relays", e, relay_pins[i]

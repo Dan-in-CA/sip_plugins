@@ -58,7 +58,7 @@ try:
             GPIO.setmode(GPIO.BOARD) #IO channels are identified by header connector pin numbers. Pin numbers are 
         relay_pins = [11,12,13,15,16,18,22,7,3,5,24,26,29,31,32,33,35,36,37,38]
     elif gv.platform == 'odroid-c2':
-        relay_pins = [11,12,13,15,16,18,22,7,24,26,29,31,32,33,35,36]
+        relay_pins = [11,12,13,15,16,18,22,24,26,29,31,32,33,35,36]
     else:
         print 'relay board plugin only supported on pi.'
         raise ValueError('relay board plugin not compatible with your hardware...')

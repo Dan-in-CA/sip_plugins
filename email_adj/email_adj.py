@@ -72,7 +72,7 @@ class EmailSender(Thread):
         time.sleep(randint(3, 10))  # Sleep some time to prevent printing before startup information
 
         dataeml = get_email_options()  # load data from file
-        subject = "Report from SIP"  # Subject in email
+        subject = "Report from " + gv.sd['name'] # Subject in email
         last_rain = 0
         was_running = False
 

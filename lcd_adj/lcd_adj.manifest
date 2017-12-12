@@ -8,4 +8,4 @@ lcd_adj.py plugins
 lcd_adj.html templates
 lcd_adj.json data (generated)
 lcd_adj.manifest plugins/manifests
-pylcd2.py .
+pylcd.py .

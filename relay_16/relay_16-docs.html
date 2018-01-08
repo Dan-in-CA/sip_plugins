@@ -1,0 +1,42 @@
+<!DOCTYPE HTML
+<HTML>
+<HEAD>
+	<META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=windows-1252">
+	<TITLE>relay_16-docs.html</TITLE>
+	<META NAME="GENERATOR" CONTENT="OpenOffice 4.1.1  (Win32)">
+	<META NAME="CREATED" CONTENT="0;0">
+	<META NAME="CHANGED" CONTENT="0;0">
+	<META NAME="viewport" CONTENT="width=device-width, initial-scale=1.0">
+    <link href="../../themes/basic/base.css" rel="stylesheet" type="text/css"/>
+</HEAD>
+<BODY LANG="en-US" BGCOLOR="#ffffff" DIR="LTR" STYLE="border: none; padding: .25in">
+<H1><A NAME="proto-plugin-documentation"></A>Relay_16 Plugin Documentation</H1>
+
+<P>This is a modified versions of the relay_board plugin. It is designed for use with 
+Raspberry Pi models with a 40 pin GPIO header.</P>
+<p>The diagram below shows the GPIO pin header and indicates the pins to use with this plugin.</p>
+
+
+
+<p> You can use a relay board with 1, 2, 4, 8 or 16 relays or a combination of those up to 16 relays.</p><br>
+<p><b>Caution:</b> when using more than 1 relay board, the boards must all be either low-level trigger or all high-level trigger. You can not mix the trigger types.</p><br>
+<p>Connect the board(s) to the Raspberry Pi following the channel numbering indicated in blue on the diagram. For example, if you are
+connecting a 1 channel relay board and a 4 channel board, connect the first board starting with pin 18 on the Pi and continue with pins 22, 24, 26 and 32.
+The relays will then operate as stations 1 through 5.<br>
+
+<div>
+	<img src="../images/Relay_16-connect.png" alt="Wiring diagram">
+</div>
+<div>
+	<ul>
+		<li>
+			The 5V and ground pins on the Pi can be used to power 1 or 2 relay boards. If more boards are being used or if more than a couple of relays will be turned on at the same time It is a good idea to use a separate power supply to power the boards.</li><br>
+		<li>
+			If you are using more than 8 channels and need to increase the number of stations SIP displays, open the <b>Options menu > Station Handling</b> and incrase the number of <b>Extension boards</b>. Increasing the number by 1 will add 8 stations to SIP.</li><br>
+		<li>
+			If the number of relays you are using is not a multiple of 8 you can hide the unused stations. Open the <b>Stations</b> menu and uncheck the boxes under <b>Enabled?</b> next to the stations you are not using.</li>		
+	</ul>
+</div>
+
+</BODY>
+</HTML>

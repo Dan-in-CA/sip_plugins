@@ -74,6 +74,11 @@ relay
 ----------
 Example plugin to demonstrate OSPi on-board relay
 
+relay_16
+----------
+A relaly_board update for use on 40 pin GPIO headers.
+Supports up to 16 relays. Requires SIP 3.2.43 or later.
+
 relay_board
 ----------
 A plugin for using relay boards to control sprinkler valves, etc

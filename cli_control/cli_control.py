@@ -7,12 +7,12 @@ from blinker import signal
 
 import subprocess
 import web, json, time
-import gv  # Get access to sip's settings, gv = global variables
-from urls import urls  # Get access to sip's URLs
+import gv  # Get access to SIP's settings, gv = global variables
+from urls import urls  # Get access to SIP's URLs
 from sip import template_render
 from webpages import ProtectedPage
 
-gv.use_gpio_pins = False  # Signal sip to not use GPIO pins
+gv.use_gpio_pins = False  # Signal SIP to not use GPIO pins
 
 
 # Add a new url to open the data entry page.

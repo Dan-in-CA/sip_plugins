@@ -157,7 +157,7 @@ class LCDSender(Thread):
                 for i in range(len(gv.ps)):
                     p, d = gv.ps[i]
                     if p != 0:
-                        s += "S{} ".format(str(i))
+                        s += "S{} ".format(str(i+1))
             lcd.lcd_puts(prg, 1)
             lcd.lcd_puts(s, 2)
 

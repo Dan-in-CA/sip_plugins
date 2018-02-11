@@ -2,12 +2,12 @@
 
 from blinker import signal
 import web, json, time
-import gv  # Get access to ospi's settings, gv = global variables
-from urls import urls  # Get access to ospi's URLs
-from ospi import template_render
+import gv  # Get access to SIP's settings, gv = global variables
+from urls import urls  # Get access to SIP's URLs
+from sip import template_render
 from webpages import ProtectedPage
 
-gv.use_gpio_pins = False  # Signal OSPi to not use GPIO pins
+gv.use_gpio_pins = False  # Signal SIP to not use GPIO pins
 
 # Load the Raspberry Pi GPIO (General Purpose Input Output) library
 try:

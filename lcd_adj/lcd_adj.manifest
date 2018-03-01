@@ -1,11 +1,11 @@
 Description: This plugin sends data to I2C for LCD 16x2 char with PCF8574. Visit for more: www.pihrt.com/elektronika/258-moje-rapsberry-pi-i2c-lcd-16x2.
 Author: Martin Pihrt
-Requirements: python pylcd2.py library
 
 ##### List all plugin files below preceded by a blank line [file_name.ext path] relative to SIP directory #####
 
 lcd_adj.py plugins
 lcd_adj.html templates
+lcd_adj-docs.html static/docs/plugins
 lcd_adj.json data (generated)
 lcd_adj.manifest plugins/manifests
 pylcd.py .

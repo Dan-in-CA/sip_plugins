@@ -1,0 +1,114 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+	<title>LCD Plugin Documentation</title>
+    <link href="../../themes/basic/base.css" rel="stylesheet" type="text/css"/>
+</head>
+<BODY LANG="en-US" BGCOLOR="#ffffff" DIR="LTR" STYLE="border: none; padding: 0in">
+<h1 class="western"><a name="lcd-plugin-documentation"></a>LCD Plugin Documentation</h1>
+<h2 class="western"><a name="about-the-lcd-plugin"></a>About the LCD Plugin</h2>
+<p>The LCD plugin is designed to display SIP status information on a 16x2 character LCD display. The display is connected with the I2C bus using a PCF8574.</p>
+<p>Each Item will show on the display for 4 seconds.</p>
+<p>Compatible with HD44780 LCD 16x2 controller.</p>
+<h2 class="western"><a name="using-the-lcd-plugin"></a>Using the LCD Plugin</h2>
+<table border="1">
+	<tr>
+		<td>
+			<p>Use I2C LCD</p>
+		</td>
+		<td>
+			<p>Cause the plugin to start displaying information on the LCD</p>
+		</td>
+	</tr>
+	<tr>
+		<td>
+			<p>I2C Address</p>
+		</td>
+		<td>
+			<p>Select the I2C address for your device</p>
+		</td>
+	</tr>
+	<tr>
+		<td>
+			<p>SIP Software Version</p>
+		</td>
+		<td>
+			<p>Show the SIP software version</p>
+		</td>
+	</tr>
+	<tr>
+		<td>
+			<p>IP</p>
+		</td>
+		<td>
+			<p>Show the IP address of the device SIP is running on</p>
+		</td>
+	</tr>
+	<tr>
+		<td>
+			<p>Port</p>
+		</td>
+		<td>
+			<p>Show the port number of the web server</p>
+		</td>
+	</tr>
+	<tr>
+		<td>
+			<p>CPU Temp</p>
+		</td>
+		<td>
+			<p>Show the CPU temperature of the device SIP is running on</p>
+		</td>
+	</tr>
+	<tr>
+		<td>
+			<p>Time and Date</p>
+		</td>
+		<td>
+			<p>Show the current time and date</p>
+		</td>
+	</tr>
+	<tr>
+		<td>
+			<p>Uptime</p>
+		</td>
+		<td>
+			<p>Show the system uptime</p>
+		</td>
+	</tr>
+	<tr>
+		<td>
+			<p>Rain Sensor</p>
+		</td>
+		<td>
+			<p>Show the rain sensor status</p>
+		</td>
+	</tr>
+	<tr>
+		<td>
+			<p>Running Stations</p>
+		</td>
+		<td>
+			<p>Show list of running stations</p>
+		</td>
+	</tr>
+	<tr>
+		<td>
+			<p>Status</p>
+		</td>
+		<td>
+			<p>Show LCD plugin status</p>
+		</td>
+	</tr>
+</table>
+<h2 class="western"><a name="troubleshooting-the-lcd-plugin"></a>Troubleshooting</h2>
+<p>The most likely cause of information not showing on the display is having the incorrect I2C address selected for your hardware. Use i2cdetect to check the address of your device.</p>
+<PRE CLASS="western" STYLE="margin-bottom: 0.2in"><CODE CLASS="western">sudo i2cdetect -y 1</CODE></PRE>
+<p>If you use one of the first RPI (Raspberry Pi Model B 256 megabytes), then we have to change the command:</p>
+<PRE CLASS="western" STYLE="margin-bottom: 0.2in"><CODE CLASS="western">sudo i2cdetect -y 0</CODE></PRE>
+<p>Should the LCD not work when connected, Use I2C LCD is checked and the correct I2C address is selected then it is probably best to run SIP from the command line as the LCD plugin prints status information.</p>
+<p>If using a Raspberry Pi, and possibly other hardware, the 5v GPIO is active on power up so the back light may come on but nothing will display on the LCD if the settings are incorrect or the wiring of the I2C bus is incorrect.</p>
+<h2 class="western"><a name="other-the-lcd-plugin"></a>Other</h2>
+<p>For original documentation and instructions on how to build your own I2C to LCD board visit: <a href="https://www.pihrt.com/elektronika/258-moje-rapsberry-pi-i2c-lcd-16x2">My Rapsberry Pi - I2C LCD 16x2</a></p>
+</body>
+</html>

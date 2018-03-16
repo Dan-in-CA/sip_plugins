@@ -87,9 +87,9 @@ class LCDSender(Thread):
             self._sleep(5)
             return
 
-        import pylcd2  # Library for LCD 16x2 PCF8574
-        lcd = pylcd2.lcd(adr,
-                         1 if get_rpi_revision() >= 2 else 0)  # Address for PCF8574 = example 0x20, Bus Raspi = 1 (0 = 256MB, 1=512MB)
+        import pylcd  # Library for LCD 16x2 PCF8574
+        lcd = pylcd.lcd(adr,
+                         (1 if get_rpi_revision() >= 2 else 0), 1)  # Address for PCF8574 = example 0x20, Bus Raspi = 1 (0 = 256MB, 1=512MB)
 
         if report == 'name':
             lcd.lcd_clear()
@@ -157,7 +157,7 @@ class LCDSender(Thread):
                 for i in range(len(gv.ps)):
                     p, d = gv.ps[i]
                     if p != 0:
-                        s += "S{} ".format(str(i))
+                        s += "S{} ".format(str(i+1))
             lcd.lcd_puts(prg, 1)
             lcd.lcd_puts(s, 2)
 

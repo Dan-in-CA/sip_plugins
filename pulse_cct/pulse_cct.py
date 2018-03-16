@@ -3,9 +3,9 @@
 to discover the location of a valve'''
 import web
 from time import sleep
-import gv # Get access to ospi's settings
-from urls import urls # Get access to ospi's URLs
-from ospi import template_render  #  Needed for working with web.py templates
+import gv # Get access to SIP's settings
+from urls import urls # Get access to SIP's URLs
+from sip import template_render  #  Needed for working with web.py templates
 from helpers import stop_stations, jsave
 from webpages import ProtectedPage  # Needed for security
 from gpio_pins import set_output

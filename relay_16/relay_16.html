@@ -1,0 +1,69 @@
+$def with (m_vals)
+
+$var title: $_('SIP - Relay 16 Settings')
+$var page: plugins
+<script>
+   // Initialize behaviors
+   jQuery(document).ready(function(){
+
+      jQuery("#cSubmit").click(function() {
+         jQuery("#pluginForm").submit();
+      });
+      jQuery("button#cCancel").click(function(){
+         window.location="/";
+      });
+
+       jQuery("button#docButton").click(function(){
+           window.open(baseUrl + "/static/docs/plugins/relay_16-docs.html", "_blank"); //Edit: replace "proto-docs.html"
+       })
+
+   });
+</script>
+
+<div id="plugin">
+   <div class="title">$_('Relay 16 Settings')
+   <button class="execute" id="docButton" type="button" >$_('Setup Help')</button>
+   </div>
+   <p>$_('This plugin allows SIP to control relay boards with up to 16 relays.')
+   </p>
+   <br>
+   <form id="pluginForm" action="/rbu16" method="get">
+   <table class="optionList">
+    <tr>
+        <td style='text-transform: none;'>$_('Enable relays'):</td>
+        <td><input type="checkbox" name="enabled" ${"checked" if m_vals['enabled']=='on' else ""}></td>
+    </tr>
+   	<tr>
+   	  <td style='text-transform: none;'>$_('Relay channels'): &nbsp;</td>
+   	  <td>
+	   <div class='option' title='Number of relays connected to the Raspberry Pi (relay boards are commonly 1. 2, 4, 8, 16)'>
+	      <select name="relays">
+	         <option value="1" ${" selected" if m_vals[u"relays"]==1 else ""}>1</option>
+	         <option value="2" ${" selected" if m_vals[u"relays"]==2 else ""}>2</option>
+	         <option value="4" ${" selected" if m_vals[u"relays"]==4 else ""}>4</option>
+	         <option value="8" ${" selected" if m_vals[u"relays"]==8 else ""}>8</option>
+	         <option value="16" ${" selected" if m_vals[u"relays"]==16 else ""}>16</option>
+	      </select>
+	      <span class='tooltip'>$_('Number of relays connected to the Raspberry Pi /(relay boards are commonly 1, 2, 4, 8, 16)')</span>
+	   </div> </td>
+	  </tr>
+	  <tr> 
+	  <td style='text-transform: none;'>$_('Trigger Level'):</td>
+	  <td>
+	   <div class='option' title='Low level trigger (Active low) means the relay turns on when the input is low and turns off when the input is high. Hith level trigger (Active high) does the opposite.'>
+	      <input type="radio" name="active" value="low" ${" checked" if m_vals[u"active"]==u"low" else ""}>$_('Low')
+	      <input type="radio" name="active" value="high" ${" checked" if m_vals[u"active"]==u"high" else ""}>$_('High')
+	      <span class='tooltip'>$_('Active low means the relay turns on when the input is low and turns off when the input is high. Active high does the opposite.')</span>
+	   </div></td>
+	  </tr> 
+   </table>
+   <br>
+   <p><b>$_('IMPORTANT'):</b> $_('If') <b>$_('Trigger level')</b> $_('is changed'), <b>$_('Relay channels')</b> $_('will be set to') <b>1</b> $_('to prevent all the relays being switched on, and possibly damaging the power supply.')
+         $_('After verifying that the first relay is off, return to this page and set') <b>$_('Relay channels')</b> $_('to the correct number.')
+   </p>
+   </form>
+</div>
+<div id="controls">
+    <button id="cSubmit" class="submit"><b>$_('Submit')</b></button>
+    <button id="cCancel" class="cancel danger">$_('Cancel')</button>
+</div>

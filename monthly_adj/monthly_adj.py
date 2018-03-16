@@ -5,9 +5,9 @@ import json
 import time
 
 import web
-import gv  # Get access to ospi's settings
-from urls import urls  # Get access to ospi's URLs
-from ospi import template_render
+import gv  # Get access to sip's settings
+from urls import urls  # Get access to sip's URLs
+from sip import template_render
 from webpages import ProtectedPage
 
 

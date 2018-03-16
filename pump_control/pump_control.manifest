@@ -7,7 +7,7 @@ See pumpControlv2.ino for the arduino code.
  The controller interfaces via I2C with the raspberry to report the pressure on the pipe and configure the parametes
  To control the pump relay, just connect the statuin pin to the arduino, see the code.
 
-##### List all plugin files below preceded by a blank line [file_name.ext path] relative to OSPi directory #####
+##### List all plugin files below preceded by a blank line [file_name.ext path] relative to SIP directory #####
 
 pump_control.py plugins
 pump_control.html templates

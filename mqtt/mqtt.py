@@ -25,6 +25,8 @@ _client = None
 _settings = {
     'broker_host': 'localhost',
     'broker_port': 1883,
+    'broker_username': 'user',
+    'broker_password': 'pass',
     'publish_up_down': ''
 }
 _subscriptions = {}
@@ -58,6 +60,8 @@ class save_settings(ProtectedPage):
                 port = int(qdict['broker_port'])
                 assert port > 80 and port < 65535
                 _settings['broker_port'] = port
+                _settings['broker_username'] = qdict['broker_username']
+                _settings['broker_password'] = qdict['broker_password']
                 _settings['broker_host'] = qdict['broker_host']
                 _settings['publish_up_down'] = qdict['publish_up_down']
             except:

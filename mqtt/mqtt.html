@@ -42,6 +42,14 @@ $var page: mqtt_plugin
                 <td><input type="text" name="broker_port" value="${settings['broker_port']}"></td>
             </tr>
             <tr>
+                <td style='text-transform: none;'>$_('MQTT Broker Username'):</td>
+                <td><input type="text" name="broker_username" value="${settings['broker_username']}"></td>
+            </tr>
+            <tr>
+                <td style='text-transform: none;'>$_('MQTT Broker Password'):</td>
+                <td><input type="text" name="broker_password" value="${settings['broker_password']}"></td>
+            </tr>
+            <tr>
               <td style='text-transform: none;'>$_('MQTT Publish up/down topic'):</td>
               <td><input type="text" name="publish_up_down" value="${settings['publish_up_down']}">
               Leave blank to not publish SIP status.</td>

@@ -1,5 +1,5 @@
 # !/usr/bin/env python
-# this plugins send and check SMS data for modem to control your ospi
+# this plugins send and check SMS data for modem to control your SIP
 
 from threading import Thread
 from random import randint
@@ -9,10 +9,10 @@ import sys
 import traceback
 
 import web
-import gv  # Get access to ospi's settings
+import gv  # Get access to SIP's settings
 from helpers import get_ip, uptime, reboot, poweroff, timestr, jsave, restart
-from urls import urls  # Get access to ospi's URLs
-from ospi import template_render
+from urls import urls  # Get access to SIP's URLs
+from SIP import template_render
 from webpages import ProtectedPage
 
 
@@ -185,9 +185,9 @@ def sms_check(self):
                     sm.DeleteSMS(m['Folder'], m['Location'])  # SMS deleted
                     self.add_status('Received SMS was deleted')
 
-                elif m['Text'] == comm2:        # If command = comm2 (stop - system OSPi off)
+                elif m['Text'] == comm2:        # If command = comm2 (stop - system SIP off)
                     self.add_status('Command ' + comm2 + ' is processed')
-                    gv.sd['en'] = 0            # disable system OSPi
+                    gv.sd['en'] = 0            # disable system SIP
                     jsave(gv.sd, 'sd')         # save en = 0
                     message = {
                         'Text': 'Command: ' + comm2 + ' was processed',
@@ -200,9 +200,9 @@ def sms_check(self):
                     sm.DeleteSMS(m['Folder'], m['Location'])
                     self.add_status('Received SMS was deleted')
 
-                elif m['Text'] == comm3:         # If command = comm3 (start - system ospi on)
+                elif m['Text'] == comm3:         # If command = comm3 (start - system SIP on)
                     self.add_status('Command ' + comm3 + ' is processed')
-                    gv.sd['en'] = 1             # enable system OSPi
+                    gv.sd['en'] = 1             # enable system SIP
                     jsave(gv.sd, 'sd')          # save en = 1
                     message = {
                         'Text': 'Command: ' + comm3 + ' was processed',
@@ -245,7 +245,7 @@ def sms_check(self):
                     self._sleep(10)
                     poweroff()                  # poweroff linux system
 
-                elif m['Text'] == comm6:        # If command = comm6 (update ospi system)
+                elif m['Text'] == comm6:        # If command = comm6 (update SIP system)
                     self.add_status('Command ' + comm6 + ' is processed')
                     message = {
                         'Text': 'Command: ' + comm6 + ' was processed',

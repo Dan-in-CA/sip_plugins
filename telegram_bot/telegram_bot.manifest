@@ -1,6 +1,6 @@
 A simple telegram.org bot to interface with a SIP installation.
 
-##### List all plugin files below preceded by a blank line [file_name.ext path] relative to OSPi directory #####
+##### List all plugin files below preceded by a blank line [file_name.ext path] relative to SIP directory #####
 
 telegramBot.py plugins
 telegramBot.html templates

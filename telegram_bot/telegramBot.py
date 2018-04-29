@@ -143,7 +143,7 @@ class SipBot(Thread):
         chat_id = update.message.chat_id
         if chat_id in self.currentChats:
             txt = "{} System <b>ON</b>".format(gv.sd[u'name'])
-            gv.sd['en'] = 1  # enable system OSPi
+            gv.sd['en'] = 1  # enable system SIP
             gv.sd['mm'] = 0 # Disable Manual Mode
             jsave(gv.sd, 'sd')  # save en = 1
         else:
@@ -166,7 +166,7 @@ class SipBot(Thread):
         chat_id = update.message.chat_id
         if chat_id in self.currentChats:
             txt = "{} RunOnce: program {} Not yet Implemented!!!!!".format(gv.sd[u'name'], args)
-#               gv.sd['en'] = 0  # disable system OSPi
+#               gv.sd['en'] = 0  # disable system SIP
 #               jsave(gv.sd, 'sd')  # save en = 0
         else:
             txt = "I'm sorry Dave I'm afraid I can't do that."

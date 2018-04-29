@@ -6,7 +6,7 @@ License: GNU GPL 3.0
 
 Requirements: none
 
-##### List all plugin files below preceded by a blank line [file_name.ext path] relative to OSPi directory #####
+##### List all plugin files below preceded by a blank line [file_name.ext path] relative to SIP directory #####
 
 mqtt.py plugins
 mqtt.html templates

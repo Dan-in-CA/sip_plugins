@@ -1,8 +1,8 @@
-Description: This plugin send and check SMS data for modem to control your ospi
+Description: This plugin send and check SMS data for modem to control your SIP
 Author: Martin Pihrt
 Requirements:
 
-##### List all plugin files below preceded by a blank line [file_name.ext path] relative to OSPi directory #####
+##### List all plugin files below preceded by a blank line [file_name.ext path] relative to SIP directory #####
 
 sms_adj.py plugins
 sms_adj.html templates

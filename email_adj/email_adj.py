@@ -10,9 +10,9 @@ import sys
 import traceback
 
 import web
-import gv  # Get access to ospi's settings
-from urls import urls  # Get access to ospi's URLs
-from ospi import template_render
+import gv  # Get access to SIP's settings
+from urls import urls  # Get access to SIP's URLs
+from sip import template_render
 from webpages import ProtectedPage
 from helpers import timestr
 
@@ -72,7 +72,7 @@ class EmailSender(Thread):
         time.sleep(randint(3, 10))  # Sleep some time to prevent printing before startup information
 
         dataeml = get_email_options()  # load data from file
-        subject = "Report from ospi"  # Subject in email
+        subject = "Report from " + gv.sd['name'] # Subject in email
         last_rain = 0
         was_running = False
 
@@ -115,13 +115,13 @@ class EmailSender(Thread):
                             pgr = str(gv.lrun[1])
 
                         dur = str(timestr(gv.lrun[2]))
-                        start = time.gmtime(gv.now - gv.lrun[2])
+                        start = time.gmtime(gv.now - gv.lrun[2])\
 
-                        body = 'On ' + time.strftime("%d.%m.%Y at %H:%M:%S", time.localtime(time.time())) + \
-                               ': System last run: ' + 'Station ' + str(gv.lrun[0]) + \
-                               ', Program ' + pgr + \
-                               ', Duration ' + dur + \
-                               ', Start time ' + time.strftime("%d.%m.%Y at %H:%M:%S", start)
+                        body = ('On ' + time.strftime("%d.%m.%Y at %H:%M:%S", time.localtime(time.time())) + '\n'
+                               'SIP has run: Station '  + str(gv.lrun[0]+1) +", " + gv.snames[gv.lrun[0]] + '\n'
+                               'Program: ' + pgr + '\n'
+                               'Start time: ' + time.strftime("%d.%m.%Y at %H:%M:%S", start) + '\n'
+                               'Duration: ' + dur)
 
                         self.try_mail(subject, body)     # send email without attachment
 

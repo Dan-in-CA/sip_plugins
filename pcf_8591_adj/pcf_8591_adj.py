@@ -9,9 +9,9 @@ import sys
 import traceback
 
 import web
-import gv  # Get access to ospi's settings
-from urls import urls  # Get access to ospi's URLs
-from ospi import template_render
+import gv  # Get access to SIP's settings
+from urls import urls  # Get access to SIP's URLs
+from sip import template_render
 from webpages import ProtectedPage
 from helpers import get_rpi_revision
 

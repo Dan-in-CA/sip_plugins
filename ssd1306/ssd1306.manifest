@@ -1,0 +1,6 @@
+Enables the use of a SSD1306 128x64 attached to the pi in i2c interface
+
+##### List all plugin files below preceded by a blank line [file_name.ext path] relative to SIP directory #####
+
+ssd1306.py plugins
+ssd1306.manifest plugins/manifests

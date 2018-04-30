@@ -10,6 +10,11 @@ This is free software: you can redistribute it and/or modify it under the terms 
 These programs are distributed in the hope that they will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 <http://opensource.org/licenses/gpl-3.0.html>
 ******************
+buzzer
+---------
+This plugin has been created to provide simple audio feedback. This plugin is intended to be controlled through other 
+plugins through the "buzzer_beep" signal. Buzzer should be connected to GPIO pin 32.
+
 california_monthly
 ---------
 Provides automatic monthly adjustment of irrigation times based on historical weather data.
@@ -22,6 +27,10 @@ Sends command line commands to control remote stations e.g. RF devices.
 email_adj
 ----------
 Sends status email to google email account
+
+keypad_plugin
+----------
+A plugin for using an 4X4 scanning keypad and buzzer to execute simple functions without the use of an external peripheral
 
 lcd_adj
 ----------
@@ -90,6 +99,10 @@ Example plugin provides functions triggered by signals from core program (instal
 sms_adj
 ----------
 Control your ospi using SMS (Short Message Service)
+
+ssd1306
+----------
+Plugin for SSD1306 128x64 pixel display connected to I2C interface with HW address 0x3c.
 
 system_update
 ----------

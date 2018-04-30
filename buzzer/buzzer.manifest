@@ -1,0 +1,8 @@
+Enables the use of a buzzer attached to the pi
+
+##### List all plugin files below preceded by a blank line [file_name.ext path] relative to SIP directory #####
+
+buzzer.py plugins
+buzzer.html templates
+buzzer.json data (generated)
+buzzer.manifest plugins/manifests

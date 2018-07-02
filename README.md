@@ -4,7 +4,7 @@ SIP Plugins
 
 ####To ask questions and learn more about SIP and plugins please visit the **[SIP Forum](http://nosack.com/sipforum/index.php)**
 
-**Please note:** Unless otherwise stated:  
+**Please note:** Unless otherwise stated:
 This is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
 These programs are distributed in the hope that they will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
@@ -12,7 +12,7 @@ These programs are distributed in the hope that they will be useful, but WITHOUT
 ******************
 buzzer
 ---------
-This plugin has been created to provide simple audio feedback. This plugin is intended to be controlled through other 
+This plugin has been created to provide simple audio feedback. This plugin is intended to be controlled through other
 plugins through the "buzzer_beep" signal. Buzzer should be connected to GPIO pin 32.
 
 california_monthly
@@ -21,7 +21,7 @@ Provides automatic monthly adjustment of irrigation times based on historical we
 
 cli_control
 ----------
-Replaces rf_control.  
+Replaces rf_control.
 Sends command line commands to control remote stations e.g. RF devices.
 
 email_adj
@@ -34,7 +34,7 @@ A plugin for using an 4X4 scanning keypad and buzzer to execute simple functions
 
 lcd_adj
 ----------
-Uses I2C for LCD 16x2 char data display  
+Uses I2C for LCD 16x2 char data display
 Requires pylcd2 library
 
 monthly_adj
@@ -51,6 +51,11 @@ mqtt_schedule
 --------------
 Relies on MQTT, subscribes to a control topic and schedules
 run once programs as command by MQTT.
+
+mqtt_slave
+--------------
+Relies on MQTT, subscribes to a control topic and allows
+one SIP system to control other SIPs using MQTT.
 
 mqtt_zones
 -------------
@@ -111,7 +116,7 @@ Allows updating OSPi software from integrated UI  S
 
 telegram_bot
 -------------
-A simple telegram.org bot to interface with a SIP installation.  
+A simple telegram.org bot to interface with a SIP installation.
 
 Run "pip install python-telegram-bot --upgrade" before installing this plugin.
 

@@ -1,0 +1,14 @@
+Description: Uses mqtt plugin and allows a SIP system to control one or more "slave" SIP systems over MQTT
+Copyright 2018
+Author: Daniel Casner & Dan Kimberling
+Email: dkimberling59@gmail.com
+License: GNU GPL 3.0
+
+Requirements: mqtt
+
+##### List all plugin files below preceded by a blank line [file_name.ext path] relative to SIP directory #####
+
+mqtt_slave.py plugins
+mqtt_slave.html templates
+slave-docs.html static/docs/plugins
+mqtt_slave.manifest plugins/manifests

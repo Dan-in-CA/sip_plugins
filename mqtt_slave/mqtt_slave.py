@@ -29,6 +29,9 @@ class settings(ProtectedPage):
     """
     def GET(self):
         settings = mqtt.get_settings()
+        settings['control_topic'] = '' 
+        settings['first_station'] = ''
+        settings['station_count'] = ''
         return template_render.mqtt_slave(settings, "")  # open settings page
 
 class save_settings(ProtectedPage):

@@ -28,7 +28,7 @@ email_adj
 ----------
 Sends status email to google email account
 
-keypad_plugin
+keypad
 ----------
 A plugin for using an 4X4 scanning keypad and buzzer to execute simple functions without the use of an external peripheral
 

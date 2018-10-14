@@ -26,6 +26,9 @@ $var page: keypad_plugin
         jQuery("button#cCancel").click(function(){
             window.location="/";
         });
+		jQuery("button#docButton").click(function(){
+            window.open("/static/docs/plugins/keypad-docs.html", "_blank"); //Edit: replace "proto-docs.html"
+        });
     });
 </script>
 
@@ -40,6 +43,7 @@ select{ width: 100%; }
 
 <div id="plugin">
     <div class="title">Keypad Plugin Settings
+	<button class="execute" id="docButton" type="button" >$_('Help')</button>
     </div>
 
     <form id="pluginForm" action="/keypad-save" method="get">

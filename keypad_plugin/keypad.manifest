@@ -6,3 +6,5 @@ keypad.py plugins
 keypad.html templates
 keypad.json data (generated)
 keypad.manifest plugins/manifests
+keypad-docs.htm static/docs/plugins
+hardware.jpg static/docs/images

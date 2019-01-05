@@ -1,0 +1,280 @@
+$def with(settings)
+<!-- Edit: Replace "proto_vals" with settings values for your plugin if used-->
+
+$var title: $_('SIP Keypad Plugin')
+$var page: keypad_plugin 
+<script>
+    // Initialize behaviors
+    jQuery(document).ready(function(){
+        jQuery(".numbersOnly").keyup(function () {
+            var newValue = this.value.replace(/[^0-9]/g, '');
+            if (this.value != newValue) {
+                this.value = newValue;
+            }
+        });
+        
+        jQuery(".listonly").keyup(function () {
+            var newValue = this.value.replace(/[^0-9,\ ,\,]/g, '');
+            if (this.value != newValue) {
+                this.value = newValue;
+            }
+        });
+        
+        jQuery("#cSubmit").click(function() {
+            jQuery("#pluginForm").submit();
+        });
+        jQuery("button#cCancel").click(function(){
+            window.location="/";
+        });
+		jQuery("button#docButton").click(function(){
+            window.open("/static/docs/plugins/keypad-docs.html", "_blank"); //Edit: replace "proto-docs.html"
+        });
+    });
+</script>
+
+<style>
+tr.padBottom > td
+{
+  padding-bottom: 10px; <!--or padding-top -->
+}
+input{ width: 100%; }
+select{ width: 100%; }
+</style>
+
+<div id="plugin">
+    <div class="title">Keypad Plugin Settings
+	<button class="execute" id="docButton" type="button" >$_('Help')</button>
+    </div>
+
+    <form id="pluginForm" action="/keypad-save" method="get">
+        <br>
+        <p>$_('Options')</p>
+        <table class="optionList">
+            <tr>
+                <td style='text-transform: none;'>$_('Key Timeout (seconds)')</td>
+            </tr>
+            <tr class="padBottom">
+                <td><input class="numbersonly" type="text" name="keytimeout" value="${settings['keytimeout'] if 'keytimeout' in settings else '5' }"></td>
+            </tr>
+            <tr>
+                <td style='text-transform: none;'>$_('Key Hold Time for Hold Function (seconds)'):</td>
+            </tr>
+            <tr class="padBottom">
+                <td><input class="numbersonly" type="text" name="keyholdtime" value="${settings['keyholdtime'] if 'keyholdtime' in settings else '1' }"></td>
+            </tr>
+            <tr>
+                <td style='text-transform: none;'>$_('Manual Station Time (minutes)')</td>
+            </tr>
+            <tr class="padBottom">
+                <td><input class="numbersonly" type="text" name="mstationtime" value="${settings['mstationtime'] if 'mstationtime' in settings else '5' }"></td>
+            </tr>
+            <tr>
+                <td style='text-transform: none;'>$_('Rain Delay Activation Time (hours)')</td>
+            </tr>
+            <tr class="padBottom">
+                <td><input class="numbersonly" type="text" name="hrraindelay" value="${settings['hrraindelay'] if 'hrraindelay' in settings else '24' }"></td>
+            </tr>
+            <tr>
+                <td style='text-transform: none;'>$_('Default Function')</td>
+            </tr>
+            <tr>
+                <td style='text-transform: none;'>$_('(e.g. if this is set to Start Manual Station, entering 12# on the keypad will start station 12)')</td>
+            </tr>
+            <tr>
+                <td>
+                <select name="defaultfn">
+				  <option value="-1" ${"selected" if 'defaultfn' in settings and settings['defaultfn'] == '-1' else ""}>None</option>
+                  <option value="0" ${"selected" if 'defaultfn' not in settings or settings['defaultfn'] == '0' else ""}>Start Manual Station</option>
+                  <option value="1" ${"selected" if 'defaultfn' in settings and settings['defaultfn'] == '1' else ""}>Start Manual Program</option>
+                  <option value="2" ${"selected" if 'defaultfn' in settings and settings['defaultfn'] == '2' else ""}>Set Water Level</option>
+                  <option value="3" ${"selected" if 'defaultfn' in settings and settings['defaultfn'] == '3' else ""}>Set Default Manual Station Time (minutes)</option>
+                  <option value="4" ${"selected" if 'defaultfn' in settings and settings['defaultfn'] == '4' else ""}>Set Default Rain Delay Time (hours)</option>
+                  <option value="5" ${"selected" if 'defaultfn' in settings and settings['defaultfn'] == '5' else ""}>Start Rain Delay (hours)</option>
+                </select>
+                </td>
+            </tr>
+        </table>
+        
+        <br>
+        <p>$_('Function Keys')</p>
+        <p>$_('(e.g. if A is set to Start Manual Station, entering A12# on the keypad will start station 12)')</p>
+        <table class="optionList">
+            <tr>
+                <td style='text-transform: none;'>$_('A'):</td>
+                <td>
+                <select name="akeyfn">
+                  <option value="-1" ${"selected" if 'akeyfn' in settings and settings['akeyfn'] == '-1' else ""}>None</option>
+                  <option value="0" ${"selected" if 'akeyfn' not in settings or settings['akeyfn'] == '0' else ""}>Start Manual Station</option>
+                  <option value="1" ${"selected" if 'akeyfn' in settings and settings['akeyfn'] == '1' else ""}>Start Manual Program</option>
+                  <option value="2" ${"selected" if 'akeyfn' in settings and settings['akeyfn'] == '2' else ""}>Set Water Level</option>
+                  <option value="3" ${"selected" if 'akeyfn' in settings and settings['akeyfn'] == '3' else ""}>Set Default Manual Station Time (minutes)</option>
+                  <option value="4" ${"selected" if 'akeyfn' in settings and settings['akeyfn'] == '4' else ""}>Set Default Rain Delay Time (hours)</option>
+                  <option value="5" ${"selected" if 'akeyfn' in settings and settings['akeyfn'] == '5' else ""}>Start Rain Delay (hours)</option>
+                </select>
+                </td>
+            </tr>
+            <tr>
+                <td style='text-transform: none;'>$_('B'):</td>
+                <td>
+                <select name="bkeyfn">
+                  <option value="-1" ${"selected" if 'bkeyfn' in settings and settings['bkeyfn'] == '-1' else ""}>None</option>
+                  <option value="0" ${"selected" if 'bkeyfn' in settings and settings['bkeyfn'] == '0' else ""}>Start Manual Station</option>
+                  <option value="1" ${"selected" if 'bkeyfn' not in settings or settings['bkeyfn'] == '1' else ""}>Start Manual Program</option>
+                  <option value="2" ${"selected" if 'bkeyfn' in settings and settings['bkeyfn'] == '2' else ""}>Set Water Level</option>
+                  <option value="3" ${"selected" if 'bkeyfn' in settings and settings['bkeyfn'] == '3' else ""}>Set Default Manual Station Time (minutes)</option>
+                  <option value="4" ${"selected" if 'bkeyfn' in settings and settings['bkeyfn'] == '4' else ""}>Set Default Rain Delay Time (hours)</option>
+                  <option value="5" ${"selected" if 'bkeyfn' in settings and settings['bkeyfn'] == '5' else ""}>Start Rain Delay (hours)</option>
+                </select>
+                </td>
+            </tr>
+            <tr>
+                <td style='text-transform: none;'>$_('C'):</td>
+                <td>
+                <select name="ckeyfn">
+                  <option value="-1" ${"selected" if 'ckeyfn' in settings and settings['ckeyfn'] == '-1' else ""}>None</option>
+                  <option value="0" ${"selected" if 'ckeyfn' in settings and settings['ckeyfn'] == '0' else ""}>Start Manual Station</option>
+                  <option value="1" ${"selected" if 'ckeyfn' in settings and settings['ckeyfn'] == '1' else ""}>Start Manual Program</option>
+                  <option value="2" ${"selected" if 'ckeyfn' not in settings or settings['ckeyfn'] == '2' else ""}>Set Water Level</option>
+                  <option value="3" ${"selected" if 'ckeyfn' in settings and settings['ckeyfn'] == '3' else ""}>Set Default Manual Station Time (minutes)</option>
+                  <option value="4" ${"selected" if 'ckeyfn' in settings and settings['ckeyfn'] == '4' else ""}>Set Default Rain Delay Time (hours)</option>
+                  <option value="5" ${"selected" if 'ckeyfn' in settings and settings['ckeyfn'] == '5' else ""}>Start Rain Delay (hours)</option>
+                </select>
+                </td>
+            </tr>
+            <tr>
+                <td style='text-transform: none;'>$_('D'):</td>
+                <td>
+                <select name="dkeyfn">
+                  <option value="-1" ${"selected" if 'dkeyfn' in settings and settings['dkeyfn'] == '-1' else ""}>None</option>
+                  <option value="0" ${"selected" if 'dkeyfn' in settings and settings['dkeyfn'] == '0' else ""}>Start Manual Station</option>
+                  <option value="1" ${"selected" if 'dkeyfn' in settings and settings['dkeyfn'] == '1' else ""}>Start Manual Program</option>
+                  <option value="2" ${"selected" if 'dkeyfn' in settings and settings['dkeyfn'] == '2' else ""}>Set Water Level</option>
+                  <option value="3" ${"selected" if 'dkeyfn' not in settings or settings['dkeyfn'] == '3' else ""}>Set Default Manual Station Time (minutes)</option>
+                  <option value="4" ${"selected" if 'dkeyfn' in settings and settings['dkeyfn'] == '4' else ""}>Set Default Rain Delay Time (hours)</option>
+                  <option value="5" ${"selected" if 'dkeyfn' in settings and settings['dkeyfn'] == '5' else ""}>Start Rain Delay (hours)</option>
+                </select>
+                </td>
+            </tr>
+        </table>
+
+        <br>
+        <p>$_('Press and Hold Functions')</p>
+        <p>$_('(e.g. if A is set to Stop All Stations, pressing and holding A on the keypad will stop all running stations)')</p>
+        <table class="optionList">
+            <tr>
+                <td style='text-transform: none;'>$_('A'):</td>
+                <td>
+                <select name="aholdfn">
+                  <option value="-1" ${"selected" if 'aholdfn' not in settings or settings['aholdfn'] == '-1' else ""}>None</option>
+                  <option value="16" ${"selected" if 'aholdfn' in settings and settings['aholdfn'] == '16' else ""}>Stop All Stations</option>
+                  <option value="17" ${"selected" if 'aholdfn' in settings and settings['aholdfn'] == '17' else ""}>Activate Rain Delay</option>
+                  <option value="18" ${"selected" if 'aholdfn' in settings and settings['aholdfn'] == '18' else ""}>Deactivate Rain Delay</option>
+                  <option value="24" ${"selected" if 'aholdfn' in settings and settings['aholdfn'] == '24' else ""}>Toggle Rain Delay</option>
+                  <option value="19" ${"selected" if 'aholdfn' in settings and settings['aholdfn'] == '19' else ""}>System On</option>
+                  <option value="20" ${"selected" if 'aholdfn' in settings and settings['aholdfn'] == '20' else ""}>System Off</option>
+                  <option value="25" ${"selected" if 'aholdfn' in settings and settings['aholdfn'] == '25' else ""}>Toggle System Enable</option>
+                  <option value="21" ${"selected" if 'aholdfn' in settings and settings['aholdfn'] == '21' else ""}>Restart System</option>
+                  <option value="22" ${"selected" if 'aholdfn' in settings and settings['aholdfn'] == '22' else ""}>Reboot OS</option>
+                  <option value="23" ${"selected" if 'aholdfn' in settings and settings['aholdfn'] == '23' else ""}>Reset Water Level to 100%</option>
+                </select>
+                </td>
+            </tr>
+            <tr>
+                <td style='text-transform: none;'>$_('B'):</td>
+                <td>
+                <select name="bholdfn">
+                  <option value="-1" ${"selected" if 'bholdfn' not in settings or settings['bholdfn'] == '-1' else ""}>None</option>
+                  <option value="16" ${"selected" if 'bholdfn' in settings and settings['bholdfn'] == '16' else ""}>Stop All Stations</option>
+                  <option value="17" ${"selected" if 'bholdfn' in settings and settings['bholdfn'] == '17' else ""}>Activate Rain Delay</option>
+                  <option value="18" ${"selected" if 'bholdfn' in settings and settings['bholdfn'] == '18' else ""}>Deactivate Rain Delay</option>
+                  <option value="24" ${"selected" if 'bholdfn' in settings and settings['bholdfn'] == '24' else ""}>Toggle Rain Delay</option>
+                  <option value="19" ${"selected" if 'bholdfn' in settings and settings['bholdfn'] == '19' else ""}>System On</option>
+                  <option value="20" ${"selected" if 'bholdfn' in settings and settings['bholdfn'] == '20' else ""}>System Off</option>
+                  <option value="25" ${"selected" if 'bholdfn' in settings and settings['bholdfn'] == '25' else ""}>Toggle System Enable</option>
+                  <option value="21" ${"selected" if 'bholdfn' in settings and settings['bholdfn'] == '21' else ""}>Restart System</option>
+                  <option value="22" ${"selected" if 'bholdfn' in settings and settings['bholdfn'] == '22' else ""}>Reboot OS</option>
+                  <option value="23" ${"selected" if 'bholdfn' in settings and settings['bholdfn'] == '23' else ""}>Reset Water Level to 100%</option>
+                </select>
+                </td>
+            </tr>
+            <tr>
+                <td style='text-transform: none;'>$_('C'):</td>
+                <td>
+                <select name="choldfn">
+                  <option value="-1" ${"selected" if 'choldfn' not in settings or settings['choldfn'] == '-1' else ""}>None</option>
+                  <option value="16" ${"selected" if 'choldfn' in settings and settings['choldfn'] == '16' else ""}>Stop All Stations</option>
+                  <option value="17" ${"selected" if 'choldfn' in settings and settings['choldfn'] == '17' else ""}>Activate Rain Delay</option>
+                  <option value="18" ${"selected" if 'choldfn' in settings and settings['choldfn'] == '18' else ""}>Deactivate Rain Delay</option>
+                  <option value="24" ${"selected" if 'choldfn' in settings and settings['choldfn'] == '24' else ""}>Toggle Rain Delay</option>
+                  <option value="19" ${"selected" if 'choldfn' in settings and settings['choldfn'] == '19' else ""}>System On</option>
+                  <option value="20" ${"selected" if 'choldfn' in settings and settings['choldfn'] == '20' else ""}>System Off</option>
+                  <option value="25" ${"selected" if 'choldfn' in settings and settings['choldfn'] == '25' else ""}>Toggle System Enable</option>
+                  <option value="21" ${"selected" if 'choldfn' in settings and settings['choldfn'] == '21' else ""}>Restart System</option>
+                  <option value="22" ${"selected" if 'choldfn' in settings and settings['choldfn'] == '22' else ""}>Reboot OS</option>
+                  <option value="23" ${"selected" if 'choldfn' in settings and settings['choldfn'] == '23' else ""}>Reset Water Level to 100%</option>
+                </select>
+                </td>
+            </tr>
+            <tr>
+                <td style='text-transform: none;'>$_('D'):</td>
+                <td>
+                <select name="dholdfn">
+                  <option value="-1" ${"selected" if 'dholdfn' not in settings or settings['dholdfn'] == '-1' else ""}>None</option>
+                  <option value="16" ${"selected" if 'dholdfn' in settings and settings['dholdfn'] == '16' else ""}>Stop All Stations</option>
+                  <option value="17" ${"selected" if 'dholdfn' in settings and settings['dholdfn'] == '17' else ""}>Activate Rain Delay</option>
+                  <option value="18" ${"selected" if 'dholdfn' in settings and settings['dholdfn'] == '18' else ""}>Deactivate Rain Delay</option>
+                  <option value="24" ${"selected" if 'dholdfn' in settings and settings['dholdfn'] == '24' else ""}>Toggle Rain Delay</option>
+                  <option value="19" ${"selected" if 'dholdfn' in settings and settings['dholdfn'] == '19' else ""}>System On</option>
+                  <option value="20" ${"selected" if 'dholdfn' in settings and settings['dholdfn'] == '20' else ""}>System Off</option>
+                  <option value="25" ${"selected" if 'dholdfn' in settings and settings['dholdfn'] == '25' else ""}>Toggle System Enable</option>
+                  <option value="21" ${"selected" if 'dholdfn' in settings and settings['dholdfn'] == '21' else ""}>Restart System</option>
+                  <option value="22" ${"selected" if 'dholdfn' in settings and settings['dholdfn'] == '22' else ""}>Reboot OS</option>
+                  <option value="23" ${"selected" if 'dholdfn' in settings and settings['dholdfn'] == '23' else ""}>Reset Water Level to 100%</option>
+                </select>
+                </td>
+            </tr>
+        </table>
+        
+        <br>
+        <p>$_('Feedback Beeps (on time, off time, on time, ...)')</p>
+        <table class="optionList">
+            <tr>
+                <td style='text-transform: none;'>$_('Value Acknowledge Beep List (milliseconds)')</td>
+            </tr>
+            <tr class="padBottom">
+                <td><input class="listonly" type="text" name="acknowledge_command_beep" value="${settings['acknowledge_command_beep'] if 'acknowledge_command_beep' in settings else '100' }"></td>
+            </tr>
+            <tr>
+                <td style='text-transform: none;'>$_('Hold Function Executed Beep List (milliseconds)')</td>
+            </tr>
+            <tr class="padBottom">
+                <td><input class="listonly" type="text" name="hold_function_executed_beep" value="${settings['hold_function_executed_beep'] if 'hold_function_executed_beep' in settings else '100, 50, 100' }"></td>
+            </tr>
+            <tr>
+                <td style='text-transform: none;'>$_('Toggle On Beep List (milliseconds)')</td>
+            </tr>
+            <tr class="padBottom">
+                <td><input class="listonly" type="text" name="hold_function_toggle_on_beep" value="${settings['hold_function_toggle_on_beep'] if 'hold_function_toggle_on_beep' in settings else '50, 50, 200' }"></td>
+            </tr>
+            <tr>
+                <td style='text-transform: none;'>$_('Toggle Off Beep List (milliseconds)')</td>
+            </tr>
+            <tr class="padBottom">
+                <td><input class="listonly" type="text" name="hold_function_toggle_off_beep" value="${settings['hold_function_toggle_off_beep'] if 'hold_function_toggle_off_beep' in settings else '200, 50, 50' }"></td>
+            </tr>
+            <tr>
+                <td style='text-transform: none;'>$_('Cancel Beep List (milliseconds)')</td>
+            </tr>
+            <tr>
+                <td><input class="listonly" type="text" name="cancel_beep" value="${settings['cancel_beep'] if 'cancel_beep' in settings else '100, 100, 500' }"></td>
+            </tr>
+        </table>
+        
+        <br>
+    </form>
+
+<div id="controls">
+    <button id="cSubmit" class="submit"><b>$_('Submit')</b></button>
+    <button id="cCancel" class="cancel danger">$_('Cancel')</button>
+</div>
+</div>

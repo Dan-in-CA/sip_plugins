@@ -19,7 +19,7 @@ try:
             import RPi.GPIO as GPIO
             pi = 0
     elif gv.platform == 'odroid-c2':
-        import wiringpi2 as GPIO
+        import wiringpi as GPIO
         GPIO.wiringPiSetup() 
 except GPIOError:
     pass

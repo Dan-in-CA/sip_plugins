@@ -150,7 +150,6 @@ def get_weather_data():
         request.add_header('Authorization', auth_header)
         request.add_header('X-Yahoo-App-Id', app_id)
         data = urllib2.urlopen(request).read()
-        print(data)
     except urllib2.URLError as e:
         print "Error getting weather data: ", e
         if do_log:

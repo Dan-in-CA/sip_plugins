@@ -8,6 +8,10 @@ import re
 import urllib
 import urllib2
 
+import uuid, urllib, urllib2
+import hmac, hashlib
+from base64 import b64encode
+
 import web
 import gv  # Get access to SIP's settings
 from urls import urls  # Get access to SIP's URLs
@@ -102,41 +106,59 @@ def get_wunderground_lid():
     return lid
 
 
-def get_woeid():
-    req = urllib2.Request("http://query.yahooapis.com/v1/public/yql?q=select%20woeid%20from%20geo.placefinder%20where%20text=%22" +
-        urllib.quote_plus(gv.sd["loc"]) + "%22")  
-    try:
-        response = urllib2.urlopen(req, timeout = 10)
-    except urllib2.URLError as e:
-        print 'Error getting woeid: ', e
-        if do_log:
-            with open("data/weather_log.txt", 'a') as wl:
-                wl.write(time.strftime("%c") + ", Error: " + e + '\n')       
-        return 0
-    data = response.read()
-    woeid = re.search("<woeid>(\d+)</woeid>", data)
-    if woeid is None:
-        return 0
-    return woeid.group(1)
-
-
 def get_weather_data():
-    woeid = get_woeid()
-    if woeid == 0:
-        return {}
-    req = urllib2.Request("http://weather.yahooapis.com/forecastrss?w=" + woeid)
+    """
+    Basic info
+    """
+    url = 'https://weather-ydn-yql.media.yahoo.com/forecastrss'
+    method = 'GET'
+    app_id = '8RmEym52'
+    consumer_key = 'dj0yJmk9WjBzQTlsQ0RxbmVrJnM9Y29uc3VtZXJzZWNyZXQmc3Y9MCZ4PTll'
+    consumer_secret = '6cdd3993f401825da5b3e5685f05b20d2fb63054'
+    concat = '&'
+    query = {'location': gv.sd['loc'], 'format': 'json'}
+    oauth = {
+        'oauth_consumer_key': consumer_key,
+        'oauth_nonce': uuid.uuid4().hex,
+        'oauth_signature_method': 'HMAC-SHA1',
+        'oauth_timestamp': str(int(time.time())),
+        'oauth_version': '1.0'
+    }
+
+    """
+    Prepare signature string (merge all params and SORT them)
+    """
+    merged_params = query.copy()
+    merged_params.update(oauth)
+    sorted_params = [k + '=' + urllib.quote(merged_params[k], safe='') for k in sorted(merged_params.keys())]
+    signature_base_str =  method + concat + urllib.quote(url, safe='') + concat + urllib.quote(concat.join(sorted_params), safe='')
+
+    """
+    Generate signature
+    """
+    composite_key = urllib.quote(consumer_secret, safe='') + concat
+    oauth_signature = b64encode(hmac.new(composite_key, signature_base_str, hashlib.sha1).digest())
+
+    """
+    Prepare Authorization header
+    """
+    oauth['oauth_signature'] = oauth_signature
+    auth_header = 'OAuth ' + ', '.join(['{}="{}"'.format(k,v) for k,v in oauth.iteritems()])
     try:
-        response = urllib2.urlopen(req, timeout = 10)
+        url = url + '?' + urllib.urlencode(query)
+        request = urllib2.Request(url)
+        request.add_header('Authorization', auth_header)
+        request.add_header('X-Yahoo-App-Id', app_id)
+        data = urllib2.urlopen(request).read()
     except urllib2.URLError as e:
         print "Error getting weather data: ", e
         if do_log:
             with open("data/weather_log.txt", 'a') as wl:
                 wl.write(time.strftime("%c") + ", Error: " + e + '\n')         
         return {}
-    data = response.read()
     if data is None:
         return {}
-    newdata = re.search("<yweather:condition\s+text=\"([\w|\s]+)\"\s+code=\"(\d+)\"\s+temp=\"(\d+)\"\s+date=\"(.*)\"",
+    newdata = re.search('condition\":{\"text\":\"([A-Za-z ]+)[",]+code\":(\d+)',
                         data)
     weather = {"text": newdata.group(1),
                "code": newdata.group(2)}

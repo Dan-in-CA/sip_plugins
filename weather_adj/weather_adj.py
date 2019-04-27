@@ -78,6 +78,9 @@ def get_weather_options():
                 'delay_duration': 24, 
                 'weather_provider': 'yahoo', 
                 'wapikey': '', 
+                'yapiappid': '', 
+                'yconkey': '',
+                'yconsec': '',
                 'reset_delay': 'on' }
     if 'reset_delay' not in data:
       data['reset_delay'] = 'on'
@@ -107,14 +110,17 @@ def get_wunderground_lid():
 
 
 def get_weather_data():
+
+    options = get_weather_options()
+    
     """
     Basic info
     """
     url = 'https://weather-ydn-yql.media.yahoo.com/forecastrss'
     method = 'GET'
-    app_id = '8RmEym52'
-    consumer_key = 'dj0yJmk9WjBzQTlsQ0RxbmVrJnM9Y29uc3VtZXJzZWNyZXQmc3Y9MCZ4PTll'
-    consumer_secret = '6cdd3993f401825da5b3e5685f05b20d2fb63054'
+    app_id = options['yapiappid'].encode('utf-8')
+    consumer_key = options['yconkey'].encode('utf-8')
+    consumer_secret = options['yconsec'].encode('utf-8')
     concat = '&'
     query = {'location': gv.sd['loc'], 'format': 'json'}
     oauth = {

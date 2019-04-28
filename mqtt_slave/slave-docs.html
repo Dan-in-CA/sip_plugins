@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta content="text/html; charset=windows-1252" http-equiv="content-type">
+    <title>MQTT slave docs</title>
+    <meta name="GENERATOR" content="OpenOffice 4.1.1  (Win32)">
+    <meta name="CREATED" content="0;0">
+    <meta name="CHANGED" content="0;0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="../../themes/basic/base.css" rel="stylesheet" type="text/css">
+  </head>
+  <body dir="LTR" style="border: none; padding: 0in" bgcolor="#ffffff" lang="en-US">
+    <h1><a name="proto-plugin-documentation"></a>SIP MQTT Slave Plugin
+      Documentation</h1>
+    <h2 class="western"><a name="about-the-proto-plugin"></a>About the SIP MQTT
+      Slave Plugin</h2>
+    <p>The mqtt_slave plugin allows multiple systems running SIP to be
+      controlled through a single user interface over MQTT.
+      That means a single SIP system can act as a master controller for one or
+      more remote (slave) systems which are also running SIP and have the the
+      mqtt_slave plugin installed.</p>
+    <p>When this plugin system is running, the master SIP broadcasts a list
+      containing the on/off states of all stations. When a slave receives the
+      list it checks to see if any of it's&nbsp; stations need to be switched on
+      or off and makes the necessary changes.</p>
+    <p>Each slave can have a master station configured to work with its local
+      stations.</p>
+    <p>All irrigation schedules are set up on the master and it logs all station
+      runs as if they are on the master itself. There is no feedback from the
+      slave(s) so the master "assumes" that all stations are operating as
+      expected.&nbsp;</p>
+    <p>If logging is enabled on the slave, station runs on that slave will be
+      logged. This provides a way to check that the stations on the slave have
+      been operating properly.</p>
+    <h2>Requirements</h2>
+    <ul>
+      <li>This plugin requires a master SIP system which has the base mqtt
+        plugin and the mqtt_zones plugin installed.</li>
+      <li>Each slave SIP system must have the base mqtt plugin and the
+        mqtt_slave plugin installed.</li>
+      <li>An MQTT broker such as mosquitto is also required to be accessible by
+        each SIP device. This broker can be on a different part of the local
+        network, on a remote network, or installed on one of the SIP systems
+        such as the master SIP.</li>
+    </ul>
+    <h2 class="western"><a name="using-the-proto-plugin"></a>Setting up and
+      using the mqtt_slave plugin</h2>
+    <h3>Master set up</h3>
+    Instal eclipse paho if not already on the Pi<br>
+    <br>
+    Install the base mqtt plugin and the mqtt_zones plugins<br>
+    <br>
+    Configure MQTT plugin<br>
+    MQTT Broker Host This will be the URL of the MQTT broker or localhost if the
+    broker is running on the SIP master<br>
+    MQTT Broker Port: Default is 1883 but may be different depending on your
+    MQTT broker<br>
+    MQTT Broker Username: Default is mosquitto but depends on your setup<br>
+    MQTT Broker Password: Depends on your setup. Use pass as default<br>
+    MQTT Publish up/down topic Can be left blank<br>
+    MQTT Client ID A unique name for each SIP system. Default is SIP but can be
+    changed on Options page &gt; <br>
+    <span class="optLabel">System name:</span><br>
+    <br>
+    Configure the base mqtt_zones plugin <span class="optLabel">(MQTT ZONE
+      BROADCASTER on the plugins menu)</span>:<br>
+    Zone topic: Can be anything you like for example sip_zones. This same is
+    also to be used on each slave<br>
+    <br>
+    Configure number of stations:<br>
+    Adjust the number of stations the master shows to be equal to or greater
+    than the total number of stations used by the master and all slaves
+    combined.<br>
+    This can be done under Options &gt; Station handling &gt; <span class="optLabel">Extension
+      boards: Each increase in the number of extension boards adds 8 stations to
+      the master UI.</span><br>
+    <br>
+    <span class="optLabel">Create irrigation programs for all stations.</span>
+    <h3><span class="optLabel">Slave set up</span></h3>
+    <p>Instal eclipse paho if not already on the Pi</p>
+    <p>Install the base mqtt plugin and the mqtt_slave plugins</p>
+    <p>Change the system name to a name that will be unique among the SIPs in
+      your setup. Do this on the SIP Options page.</p>
+    <p>Configure the base mqtt plugin:</p>
+    MQTT Broker Host This will be the URL of the MQTT broker or localhost if the
+    broker is running on this SIP.<br>
+    MQTT Broker Port: Default is 1883 but may be different depending on your
+    MQTT broker<br>
+    MQTT Broker Username: Default is mosquitto but depends on your setup<br>
+    MQTT Broker Password: Depends on your setup. Use pass as default<br>
+    MQTT Publish up/down topic Can be left blank<br>
+    MQTT Client ID A unique name for each SIP system. Default is SIP but should
+    be changed on Options page &gt; <span class="optLabel">System name:</span>
+    <p><span class="optLabel">Configure the mqtt_slave plugin:</span><br>
+      Zone topic: This must be the same topic you entered on the master on the
+      MQTT Zones Plugin setup page.</p>
+    <p>First station number: This will be the station number the master is using
+      for the first station on this slave. This will determine which irrigation
+      schedules will correspond to the stations on this slave.</p>
+    <p>Station count: How many asctive stations does this slave have including
+      the master station if used. </p>
+    <br>
+    <p><span class="optLabel">On the SIP home screen set the mode to Manual. The
+        slave will only react to signals from the master when it is in manual
+        mode.</span></p>
+    <p><span class="optLabel">Enable logging if desired. Do this on the Options
+        page &gt; Logging Be sure the Enable logging box is filled.</span></p>
+    <h3><span class="optLabel">Test your setup:</span></h3>
+    With your master and at least one slave set up and running, You can switch
+    the master to manual and you can test individual stations.<br>
+    <br>
+    <p></p>
+  </body>
+</html>

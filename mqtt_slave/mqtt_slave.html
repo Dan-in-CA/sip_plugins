@@ -1,0 +1,64 @@
+$def with(settings, error_msg)
+
+$var title: $_('SIP MQTT Slave Plugin')
+$var page: mqtt_plugin
+<script>
+
+    // Initialize behaviors
+    jQuery(document).ready(function(){
+
+        jQuery("#cSubmit").click(function() {
+            jQuery("#pluginForm").submit();
+        });
+        jQuery("button#cCancel").click(function(){
+            window.location= baseUrl + "/";
+        });
+
+        jQuery("button#docButton").click(function(){
+            window.open(baseUrl + "/static/docs/plugins/slave-docs.html", "_blank"); //Edit: replace "proto-docs.html"
+        });        
+    });
+</script>
+
+<div id="plugin">
+    <div class="title">MQTT Slave Plugin
+    <button class="execute" id="docButton" type="button" >$_('Help')</button>
+    </div>
+    <div>
+    <p>Relies on the base MQTT plugin</p> 
+    <p>Allows this SIP system to be controlled by another (master) SIP system over MQTT.</p>
+    </div>
+
+    <div id="errorMessage">${error_msg}</div>
+
+    <form id="pluginForm" action="${app_path('/mr2-save')}" method="get"> <!--Edit: Replace "proto-save" with URL of plugin's class for saving settings-->
+
+        <table class="optionList">
+
+            <!--Text fields-->
+            <tr>
+                <td style='text-transform: none;'>$_('Zone topic'):</td>
+                <td>The topic to subscribe to for control commands.<br />
+                  <input type="text" name="control_topic" value="${settings['control_topic']}">
+                </td>
+            </tr>
+                        <tr>
+                <td style='text-transform: none;'>$_('First station number'):</td>
+                <td>The number from the master of this slave's first station.<br />
+                  <input type="text" name="first_station" value="${settings['first_station']}">
+                </td>
+            </tr>
+                        <tr>
+                <td style='text-transform: none;'>$_('Station count'):</td>
+                <td>The number of station this slave uses.<br />
+                  <input type="text" name="station_count" value="${settings['station_count']}">
+                </td>
+            </tr>
+        </table>
+    </form>
+
+<div id="controls">
+    <button id="cSubmit" class="submit"><b>$_('Submit')</b></button>
+    <button id="cCancel" class="cancel danger">$_('Cancel')</button>
+</div>
+</div>

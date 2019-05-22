@@ -6,7 +6,7 @@ License: GNU GPL 3.0
 
 Requirements:
 
-##### List all plugin files below preceded by a blank line [file_name.ext path] relative to SIP directory #####
+##### List all plugin files below preceded by a blank line [file_name.ext path] relative to OSPi directory #####
 
 weather_adj.py plugins
 weather_adj.html templates

@@ -1,0 +1,1 @@
+{"weather_provider": "wunderground", "delay_duration": "24", "forecast_hours": "12", "percent_cutoff": "40", "delay_count_req": "4", "wapikey": "241f9358bed1065c", "reset_delay": "on", "auto_delay": "on"}

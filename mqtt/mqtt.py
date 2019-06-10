@@ -99,7 +99,7 @@ def get_client():
     if _client is None and mqtt is not None:
         try:
             _client = mqtt.Client(gv.sd[u'name']) # Use system name as client ID
-			if _settings['publish_up_down']:
+            if _settings['publish_up_down']:
                 _client.will_set(_settings['publish_up_down'], json.dumps("DOWN"), qos=1, retain=True)
             _client.on_message = on_message
             _client.username_pw_set(_settings['broker_username'],_settings['broker_password'])

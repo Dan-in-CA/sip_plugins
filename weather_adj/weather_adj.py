@@ -11,15 +11,14 @@ import urllib
 import urllib2
 
 import web
-import gv  # Get access to ospi's settings
-from urls import urls  # Get access to ospi's URLs
-#from ospi import template_render                 #altered this to show the webpage for further functionality changes. I guess it works....?
+import gv  # Get access to SIP's settings
+from urls import urls  # Get access to SIP's URLs
 from sip import template_render
 from webpages import ProtectedPage
 from helpers import stop_onrain
 
 #  For testing only. Keeping this enabled will shorten the life of your SD card.
-do_log = True #  Change to True to enable, False to disable logging
+do_log = False #  Change to True to enable, False to disable logging
 
 # Add a new url to open the data entry page.
 urls.extend(['/wa', 'plugins.weather_adj.settings',

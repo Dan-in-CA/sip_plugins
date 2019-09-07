@@ -81,7 +81,7 @@ def get_weather_options():
             'delay_duration': 24,
             'apikey': '', 
             'reset_delay': True,
-            'loc': 'Houston'
+            'loc': ''
         }
     try:
         with open('./data/weather_adj.json', 'r') as f:  # Read the settings from file

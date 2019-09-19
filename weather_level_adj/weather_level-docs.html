@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+	<TITLE>Weather_level-docs.html</TITLE>
+	<META NAME="viewport" CONTENT="width=device-width, initial-scale=1.0">
+    <link href="../../themes/basic/base.css" rel="stylesheet" type="text/css"/>
+</HEAD>
+<BODY style="background-color: rgb(57, 127, 25)">
+<H1><A NAME="weather_level-documentation"></A>Weather_level_adj Plugin
+Documentation</H1>
+<H2 <A NAME="about-the-Weather_level_adj"></A>About the Plugin</H2>
+<P>The Weather_level_adj plugin can be used to control irrigation times based on weather information 
+and/or prevent irrigation during cold conditions</P>
+
+<H2 CLASS="western"><A NAME="using-the-Weather_level_adj"></A>Using the
+plugin</H2>
+<P>A couple of the option fields on the plugin page must be filled in order for the plugin to function.</P><br>
+<p>First, you will need a free <STRONG>OpenWeather API key</STRONG> in order for the plugin to be able to get weather data.
+You can get an API key by creating a free account on the <A HREF="https://home.openweathermap.org/users/sign_up" target="_blank">Openweathermap</A> web site.</p>
+<p>Enter your API key into the appropriate field on the plugin page.</p><br>
+
+The <STRONG>location field</STRONG> can contain a city name or postal code. However, the most accurate weather data will be obtained by using 
+<STRONG>geographic coordinates</STRONG> (latitude - longitude) in the location field.<p>
+You will need to enter your coordinates as decimal degrees in the following format:
+<pre>lat=XXX.XXX_lonXXX.XXX</pre><p>Note the underscore between the lat and lon values and do not include any spaces.</p><br>
+
+<p>If you do not know your geographic coordinates, an easy way to find them is by using <A HREF="https://www.google.com/maps/" target="_blank">Google Maps.</A><br>
+On your computer search for your location on the map then right click your location and select <STRONG>What's here?</STRONG> from the menu that appears. 
+At the bottom, you will see a card with your coordinates.</P><br>
+
+<p>Once you have the Location and API key fields filled in you need to check one or both of the <STRONG>check boxes</STRONG> at the top of the page depending on how you want the plugin to function.</p><br>
+<p>After clicking the <strong>Submit</strong> button to save your settings the plugin should be operational and you can adjust the remaining options to suit your needs.</p><br>
+<p><STRONG>Note:</STRONG><br>If you change the <STRONG>Preferred Units</STRONG> option, any other changes made at the same time will be ignored. Only the type of units displayed will be changed.</p><br>
+<p>The <strong>Max percentage</strong> field has a maximum possible value of 200.</p><br>
+<p>The <strong>History days used</strong> and <strong>Forecast days used</strong> fields have maximum values of 5.</p><br>
+
+<p>The <strong>Daily irrigation</strong> field should hold an estimated amount of water your system applies on a per-day basis. 
+If, like most users, you don't irrigate every day, divide the total estimated amount of water your system applies in a week by 7 to get the average daily amount. 
+An  internet search should list a number of sites that provide information abut how to measure and/or estimate the amount of water an irrigation system applies.</p><br>
+<p>The <strong>Status</strong> box is used by the plugin to display information about it's operation. 
+It may display error messages but if the plugin is operating properly it will show information it is using to adjust the irrigation time. 
+If there is no information in the box, it may take up to an hour for the plugin to acquire data to display. 
+If you leave the plugin page open you will need to refresh the page to see updated information.<br>
+The current temperature is updated hourly and can be compared to another source such as an online weather report for your area to determine if the plugin is getting accurate data. 
+The Temperature shown by the plugin probably won't be an exact match to another source but it should be within a few degrees.</p>
+
+<h2>Notes:</h2>
+<p>This plugin uses a set of weight values to adjust watering times. You can modify the values used by editing the <strong>PrecipWeights</strong> section of the <strong>weather_decipher.json</strong> file in SIP's data directory.</p><br>
+<p>After the plugin is installed it will take a few days for it to accumulate the necessary historical data. Open Weather Map does not supply historical data for free.</p><br>
+<p> </p>
+
+
+
+
+
+</BODY>
+</HTML>

@@ -1,8 +1,23 @@
 $def with(m_vals)
 
-$var title: $_('OpenSprinkler Pi Weather-based Water Level')
+$code:
+	uniType = m_vals["units"]
+	if uniType == "US" :
+		tCutoff = round((float(m_vals["temp_cutoff"]) * 1.8) + 32, 1)
+		rainPerDay = round(float(m_vals["daily_irrigation"]) / 25.4, 1)
+	else:
+		tCutoff = m_vals["temp_cutoff"]
+		rainPerDay = m_vals["daily_irrigation"]
+
+$var title: $_('SIP Weather-based Water Level')
 $var page: plugins
+
+
+
 <script>
+	var SI = "SI", US = "US";
+	var unitType = $m_vals['units'];
+
     // Initialize behaviors
     jQuery(document).ready(function(){
 
@@ -13,13 +28,32 @@ $var page: plugins
             window.location="/";
         });
 
+        jQuery("button#docButton").click(function(){
+            window.open(baseUrl + "/static/docs/plugins/weather_level-docs.html", "_blank"); //Edit: replace "proto-docs.html"
+        });
+
+		jQuery('#units option[value=$m_vals["units"]]').attr("selected",true);
+		
+		if (unitType == "US") {
+			jQuery(".len span").text(" (inch)");
+			jQuery(".temp span").text(" ("+String.fromCharCode(176)+"F)");
+
+		}
+		else {
+			jQuery(".len span").text(" (mm)");
+			jQuery(".temp span").text(" ("+String.fromCharCode(176)+"C)");
+		}
+		
     });
 </script>
 
 <div id="plugin">
-    <div class="title">$_('Weather-based Water Level')</div>
-    <p>$_('When weather-based water level is enabled, the weather will be checked every hour and the water level will be adjusted accordingly.')</p>
+    <div class="title">$_('Weather-based Water Level ')
+    <button class="execute" id="docButton" type="button" >$_('Help')</button>
+    </div>
+    <p>$_('When Automatic Water Level Adjustment is enabled, the weather will be checked every hour and the water level will be adjusted accordingly.')</p>
     <p>$_('Additionally, when the low temperature cutoff is enabled the the sprinklers will not run when the temperature at the last hourly check was below the set temperature.')</p>
+
     <form id="pluginForm" action="/luwa" method="get">
         <table class="optionList">
             <tr>
@@ -35,15 +69,19 @@ $var page: plugins
                 </td>
             </tr>
             <tr>
-                <td style='text-transform: none;'>$_('Time Zone'):</td>
+                <td style='text-transform: none;'>$_('Preferred Units'):</td>
                 <td>
-                    <input name='time_zone' type='number' min="-12" max="12" value=$m_vals["time_zone"]>
+					 <select name="units" id="units">
+					  <option value="SI">SI (mm, &deg;C)</option>
+					  <option value="US">US (inch, &deg;F)</option>
+					</select> 
                 </td>
             </tr>
+            </tr>
             <tr>
-                <td style='text-transform: none;'>$_('Low temperature cutoff in Celsius'):</td>
+                <td  class="temp" style='text-transform: none;'>$_('Low temperature cutoff')<span></span>:</td>
                 <td>
-                    <input name='temp_cutoff' type='number' min="0" max="100" value=$m_vals["temp_cutoff"]>
+                    <input name='temp_cutoff' type='number' min="0" max="100" value=$tCutoff>
                 </td>
             </tr>
             <tr>
@@ -71,15 +109,15 @@ $var page: plugins
                 </td>
             </tr>
             <tr>
-                <td style='text-transform: none;'>$_('Rainfall Per Day (mm)'):</td>
+                <td class="len" style='text-transform: none;'>$_('Daily irrigation')<span></span>:</td>
                 <td>
-                    <input name='rainfall_per_day' type='number' min="0" max="100" value=$m_vals["rainfall_per_day"]>
+                    <input name='daily_irrigation' type='number' min="0" max="100" value=$rainPerDay>
                 </td>
             </tr>
             <tr>
                 <td style='text-transform: none;'>$_('Location'):</td>
                 <td>
-                    <input name='loc' type='text' value=$m_vals["loc"]>
+                    <input name='loc' type='text' value=${m_vals["loc"]}>
                 </td>
             </tr>
             <tr>

@@ -10,6 +10,7 @@ Requirements:
 
 weather_level_adj.py plugins
 weather_level_adj.html templates
+weather_level_adj static/docs/plugins
 weather_level_adj.json data (generated)
-weather_decipher.json data
+weather_decipher.json data (generated)
 weather_level_adj.manifest plugins/manifests

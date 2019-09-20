@@ -12,4 +12,5 @@ weather_adj.py plugins
 weather_adj.html templates
 weather_adj.json data (generated)
 weather_decipher.json data
+weather_current data
 weather_adj.manifest plugins/manifests

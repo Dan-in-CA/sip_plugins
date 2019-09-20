@@ -274,6 +274,7 @@ def options_data():
     default_options = {
         'units': 'SI',
         'auto_wl': 'off',
+        "daily_irrigation": "4", 
         'temp_cutoff_enable': 'off',
         'temp_cutoff': 4,
         'wl_min': 0,

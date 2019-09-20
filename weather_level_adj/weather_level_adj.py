@@ -1,20 +1,17 @@
+from __future__ import print_function
 # !/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 import datetime
-# from random import randint
 from threading import Thread
 import sys
 import traceback
-# import shutil
 import json
 import time
 import re
 import os
-# import urllib
 import urllib2
 import errno
-# from datetime import timedelta
 
 import web
 import gv  # Get access to SIP's settings
@@ -29,7 +26,7 @@ def safe_float(s):
     """
     try:
         return float(s)
-    except Exception:
+    except TypeError:
         return 0.0
 
 def mkdir_p(path):
@@ -80,7 +77,7 @@ class WeatherLevelChecker(Thread):
             self.status = msg
         if msg:
             lwa_options['status'] = self.status
-        print msg
+        print(msg)
 
     def update(self):
         self._sleep_time = 0
@@ -102,8 +99,7 @@ class WeatherLevelChecker(Thread):
                     if 'wl_weather' in gv.sd:
                         del gv.sd['wl_weather']
                 else:
-                    print "Checking weather status..."                
-#                     options = options_data()
+                    print("Checking weather status...")                
                     today = today_info(self, options)
                     forecast = forecast_info(self, options, today)
                     history = history_info(self, today, options)
@@ -239,7 +235,6 @@ class update(ProtectedPage):
         # write the settings to file
         with open('./data/weather_level_adj.json', 'w') as f:
             json.dump(lwa_options, f, indent=4, sort_keys=True)
-#         checker.update()
         raise web.seeother('/lwa')
 
 ################################################################################
@@ -282,7 +277,7 @@ def options_data():
         'temp_cutoff_enable': 'off',
         'temp_cutoff': 4,
         'wl_min': 0,
-        'wl_max': 200,
+        'wl_max': 100,
         'days_history': 3,
         'days_forecast': 3,
         'apikey': '',
@@ -338,13 +333,10 @@ def get_data(filename, suffix, data_type, options):
     url = "https://api.openweathermap.org/data/2.5/" + data_type + "?" + suffix
     
     dirpath = "./data/weather_level_history"
-#     mkdir_p(os.path.dirname(dirpath))
     path = os.path.join(dirpath, filename)
     try_nr = 1
     while try_nr <= 2:
         try:
-#             if not os.path.exists(dirpath):
-#                 os.mkdir(dirpath)
             with open(path, 'wb') as fh:
                 req = urllib2.urlopen(url + "&appid=" + options['apikey'])
                 while True:
@@ -370,7 +362,7 @@ def get_data(filename, suffix, data_type, options):
 
         except Exception as err:
             if try_nr < 2:
-                print str(err), 'Retrying.'
+                print(str(err), 'Retrying.')
                 os.remove(path)
                 # If we had an exception, this is where we need to increase
                 # our count retry

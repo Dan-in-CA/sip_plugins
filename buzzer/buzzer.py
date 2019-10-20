@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 # !/usr/bin/env python
 
 import web  # web.py framework
@@ -6,27 +8,37 @@ from urls import urls  # Get access to ospi's URLs
 from ospi import template_render  #  Needed for working with web.py templates
 from webpages import ProtectedPage  # Needed for security
 import json  # for working with data file
+
 # For helper functions
 from helpers import *
+
 # to write to the console
 import sys
+
 # sleep function
 from time import sleep
+
 # threads
 from threading import Thread
+
 # get open sprinkler signals
 from blinker import signal
+
 # to trace exceptions
 import traceback
+
 # to determine how much time as elapsed (for timeout purposes)
 import time
+
 # Load the Raspberry Pi GPIO (General Purpose Input Output) library
 try:
-    if (gv.use_pigpio):
+    if gv.use_pigpio:
         import pigpio
+
         pi = pigpio.pi()
     else:
         import RPi.GPIO as GPIO
+
         pi = 0
 except IOError:
     pass
@@ -38,16 +50,18 @@ BUZZER_PIN = 32
 BUZZER_ACTIVE_HIGH = True
 
 # Add new URLs to access classes in this plugin.
-urls.extend([
-    '/buzzer-sp', 'plugins.buzzer.settings',
-    '/buzzer-save', 'plugins.buzzer.save_settings'
-    ])
+urls.extend(
+    [
+        u"/buzzer-sp", u"plugins.buzzer.settings",
+        u"/buzzer-save", u"plugins.buzzer.save_settings",
+    ]
+)
 
 # Add this plugin to the PLUGINS menu ['Menu Name', 'URL'], (Optional)
-gv.plugin_menu.append(['Buzzer Plugin', '/buzzer-sp'])
+gv.plugin_menu.append([u"Buzzer Plugin", u"/buzzer-sp"])
 
-# This class handles the buzzer hardware       
-class Buzzer(Thread):    
+# This class handles the buzzer hardware
+class Buzzer(Thread):
     def __init__(self, pin, active_high):
         Thread.__init__(self)
         # set to true when buzzer pin is initialized
@@ -60,15 +74,15 @@ class Buzzer(Thread):
         # Set all default settings
         self.__set_default_settings()
         return
-        
+
     def __set_default_settings(self):
         # Beeps
         self.startup_beep = [0.050, 0.050, 0.050, 0.050, 0.050, 0.050, 0.100]
-        
+
     @staticmethod
     def __button_list_to_string(l):
         return ", ".join(str(e) for e in [int(x * 1000) for x in l])
-      
+
     @staticmethod
     def __string_to_button_list(s):
         str_list = s.split(",")
@@ -76,7 +90,7 @@ class Buzzer(Thread):
         total_time = 0
         for x in str_list:
             try:
-                value = (int(x) / 1000.0)
+                value = int(x) / 1000.0
                 # single value cannot be more than 1 second
                 if value > 1:
                     value = 1
@@ -89,40 +103,38 @@ class Buzzer(Thread):
                 # do nothing
                 pass
         return flist
-        
+
     def load_from_dict(self, settings):
         self.__set_default_settings()
-        if (settings is None):
+        if settings is None:
             return
-        if (settings.has_key("startup_beep")):
+        if u"startup_beep" in settings:
             self.startup_beep = Buzzer.__string_to_button_list(settings["startup_beep"])
         return
-        
+
     def load_settings(self):
         # Get settings
         try:
-            with open('./data/buzzer.json', 'r') as f:
+            with open(u"./data/buzzer.json", u"r") as f:
                 self.load_from_dict(json.load(f))
         except:
             self.__set_default_settings()
         return
-        
+
     def save_settings(self):
-        settings = {
-            "startup_beep": Buzzer.__button_list_to_string(self.startup_beep),
-        }
-        with open('./data/buzzer.json', 'w') as f:
-            json.dump(settings, f) # save to file
+        settings = {u"startup_beep": Buzzer.__button_list_to_string(self.startup_beep)}
+        with open(u"./data/buzzer.json", u"w") as f:
+            json.dump(settings, f)  # save to file
         return
-        
+
     def isReady(self):
-        return (self.pin < 0 or self.pin_initialized)
-    
+        return self.pin < 0 or self.pin_initialized
+
     def init_pins(self):
         try:
-            if (self.pin >= 0):
+            if self.pin >= 0:
                 # Initialize buzzer pin
-                if (gv.use_pigpio):
+                if gv.use_pigpio:
                     pi.set_mode(gv.pin_map[self.pin], pigpio.OUTPUT)
                 else:
                     GPIO.setmode(GPIO.BOARD)
@@ -131,28 +143,28 @@ class Buzzer(Thread):
                 self.__set_buzzer_pin(False)
                 # Done!
                 self.pin_initialized = True
-            else: 
+            else:
                 self.pin_initialized = False
         except:
             self.pin_initialized = False
             return False
         return True
-        
+
     def __set_buzzer_pin(self, is_on):
         pin_value = self.active_high if is_on else not self.active_high
-        if (gv.use_pigpio):
+        if gv.use_pigpio:
             pi.write(gv.pin_map[self.pin], pin_value)
         else:
             GPIO.output(self.pin, pin_value)
-        
+
     # time: Time value(s) in seconds
-    #       If single value, on time for buzzer 
+    #       If single value, on time for buzzer
     #       If array, time values in the format [on time, off time, on time, ...]
-    def buzz(self, time = 0.010):
+    def buzz(self, time=0.010):
         try:
-            if (self.pin >= 0 and self.pin_initialized and time is not None):
+            if self.pin >= 0 and self.pin_initialized and time is not None:
                 time_list = []
-                if (isinstance(time, list)):
+                if isinstance(time, list):
                     time_list = time
                 else:
                     time_list.append(time)
@@ -161,42 +173,42 @@ class Buzzer(Thread):
                 # Loop through each time in list
                 for v in time_list:
                     # If this value is on time, turn on the buzzer
-                    if (buzz_on and v > 0):
+                    if buzz_on and v > 0:
                         self.__set_buzzer_pin(True)
                     # Suspend for the given time
-                    if (v > 0):
+                    if v > 0:
                         sleep(v)
                     # Always shut off buzzer before next iteration
                     self.__set_buzzer_pin(False)
-                    # Invert 
+                    # Invert
                     buzz_on = not buzz_on
         except:
             self.pin_initialized = False
             return False
         return True
-        
+
     def __wait_for_ready(self):
         MAX_INIT_RETRY = 15
         retry = 0
         # First attempt to initialize pins
         self.init_pins()
         # Wait for buzzer to be ready
-        while (not self.isReady() and retry < MAX_INIT_RETRY):
-            if (retry == 0):
-                print "buzzer not ready yet"
-            print "Attempting to reinitialize buzzer plugin..."
-            #sleep for a moment and try to reinit
+        while not self.isReady() and retry < MAX_INIT_RETRY:
+            if retry == 0:
+                print(u"buzzer not ready yet")
+            print(u"Attempting to reinitialize buzzer plugin...")
+            # sleep for a moment and try to reinit
             sleep(1)
-            if (self.init_pins()):
-                print "Done"
+            if self.init_pins():
+                print(u"Done")
             else:
-                print "Failed"
-            retry+=1
-        if (retry >= MAX_INIT_RETRY):
-            print "Buzzer failure"
+                print(u"Failed")
+            retry += 1
+        if retry >= MAX_INIT_RETRY:
+            print(u"Buzzer failure")
             return False
         return True
-        
+
     def __buzzer_init_task(self):
         # Load settings from file
         self.load_settings()
@@ -204,11 +216,13 @@ class Buzzer(Thread):
         self.__wait_for_ready()
         # Ring startup beep
         self.buzz(self.startup_beep)
-        
+
     def run(self):
         self.__buzzer_init_task()
 
+
 buzzer = Buzzer(BUZZER_PIN, BUZZER_ACTIVE_HIGH)
+
 
 class settings(ProtectedPage):
     """
@@ -217,11 +231,14 @@ class settings(ProtectedPage):
 
     def GET(self):
         try:
-            with open('./data/buzzer.json', 'r') as f:  # Read settings from json file if it exists
+            with open(
+                u"./data/buzzer.json", u"r"
+            ) as f:  # Read settings from json file if it exists
                 settings = json.load(f)
         except IOError:  # If file does not exist return empty value
             settings = {}  # Default settings. can be list, dictionary, etc.
         return template_render.buzzer(settings)  # open settings page
+
 
 class save_settings(ProtectedPage):
     """
@@ -231,15 +248,20 @@ class save_settings(ProtectedPage):
     """
 
     def GET(self):
-        qdict = web.input()  # Dictionary of values returned as query string from settings page.
-        buzzer.load_from_dict(qdict) # load settings from dictionary
-        buzzer.save_settings() # Save keypad settings
-        raise web.seeother('/')  # Return user to home page.
-        
+        qdict = (
+            web.input()
+        )  # Dictionary of values returned as query string from settings page.
+        buzzer.load_from_dict(qdict)  # load settings from dictionary
+        buzzer.save_settings()  # Save keypad settings
+        raise web.seeother(u"/")  # Return user to home page.
+
+
 # Setup buzzer signal notification
-def notify_buzzer_beep(time,  **kw):
+def notify_buzzer_beep(time, **kw):
     return buzzer.buzz(time)
-buzzer_beep = signal('buzzer_beep')
+
+
+buzzer_beep = signal(u"buzzer_beep")
 buzzer_beep.connect(notify_buzzer_beep)
 
 # Run to get hardware initialized

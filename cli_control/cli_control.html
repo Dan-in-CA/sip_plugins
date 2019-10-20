@@ -1,6 +1,6 @@
 $def with(commands)
 
-$var title: $_('SIP CLI Plugin') 
+$var title: $_(u'SIP CLI Plugin') 
 $var page: cli_control
 
 <script>
@@ -41,13 +41,13 @@ $var page: cli_control
 
 </script>
 <div id="stations">
-    <div class="title">$_('Cl Commands')</div>
+    <div class="title">$_(u'Cl Commands')</div>
     <form id="clic" name="clic" action="$app_path('/clicu')" method="get">
         <table id="commandList">
             <tr>
-                <th class="stationNumber">$_('Station')</th>
-                <th class="columnName">$_('Start Command')</th>
-                <th class="columnName">$_('Stop Command')</th>
+                <th class="stationNumber">$_(u'Station')</th>
+                <th class="columnName">$_(u'Start Command')</th>
+                <th class="columnName">$_(u'Stop Command')</th>
             </tr>
             $for bid in range(0,gv.sd['nbrd']):
                 $for s in range(0,8):
@@ -71,7 +71,7 @@ $var page: cli_control
 </div>
 
 <div id="controls">
-    <button id="cSubmit" class="submit"><b>$_('Submit')</b></button>
-    <button id="cCancel" class="cancel danger">$_('Cancel')</button>
+    <button id="cSubmit" class="submit"><b>$_(u'Submit')</b></button>
+    <button id="cCancel" class="cancel danger">$_(u'Cancel')</button>
 </div>
 </div>

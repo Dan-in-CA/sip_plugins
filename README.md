@@ -84,10 +84,6 @@ pump_control
 Controls a pump relay via an Arduino over i2C.
 Checks pressure in pipe ensuring proper operation.
 
-relay
-----------
-Example plugin to demonstrate OSPi on-board relay
-
 relay_16
 ----------
 A relaly_board update for use on 40 pin GPIO headers.
@@ -103,7 +99,7 @@ Example plugin provides functions triggered by signals from core program (instal
 
 sms_adj
 ----------
-Control your ospi using SMS (Short Message Service)
+Control your SIP using SMS (Short Message Service)
 
 ssd1306
 ----------
@@ -111,7 +107,7 @@ Plugin for SSD1306 128x64 pixel display connected to I2C interface with HW addre
 
 system_update
 ----------
-Allows updating OSPi software from integrated UI  S
+Allows updating SIP software from integrated UI  S
 (Installed by default)
 
 telegram_bot
@@ -120,11 +116,6 @@ A simple telegram.org bot to interface with a SIP installation.
 
 Run "pip install python-telegram-bot --upgrade" before installing this plugin.
 
-weather_adj
-----------
-Adjust irrigation schedule based on weather forecast
-
 weather_level_adj
 ----------
 Adjust irrigation time based on weather forecast
-

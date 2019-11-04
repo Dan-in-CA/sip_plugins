@@ -1,10 +1,10 @@
 """
 Copyright (C) 2012 Matthew Skolaut
 
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and 
-associated documentation files (the "Software"), to deal in the Software without restriction, 
-including without limitation the rights to use, copy, modify, merge, publish, distribute, 
-sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is 
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+associated documentation files (the "Software"), to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify, merge, publish, distribute,
+sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
 furnished to do so, subject to the following conditions:
 
 The above copyright notice and this permission notice shall be included in all copies or substantial
@@ -13,12 +13,12 @@ portions of the Software.
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
 LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
 IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
-WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
+WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
-import smbus
 from time import *
+import smbus
 
 # General i2c device class so that other devices can be added easily
 class i2c_device:
@@ -39,38 +39,31 @@ class i2c_device:
 class lcd:
     # initializes objects and lcd
     """
-	Reverse Codes:
-	0: lower 4 bits of expander are commands bits
-	1: top 4 bits of expander are commands bits AND P0-4 P1-5 P2-6 (Use for "LCD2004" board)
-	2: top 4 bits of expander are commands bits AND P0-6 P1-5 P2-4
-	3: "LCD2004" board where lower 4 are commands, but backlight is pin 3
-	"""
+    Reverse Codes:
+    0: lower 4 bits of expander are commands bits
+    1: top 4 bits of expander are commands bits AND P0-4 P1-5 P2-6 (Use for "LCD2004" board)
+    2: top 4 bits of expander are commands bits AND P0-6 P1-5 P2-4
+    3: "LCD2004" board where lower 4 are commands, but backlight is pin 3
+    """
 
-    def __init__(
-        self,
-        addr,
-        port,
-        reverse=0,
-        backlight_pin=-1,
-        en_pin=-1,
-        rw_pin=-1,
-        rs_pin=-1,
-        d4_pin=-1,
-        d5_pin=-1,
-        d6_pin=-1,
-        d7_pin=-1,
-    ):
+    def __init__(self, addr, port, reverse=0, backlight_pin=-1, en_pin=-1, rw_pin=-1, rs_pin=-1, d4_pin=-1, d5_pin=-1, d6_pin=-1, d7_pin=-1):
         self.reverse = reverse
         self.lcd_device = i2c_device(addr, port)
+        self.error = None
 
+        # If there is not a device at the address return with error
+        try:
+            self.lcd_device.write(0)
+        except IOError as e:
+            self.error = e
+            return
+        except Exception as e:
+            self.error = e
+            return
         self.pins = [i for i in range(8)]  # Initialize the list
-        self.backlight = (
-            1 << 7
-        )  # Initialize with backlight as on (Change self.backlight to 0 to turn off backlight pin)
+        self.backlight = 1 << 7  # Initialize with backlight as on (Change self.backlight to 0 to turn off backlight pin)
 
-        if (
-            d7_pin != -1
-        ):  # Manually set pins, in case we have a different backpack pinout
+        if d7_pin != -1:  # Manually set pins, in case we have a different backpack pinout
             self.pins[0] = d4_pin
             self.pins[1] = d5_pin
             self.pins[2] = d6_pin
@@ -80,9 +73,7 @@ class lcd:
             self.pins[6] = en_pin
             self.pins[7] = backlight_pin
 
-        elif (
-            self.reverse == 1
-        ):  # 1: top 4 bits of expander are commands bits AND P0-4 P1-5 P2-6 (Use for "LCD2004" board)
+        elif self.reverse == 1:  # 1: top 4 bits of expander are commands bits AND P0-4 P1-5 P2-6 (Use for "LCD2004" board)
             self.pins[0] = 4  # D4 Pin
             self.pins[1] = 5  # D5 Pin
             self.pins[2] = 6  # D6 Pin
@@ -92,9 +83,7 @@ class lcd:
             self.pins[6] = 2  # EN Pin
             self.pins[7] = 3  # Backlight Pin
 
-        elif (
-            self.reverse == 2
-        ):  # 2: top 4 bits of expander are commands bits AND P0-6 P1-5 P2-4
+        elif self.reverse == 2:  # 2: top 4 bits of expander are commands bits AND P0-6 P1-5 P2-4
             self.pins[0] = 4  # D4 Pin
             self.pins[1] = 5  # D5 Pin
             self.pins[2] = 6  # D6 Pin
@@ -134,21 +123,16 @@ class lcd:
         self.lcd_write(0x01)  # Clear display, move cursor home
         self.lcd_write(0x06)  # Move cursor right
         self.lcd_write(0x0C)  # Turn on display
-
-    # 		self.lcd_write(0x0F)
+#        self.lcd_write(0x0F)
 
     # clocks EN to latch command
     def lcd_strobe(self):
         self.lcd_device_write(self.lastcomm | (1 << 6), 1)  # 1<<6 is the enable pin
-        self.lcd_device_write(
-            self.lastcomm, 1
-        )  # Technically not needed, but included so we can read from the display
+        self.lcd_device_write(self.lastcomm, 1)  # Technically not needed, but included so we can read from the display
 
     # write a command to lcd
     def lcd_write(self, cmd):
-        self.lcd_device_write(
-            (cmd >> 4)
-        )  # Write the first 4 bits (nibble) of the command
+        self.lcd_device_write((cmd >> 4))  # Write the first 4 bits (nibble) of the command
         self.lcd_strobe()
         self.lcd_device_write((cmd & 0x0F))  # Write the second nibble of the command
         self.lcd_strobe()
@@ -158,9 +142,7 @@ class lcd:
     def lcd_write_char(self, charvalue):
         self.lcd_device_write(((1 << 4) | (charvalue >> 4)))  # Originally this was 0x40
         self.lcd_strobe()
-        self.lcd_device_write(
-            ((1 << 4) | (charvalue & 0x0F))
-        )  # Originally this was 0x40
+        self.lcd_device_write(((1 << 4) | (charvalue & 0x0F)))  # Originally this was 0x40
         self.lcd_strobe()
         self.lcd_device_write(0x0)
 
@@ -185,9 +167,7 @@ class lcd:
             a = a - 1
 
         self.lcd_device.write(tempcomm)
-        sleep(
-            0.0005
-        )  # May be unnecessary, but including to guarantee we don't push data out too fast
+        sleep(0.0005)  # May be unnecessary, but including to guarantee we don't push data out too fast
 
         # Since we can't trust what we read from the display, we store the last
         # executed command in a property inside the object. This way strobe

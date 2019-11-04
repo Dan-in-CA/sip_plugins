@@ -35,7 +35,6 @@ A plugin for using an 4X4 scanning keypad and buzzer to execute simple functions
 lcd_adj
 ----------
 Uses I2C for LCD 16x2 char data display
-Requires pylcd2 library
 
 monthly_adj
 ----------

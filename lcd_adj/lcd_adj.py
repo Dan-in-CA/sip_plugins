@@ -96,7 +96,7 @@ class LCDSender(Thread):
             self.add_status("Port IP: / {}".format(gv.sd["htp"]))
         elif report == "d_cpu_temp":
             self._lcd.lcd_clear()
-            temp = get_cpu_temp(gv.sd["tu"]) + " " + gv.sd["tu"]
+            temp = str(get_cpu_temp()) + " " + gv.sd["tu"]
             self._lcd.lcd_puts("CPU temperature:", 1)
             self._lcd.lcd_puts(temp, 2)
             self.add_status("CPU temperature: / " + temp)
@@ -306,5 +306,6 @@ class update(ProtectedPage):
 
         with open("./data/lcd_adj.json", "w") as f:  # write the settings to file
             json.dump(datalcd, f)
+            print("Saving settings") #  - test
         checker.update()
         raise web.seeother("/")

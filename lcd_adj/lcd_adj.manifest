@@ -9,3 +9,4 @@ lcd_adj-docs.html static/docs/plugins
 lcd_adj.json data (generated)
 lcd_adj.manifest plugins/manifests
 pylcd.py .
+smbus.py .

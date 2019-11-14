@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # This plugin sends data to I2C for LCD 16x2 char with PCF8574. Visit for more: www.pihrt.com/elektronika/258-moje-rapsberry-pi-i2c-lcd-16x2.
 
-from __future__ import print_function
+from __future__ import print_function, unicode_literals
 from threading import Thread, Lock
 import json
 import time
@@ -307,4 +307,4 @@ class update(ProtectedPage):
         with open("./data/lcd_adj.json", "w") as f:  # write the settings to file
             json.dump(datalcd, f, indent=4, sort_keys=True)
         checker.update()
-        raise web.seeother(u"/")
+        raise web.seeother("/")

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # This plugin sends data to I2C for LCD 16x2 char with PCF8574. Visit for more: www.pihrt.com/elektronika/258-moje-rapsberry-pi-i2c-lcd-16x2.
 
-from __future__ import print_function, unicode_literals
+from __future__ import print_function
 from threading import Thread, Lock
 import json
 import time
@@ -18,12 +18,12 @@ from blinker import signal
 import pylcd  # Library for LCD 16x2 PCF8574
 
 # Add a new url to open the data entry page.
-urls.extend(["/lcd", "plugins.lcd_adj.settings",
-             "/lcdj", "plugins.lcd_adj.settings_json",
-             "/lcda", "plugins.lcd_adj.update"])
+urls.extend(["/lcd", u"plugins.lcd_adj.settings",
+             "/lcdj", u"plugins.lcd_adj.settings_json",
+             "/lcda", u"plugins.lcd_adj.update"])
 
 # Add this plugin to the home page plugins menu
-gv.plugin_menu.append(["LCD Settings", "/lcd"])
+gv.plugin_menu.append([_(u"LCD Settings"), '/lcd'])
 
 ################################################################################
 # Main function loop:                                                          #

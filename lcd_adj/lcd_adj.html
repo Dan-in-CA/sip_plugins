@@ -23,7 +23,7 @@ $var page: plugins
 
 <div id="plugin">
     <div class="title">LCD settings
-        <button class="execute" id="docButton" type="button">$_('Help')</button>
+        <button class="execute" id="docButton" type="button">$_(u'Help')</button>
     </div>
 
     <form id="pluginForm" action="/lcda" method="get">
@@ -35,7 +35,7 @@ $var page: plugins
                         <tr>
                             <td style='text-transform: none;'>Use I2C LCD:</td>
                             <td>
-                                <input name='use_lcd' type='checkbox' ${ " checked" if m_vals[ 'use_lcd']=="on" else ""}>
+                                <input name='use_lcd' type='checkbox' ${ u" checked" if m_vals[ 'use_lcd']==u"on" else u""}>
                             </td>
                         </tr>
                         <tr>
@@ -72,49 +72,49 @@ $var page: plugins
                         <tr>
                             <td>SIP Software Version:</td>
                             <td>
-                                <input name='d_sw_version' type='checkbox' ${ " checked" if m_vals[ 'd_sw_version']=="on" else ""}>
+                                <input name='d_sw_version' type='checkbox' ${ u" checked" if m_vals[ 'd_sw_version']==u"on" else u""}>
                             </td>
                         </tr>
                         <tr>
                             <td>IP:</td>
                             <td>
-                                <input name='d_ip' type='checkbox' ${ " checked" if m_vals[ 'd_ip']=="on" else ""}>
+                                <input name='d_ip' type='checkbox' ${ u" checked" if m_vals[ 'd_ip']==u"on" else u""}>
                             </td>
                         </tr>
                         <tr>
                             <td>Port:</td>
                             <td>
-                                <input name='d_port' type='checkbox' ${ " checked" if m_vals[ 'd_port']=="on" else ""}>
+                                <input name='d_port' type='checkbox' ${ u" checked" if m_vals[ 'd_port']==u"on" else u""}>
                             </td>
                         </tr>
                         <tr>
                             <td>CPU Temp:</td>
                             <td>
-                                <input name='d_cpu_temp' type='checkbox' ${ " checked" if m_vals[ 'd_cpu_temp']=="on" else ""}>
+                                <input name='d_cpu_temp' type='checkbox' ${ u" checked" if m_vals[ 'd_cpu_temp']==u"on" else u""}>
                             </td>
                         </tr>
                         <tr>
                             <td>Time and Date:</td>
                             <td>
-                                <input name='d_date_time' type='checkbox' ${ " checked" if m_vals[ 'd_date_time']=="on" else ""}>
+                                <input name='d_date_time' type='checkbox' ${ u" checked" if m_vals[ 'd_cpu_temp']==u"on" else u""}>
                             </td>
                         </tr>
                         <tr>
                             <td>Uptime:</td>
                             <td>
-                                <input name='d_uptime' type='checkbox' ${ " checked" if m_vals[ 'd_uptime']=="on" else ""}>
+                                <input name='d_uptime' type='checkbox' ${ u" checked" if m_vals[ 'd_cpu_temp']==u"on" else u""}>
                             </td>
                         </tr>
                         <tr>
                             <td>Rain Sensor:</td>
                             <td>
-                                <input name='d_rain_sensor' type='checkbox' ${ " checked" if m_vals[ 'd_rain_sensor']=="on" else ""}>
+                                <input name='d_rain_sensor' type='checkbox' ${ u" checked" if m_vals[ 'd_cpu_temp']==u"on" else u""}>
                             </td>
                         </tr>
                         <tr>
                             <td>Running Stations:</td>
                             <td>
-                                <input name='d_running_stations' type='checkbox' ${ " checked" if m_vals[ 'd_running_stations']=="on" else ""}>
+                                <input name='d_running_stations' type='checkbox' ${ u" checked" if m_vals[ 'd_cpu_temp']==u"on" else u""}>
                             </td>
                         </tr>
                     </table>
@@ -127,7 +127,7 @@ $var page: plugins
                     <table class="optionList" width="100%">
                         <tr>
                             <td>
-                                <textarea style="font-family: monospace;" rows="7" cols="35" readonly>$m_vals['status']</textarea>
+                                <textarea style="font-family: monospace;" rows="7" cols="35" readonly>$m_vals[u'status']</textarea>
                             </td>
                         </tr>
                     </table>

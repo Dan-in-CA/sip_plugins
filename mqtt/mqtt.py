@@ -60,7 +60,8 @@ class settings(ProtectedPage):
 
 
 class save_settings(ProtectedPage):
-    """Save user input to json file.
+    """
+    Save user input to json file.
     Will create or update file when SUBMIT button is clicked
     CheckBoxes only appear in qdict if they are checked.
     """
@@ -85,7 +86,7 @@ class save_settings(ProtectedPage):
                     u"Broker port must be a valid integer port number",
                 )
             else:
-                json.dump(_settings, f)  # save to file
+                json.dump(_settings, f, indent=4, sort_keys=True)  # save to file
                 publish_status()
         raise web.seeother(u"/")  # Return user to home page.
 
@@ -106,7 +107,9 @@ def get_settings():
 
 
 def on_message(client, userdata, msg):
-    """Callback for MQTT data recieved"""
+    """
+    Callback for MQTT data recieved
+    """
     global _subscriptions
     if not msg.topic in _subscriptions:
         print(u"MQTT plugin got unexpected message on topic:", msg.topic)
@@ -147,7 +150,9 @@ def publish_status(status=u"UP"):
 
 
 def subscribe(topic, callback, qos=0):
-    """Subscribes to a topic with the given callback"""
+    """
+    Subscribes to a topic with the given callback
+    """
     global _subscriptions
     client = get_client()
     if client:

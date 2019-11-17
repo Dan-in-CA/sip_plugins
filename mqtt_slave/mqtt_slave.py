@@ -6,6 +6,7 @@ from __future__ import print_function
 """
 __author__ = "Orginally written by Daniel Casner <daniel@danielcasner.org> Modified from mqtt_schedule by Dan K."
 
+from builtins import range
 import web  # web.py framework
 import gv  # Get access to SIP's settings
 from urls import urls  # Get access to SIP's URLs
@@ -20,15 +21,15 @@ from time import sleep
 DATA_FILE = "./data/mqtt.json"
 
 # Add new URLs to access classes in this plugin.
+# fmt: off
 urls.extend(
     [
-        "/mr2-sp",
-        "plugins.mqtt_slave.settings",
-        "/mr2-save",
-        "plugins.mqtt_slave.save_settings",
+        u"/mr2-sp", u"plugins.mqtt_slave.settings",
+        u"/mr2-save", u"plugins.mqtt_slave.save_settings",
     ]
 )
-gv.plugin_menu.append(["MQTT slave", "/mr2-sp"])
+# fmt: on
+gv.plugin_menu.append([u"MQTT slave", u"/mr2-sp"])
 
 
 class settings(ProtectedPage):
@@ -37,9 +38,9 @@ class settings(ProtectedPage):
 
     def GET(self):
         settings = mqtt.get_settings()
-        settings["control_topic"] = ""
-        settings["first_station"] = ""
-        settings["station_count"] = ""
+        settings[u"control_topic"] = ""
+        settings[u"first_station"] = ""
+        settings[u"station_count"] = ""
         return template_render.mqtt_slave(settings, "")  # open settings page
 
 
@@ -55,28 +56,28 @@ class save_settings(ProtectedPage):
         )  # Dictionary of values returned as query string from settings page.
         settings = mqtt.get_settings()
         settings.update(qdict)
-        with open(DATA_FILE, "w") as f:
+        with open(DATA_FILE, u"w") as f:
             json.dump(settings, f, indent=4, sort_keys=True)  # save to file
         subscribe()
-        raise web.seeother("/")  # Return user to home page.
+        raise web.seeother(u"/")  # Return user to home page.
 
 
 def on_message(client, msg):
     "Callback when MQTT message is received."
-    if not gv.sd["en"]:  # check operation status
+    if not gv.sd[u"en"]:  # check operation status
         return
 
-    num_brds = gv.sd["nbrd"]
+    num_brds = gv.sd[u"nbrd"]
     num_sta = num_brds * 8
     try:
         cmd = json.loads(msg.payload)
     except ValueError as e:
-        print("MQTT Slave could not decode command: ", msg.payload, e)
+        print(u"MQTT Slave could not decode command: ", msg.payload, e)
         return
 
     zones = cmd["zone_list"]  #  list of all zones sent from master
-    first = int(mqtt.get_settings().get("first_station")) - 1
-    count = int(mqtt.get_settings().get("station_count"))
+    first = int(mqtt.get_settings().get(u"first_station")) - 1
+    count = int(mqtt.get_settings().get(u"station_count"))
     local_zones = zones[first : first + count]
     for i in range(len(local_zones)):
         if (
@@ -90,13 +91,13 @@ def on_message(client, msg):
         elif gv.srvals[i] and not local_zones[i]:
             gv.rs[i][1] = gv.now
     if any(gv.rs):
-        gv.sd["bsy"] = 1
+        gv.sd[u"bsy"] = 1
     sleep(1)
 
 
 def subscribe():
     "Subscribe to messages"
-    topic = mqtt.get_settings().get("control_topic")
+    topic = mqtt.get_settings().get(u"control_topic")
     if topic:
         mqtt.subscribe(topic, on_message, 2)
 

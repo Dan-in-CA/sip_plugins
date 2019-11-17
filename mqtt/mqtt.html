@@ -1,7 +1,6 @@
 $def with(settings, client_id, error_msg)
-<!-- Edit: Replace "proto_vals" with settings values for your plugin if used-->
 
-$var title: $_('SIP MQTT Plugin')
+$var title: $_(u'SIP MQTT Plugin')
 $var page: mqtt_plugin
 <script>
 
@@ -28,34 +27,34 @@ $var page: mqtt_plugin
 
     <div id="errorMessage">${error_msg}</div>
 
-    <form id="pluginForm" action="${app_path('/mqtt-save')}" method="get"> <!--Edit: Replace "proto-save" with URL of plugin's class for saving settings-->
+    <form id="pluginForm" action="${app_path('/mqtt-save')}" method="get">
 
         <table class="optionList">
 
             <!--Text fields-->
             <tr>
-                <td style='text-transform: none;'>$_('MQTT Broker Host'):</td>
+                <td style='text-transform: none;'>$_(u'MQTT Broker Host'):</td>
                 <td><input type="text" name="broker_host" value="${settings['broker_host']}"></td>
             </tr>
             <tr>
-                <td style='text-transform: none;'>$_('MQTT Broker Port'):</td>
+                <td style='text-transform: none;'>$_(u'MQTT Broker Port'):</td>
                 <td><input type="text" name="broker_port" value="${settings['broker_port']}"></td>
             </tr>
             <tr>
-                <td style='text-transform: none;'>$_('MQTT Broker Username'):</td>
+                <td style='text-transform: none;'>$_(u'MQTT Broker Username'):</td>
                 <td><input type="text" name="broker_username" value="${settings['broker_username']}"></td>
             </tr>
             <tr>
-                <td style='text-transform: none;'>$_('MQTT Broker Password'):</td>
+                <td style='text-transform: none;'>$_(u'MQTT Broker Password'):</td>
                 <td><input type="text" name="broker_password" value="${settings['broker_password']}"></td>
             </tr>
             <tr>
-              <td style='text-transform: none;'>$_('MQTT Publish up/down topic'):</td>
+              <td style='text-transform: none;'>$_(u'MQTT Publish up/down topic'):</td>
               <td><input type="text" name="publish_up_down" value="${settings['publish_up_down']}">
               Leave blank to not publish SIP status.</td>
             </tr>
             <tr>
-                <td style='text-transform: none;'>$_('MQTT Client ID'):</td>  <!--Edit-->
+                <td style='text-transform: none;'>$_(u'MQTT Client ID'):</td>  <!--Edit-->
                 <td>${client_id}</td>
             </tr>
         </table>
@@ -63,7 +62,7 @@ $var page: mqtt_plugin
     </form>
 
 <div id="controls">
-    <button id="cSubmit" class="submit"><b>$_('Submit')</b></button>
-    <button id="cCancel" class="cancel danger">$_('Cancel')</button>
+    <button id="cSubmit" class="submit"><b>$_(u'Submit')</b></button>
+    <button id="cCancel" class="cancel danger">$_(u'Cancel')</button>
 </div>
 </div>

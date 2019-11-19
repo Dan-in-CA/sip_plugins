@@ -1,8 +1,9 @@
 # !/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-
 from __future__ import print_function
+from builtins import next
+from builtins import str
 import datetime
 from threading import Thread
 import sys
@@ -11,7 +12,8 @@ import json
 import time
 import re
 import os
-import urllib2
+# import urllib2
+import urllib.request, urllib.error, urllib.parse
 import errno
 
 import web
@@ -47,16 +49,15 @@ def mkdir_p(path):
 
 
 # Add a new url to open the data entry page.
+# fmt: off
 urls.extend(
     [
-        u"/lwa",
-        u"plugins.weather_level_adj.settings",
-        u"/lwj",
-        u"plugins.weather_level_adj.settings_json",
-        u"/luwa",
-        u"plugins.weather_level_adj.update",
+        u"/lwa", u"plugins.weather_level_adj.settings",
+        u"/lwj", u"plugins.weather_level_adj.settings_json",
+        u"/luwa", u"plugins.weather_level_adj.update",
     ]
 )
+# fmt: on
 
 # Add this plugin to the home page plugins menu
 gv.plugin_menu.append([u"Weather-based Water Level", u"/lwa"])
@@ -124,7 +125,7 @@ class WeatherLevelChecker(Thread):
                             + history[u"temp_c"]
                             + forecast[u"temperature_trend"][u"temp_avg"]
                         )
-                        / 3,
+                        // 3,
                         u"rain_mm": (
                             today[u"rain_mm"]
                             + history[u"rain_mm"]
@@ -135,13 +136,13 @@ class WeatherLevelChecker(Thread):
                             + history[u"wind_ms"]
                             + forecast[u"wind_average"][u"wind_speed_avg"]
                         )
-                        / 3,
+                        // 3,
                         u"humidity": (
                             today[u"humidity"]
                             + history[u"humidity"]
                             + forecast[u"humidity_trend"][u"humid_avg"]
                         )
-                        / 3,
+                        // 3,
                     }
 
                     # We assume that the default 100% provides 4mm water per day (normal need)
@@ -153,20 +154,20 @@ class WeatherLevelChecker(Thread):
                         + 1
                     )  # 4mm per day
                     water_needed *= (
-                        1 + (total_info[u"temp_c"] - 20) / 15
+                        1 + (total_info[u"temp_c"] - 20) // 15
                     )  # 5 => 0%, 35 => 200%
                     water_needed *= 1 + (
-                        total_info[u"wind_ms"] / 100
+                        total_info[u"wind_ms"] // 100
                     )  # 0 => 100%, 20 => 120%
                     water_needed *= (
-                        1 - (total_info[u"humidity"] - 50) / 200
+                        1 - (total_info[u"humidity"] - 50) // 200
                     )  # 0 => 125%, 100 => 75%
                     water_needed = round(water_needed, 1)
 
                     water_left = water_needed - total_info[u"rain_mm"]
                     water_left = round(max(0, min(100, water_left)), 1)
 
-                    water_adjustment = round((water_left / ini_water_needed) * 100, 1)
+                    water_adjustment = round((water_left // ini_water_needed) * 100, 1)
 
                     water_adjustment = max(
                         safe_float(options[u"wl_min"]),
@@ -200,7 +201,7 @@ class WeatherLevelChecker(Thread):
                             u"Water needed ({}days)  : {}{}".format(
                                 int(options[u"days_forecast"]) + 1,
                                 to_in(water_needed),
-                                "in",
+                                u"in",
                             )
                         )
                         self.add_status(u"________________________________")
@@ -296,33 +297,39 @@ class update(ProtectedPage):
         global prior
 
         qdict = web.input()
+        # fmt: off
         if (
-            qdict[u"units"] == u"US" and lwa_options[u"units"] == u"SI"
+            qdict[u"units"] == u"US" 
+            and lwa_options[u"units"] == u"SI"
         ):  #  Units type has changed SI to US.
-            qdict = lwa_options  #  Ignore any other changes
+            qdict = lwa_options  #  Ignore any other changed
+        # fmt: on    
             qdict[u"units"] = u"US"
             prior[u"temp_cutoff"] = round(
-                ((float(qdict[u"temp_cutoff"]) - 32) * 5) / 9, 1
+                ((float(qdict[u"temp_cutoff"]) - 32) * 5) // 9, 1
             )
             prior[u"water_needed"] = round(float(qdict[u"daily_irrigation"]) * 25.4, 1)
 
+        # fmt: off
         if (
-            qdict[u"units"] == u"SI" and lwa_options[u"units"] == u"US"
+            qdict[u"units"] == u"SI" 
+            and lwa_options[u"units"] == u"US"
         ):  #  Units type has changed US to SI.
+        # fmt: on
             qdict = lwa_options  #  Ignore any other changes
             qdict[u"units"] = u"SI"
-            prior[u"temp_cutoff"] = lwa_options[u"temp_cutoff"]
-            prior[u"water_needed"] = lwa_options[u"daily_irrigation"]
+            prior[u"temp_cutoff"] = float(lwa_options[u"temp_cutoff"])
+            prior[u"water_needed"] = float(lwa_options[u"daily_irrigation"])
 
         if qdict[u"units"] == u"US":
             temp_setting = round(
-                ((float(qdict[u"temp_cutoff"]) - 32) * 5) / 9, 1
+                ((float(qdict[u"temp_cutoff"]) - 32) * 5) // 9, 1
             )  #  cnvert to SI vals.
             if prior[u"temp_cutoff"] != temp_setting:  #  If changed
                 prior[u"temp_cutoff"] = temp_setting
                 qdict[u"temp_cutoff"] = temp_setting
             else:
-                qdict[u"temp_cutoff"] = lwa_options[u"temp_cutoff"]  #  No change
+                qdict[u"temp_cutoff"] = float(lwa_options[u"temp_cutoff"])  #  No change
 
             per_day_setting = round(
                 float(qdict[u"daily_irrigation"]) * 25.4, 1
@@ -331,22 +338,23 @@ class update(ProtectedPage):
                 prior[u"water_needed"] = per_day_setting
                 qdict[u"water_needed"] = per_day_setting
             else:
-                qdict[u"water_needed"] = lwa_options[u"daily_irrigation"]  # No change
+                qdict[u"water_needed"] = float(lwa_options[u"daily_irrigation"])  # No change
 
         for (
             key,
             value,
-        ) in qdict.iteritems():  # Convert format from storage to dictionary
+        ) in list(qdict.items()):  # Convert format from storage to dictionary
             if key in qdict:
                 lwa_options[key] = value
-        lwa_options[u"status"] = ""  #  clear any existing text.
+        print(u"lwa_options: ", lwa_options)
+        lwa_options[u"status"] = u""  #  clear any existing text.
         if u"auto_wl" not in qdict:
             lwa_options[u"auto_wl"] = u"off"
         if u"temp_cutoff_enable" not in qdict:
             lwa_options[u"temp_cutoff_enable"] = u"off"
-        if lwa_options[u"days_history"] > 5:
+        if int(lwa_options[u"days_history"]) > 5:
             lwa_options[u"days_history"] = 5
-        if lwa_options[u"days_forecast"] > 5:
+        if int(lwa_options[u"days_forecast"]) > 5:
             lwa_options[u"days_forecast"] = 5
 
         # write the settings to file
@@ -380,7 +388,7 @@ def to_f(temp_c):
 
 def to_in(len_mm):
     """ convert length in milimeters to inches."""
-    len_in = round(safe_float(len_mm) / 25.4, 1)
+    len_in = round(safe_float(len_mm) // 25.4, 1)
     return len_in
 
 
@@ -396,7 +404,7 @@ def options_data():
     default_options = {
         u"units": u"SI",
         u"auto_wl": u"off",
-        u"daily_irrigation": u"4",
+        u"daily_irrigation": 4,
         u"temp_cutoff_enable": u"off",
         u"temp_cutoff": 4,
         u"wl_min": 0,
@@ -470,7 +478,7 @@ def get_data(filename, suffix, data_type, options):
     while try_nr <= 2:
         try:
             with open(path, u"wb") as fh:
-                req = urllib2.urlopen(url + u"&appid=" + options[u"apikey"])
+                req = urllib.request.urlopen(url + u"&appid=" + options[u"apikey"])
                 while True:
                     chunk = req.read(20480)
                     if not chunk:
@@ -478,13 +486,14 @@ def get_data(filename, suffix, data_type, options):
                     fh.write(chunk)
 
             try:
-                with file(path, u"r") as fh:
+#                 with file(path, u"r") as fh:
+                with open(path, u"r") as fh:
                     data = json.load(fh)
             except ValueError:
                 raise Exception(u"Failed to read " + path + u".")
 
             if data is not None:
-                if "error" in data:
+                if u"error" in data:
                     raise Exception(str(data[u"response"][u"error"]))
             else:
                 raise Exception(u"JSON decoding failed.")
@@ -513,13 +522,13 @@ def get_data(filename, suffix, data_type, options):
 def history_info(obj, curr_conditions, options):
 
     time_now = datetime.datetime.now()
-    day_delta = datetime.timedelta(days=int(options[u"days_history"]))
+    day_delta = datetime.timedelta(days = int(options[u"days_history"]))
 
     history = curr_conditions
 
     path = u"./data/weather_level_history"
     i = 1
-    count = options["days_history"]
+    count = int(options[u"days_history"])
     for filename in sorted(os.listdir(path)):
         tmp = re.split("_|-", filename)
         if tmp[0] == u"history":
@@ -530,21 +539,24 @@ def history_info(obj, curr_conditions, options):
             if (time_now - day_delta) < thisdate_time and count > 0:
                 with open(os.path.join(path, filename), u"r") as fn2187:
                     jsonhistdata = json.loads(fn2187.read())
-                history["temp_c"] = (
-                    history["temp_c"] * i + (jsonhistdata["main"]["temp"] - 273.15)
-                ) / (i + 1)
-                if "rain" in jsonhistdata:
-                    history["rain_mm"] += jsonhistdata["rain"].get(
-                        next(iter(jsonhistdata["rain"]))
+                history[u"temp_c"] = (
+                    history[u"temp_c"] * i + (jsonhistdata[u"main"][u"temp"] - 273.15)
+                ) // (i + 1)
+                if (
+                    "rain" in jsonhistdata
+                    and jsonhistdata[u"rain"]
+                    ):
+                    history[u"rain_mm"] += jsonhistdata[u"rain"].get(
+                        next(iter(jsonhistdata[u"rain"]))
                     )  #  Add rain
-                history["wind_ms"] = (
-                    history["wind_ms"] * i + jsonhistdata["wind"]["speed"]
-                ) / (
+                history[u"wind_ms"] = (
+                    history[u"wind_ms"] * i + jsonhistdata[u"wind"][u"speed"]
+                ) // (
                     i + 1
                 )  #  average wind speed
-                history["humidity"] = (
-                    history["humidity"] * i + jsonhistdata["main"]["humidity"]
-                ) / (
+                history[u"humidity"] = (
+                    history[u"humidity"] * i + jsonhistdata[u"main"][u"humidity"]
+                ) // (
                     i + 1
                 )  # Aberage humidity
                 i += 1
@@ -554,7 +566,7 @@ def history_info(obj, curr_conditions, options):
                     os.remove(os.path.join(path, filename))
                 except Exception as excp:
                     sys.stdout.write(
-                        "Unable to remove file {}: \n{}".format(filename, excp)
+                        u"Unable to remove file {}: \n{}".format(filename, excp)
                     )
 
     return history
@@ -563,56 +575,59 @@ def history_info(obj, curr_conditions, options):
 def today_info(obj, options):
     """Get today's weather info."""
     date_now = datetime.datetime.today()
-    loc = options["loc"]
+    loc = options[u"loc"]
 
-    if loc[:4] == "lat=":
-        loc = loc.replace("_", "&")
-        loc = loc.replace(",", ".")
+    if loc[:4] == u"lat=":
+        loc = loc.replace(u"_", u"&")
+        loc = loc.replace(u",", u".")
         request = loc
     else:
-        request = "q=" + loc
+        request = u"q=" + loc
 
-    datestring = date_now.strftime("%Y%m%d")
-    path = "./data/weather_level_history"
+    datestring = date_now.strftime(u"%Y%m%d")
+    path = u"./data/weather_level_history"
 
-    name = "conditions_" + loc + "-" + datestring + ".json"
+    name = u"conditions_" + loc + u"-" + datestring + u".json"
     if name in os.listdir(path):
         os.remove(os.path.join(path, name))
 
-    data = get_data(name, request, "weather", options)
+    data = get_data(name, request, u"weather", options)
 
-    del data["clouds"]
-    del data["base"]
-    del data["id"]
-    file_time = date_now.strftime("%Y_%m_%d-%H_%M_%S")
-    del data["dt"]
+    del data[u"clouds"]
+    del data[u"base"]
+    del data[u"id"]
+    file_time = date_now.strftime(u"%Y_%m_%d-%H_%M_%S")
+    del data[u"dt"]
 
     result = {}
     try:
-        if "rain" in data.keys():
-            precipd = data["rain"].get(next(iter(data["rain"])))
+        if (
+            u"rain" in list(data.keys())
+            and data[u"rain"]
+            ):
+            precipd = data[u"rain"].get(next(iter(data[u"rain"])))
         else:
             precipd = 0
-        id = next(iter(data["weather"]))["id"]
-        for keycodes, codes in lwa_decipher["PrecipCodes"].items():
+        id = next(iter(data[u"weather"]))[u"id"]
+        for keycodes, codes in list(lwa_decipher[u"PrecipCodes"].items()):
             if id in codes:
-                weight = lwa_decipher["PrecipWeights"][keycodes]
-                data["weight"] = weight
+                weight = lwa_decipher[u"PrecipWeights"][keycodes]
+                data[u"weight"] = weight
                 break
         result = {
-            "temp_c": safe_float(data["main"]["temp"]) - 273.15,
-            "rain_mm": safe_float(precipd),
-            "wind_ms": safe_float(data["wind"]["speed"]),
-            "humidity": safe_float(data["main"]["humidity"]),
-            "pressure": safe_float(data["main"]["pressure"]),
+            u"temp_c": safe_float(data[u"main"][u"temp"]) - 273.15,
+            u"rain_mm": safe_float(precipd),
+            u"wind_ms": safe_float(data[u"wind"][u"speed"]),
+            u"humidity": safe_float(data[u"main"][u"humidity"]),
+            u"pressure": safe_float(data[u"main"][u"pressure"]),
         }
     except ValueError as excp:
-        obj.add_status("An error occurred parsing data: %s" % excp)
+        obj.add_status(u"An error occurred parsing data: %s" % excp)
 
     try:
         os.rename(
             os.path.join(path, name),
-            os.path.join(path, "history_" + file_time + ".json"),
+            os.path.join(path, u"history_" + file_time + u".json"),
         )
     except Exception:
         pass
@@ -622,28 +637,28 @@ def today_info(obj, options):
 
 def forecast_info(obj, options, curr_weather):
 
-    loc = options["loc"]
+    loc = options[u"loc"]
     date_now = datetime.datetime.today()
-    date_future = date_now + datetime.timedelta(days=int(options["days_history"]))
-    path = "./data/weather_level_history"
+    date_future = date_now + datetime.timedelta(days = int(options[u"days_history"]))
+    path = u"./data/weather_level_history"
 
-    if loc[:4] == "lat=":
-        loc = loc.replace("_", "&")
-        loc = loc.replace(",", ".")
+    if loc[:4] == u"lat=":
+        loc = loc.replace(u"_", u"&")
+        loc = loc.replace(u",", u".")
         request = loc
     else:
-        request = "q=" + loc
+        request = u"q=" + loc
 
-    name = "forecast5day_" + loc + "-" + date_now.strftime("%Y%m%d_%H") + ".json"
+    name = u"forecast5day_" + loc + u"-" + date_now.strftime(u"%Y%m%d_%H") + u".json"
 
     hfiles = []
-    count = options["days_forecast"]
+    count = int(options[u"days_forecast"])
     for fname in reversed(sorted(os.listdir(path))):
-        if "forecast" not in fname:
+        if u"forecast" not in fname:
             continue
         else:
             file_date = datetime.datetime.strptime(
-                next(iter(fname.split("-")[-1].split("."))), "%Y%m%d_%H"
+                next(iter(fname.split("-")[-1].split(u"."))), u"%Y%m%d_%H"
             )
             if file_date < date_future and count > 0:
                 hfiles.append(os.path.join(path, fname))
@@ -652,136 +667,136 @@ def forecast_info(obj, options, curr_weather):
                 try:
                     os.remove(os.path.join(path, fname))
                 except Exception as excp:
-                    sys.stdout.write("Unable to remove file '%s': %s" % (fname, excp))
+                    sys.stdout.write(u"Unable to remove file '%s': %s" % (fname, excp))
 
-    data = get_data(name, request, "forecast", options)
+    data = get_data(name, request, u"forecast", options)
 
-    del data["cnt"]
-    del data["cod"]
-    data["precip_accumulate"] = 0
-    data["temperature_trend"] = {
-        "temp_avg": curr_weather["temp_c"],
-        "tot_elems": 1,
-        "trend_up_down": 0,
-        "temp_max": curr_weather["temp_c"],
-        "temp_min": curr_weather["temp_c"],
+    del data[u"cnt"]
+    del data[u"cod"]
+    data[u"precip_accumulate"] = 0
+    data[u"temperature_trend"] = {
+        u"temp_avg": curr_weather[u"temp_c"],
+        u"tot_elems": 1,
+        u"trend_up_down": 0,
+        u"temp_max": curr_weather[u"temp_c"],
+        u"temp_min": curr_weather[u"temp_c"],
     }
-    data["humidity_trend"] = {
-        "humid_avg": curr_weather["humidity"],
-        "tot_elems": 1,
-        "trend_up_down": 0,
+    data[u"humidity_trend"] = {
+        u"humid_avg": curr_weather[u"humidity"],
+        u"tot_elems": 1,
+        u"trend_up_down": 0,
     }
-    data["wind_average"] = {"wind_speed_avg": curr_weather["wind_ms"], "tot_elems": 1}
-    data["baro_press_trend"] = {
-        "press_avg": curr_weather["pressure"],
-        "tot_elems": 1,
-        "trend_up_down": 0,
+    data[u"wind_average"] = {u"wind_speed_avg": curr_weather[u"wind_ms"], u"tot_elems": 1}
+    data[u"baro_press_trend"] = {
+        u"press_avg": curr_weather[u"pressure"],
+        u"tot_elems": 1,
+        u"trend_up_down": 0,
     }
-    for entry in data["list"]:
+    for entry in data[u"list"]:
         try:
-            del entry["dt"]
-            del entry["sys"]
-            del entry["clouds"]
-            id = next(iter(entry["weather"]))["id"]
-            for keycodes, codes in options["weather_decipher"]["PrecipCodes"].items():
+            del entry[u"dt"]
+            del entry[u"sys"]
+            del entry[u"clouds"]
+            id = next(iter(entry[u"weather"]))[u"id"]
+            for keycodes, codes in list(options[u"weather_decipher"][u"PrecipCodes"].items()):
                 if id in codes:
-                    weight = options["weather_decipher"]["PrecipWeights"][keycodes]
-                    entry["weight"] = weight
+                    weight = options[u"weather_decipher"][u"PrecipWeights"][keycodes]
+                    entry[u"weight"] = weight
                     break
-            if "rain" in entry:
+            if u"rain" in entry:
                 _precip_time = datetime.datetime.strptime(
-                    entry["dt_txt"], "%Y-%m-%d %H:%M:%S"
+                    entry[u"dt_txt"], u"%Y-%m-%d %H:%M:%S"
                 )
-                if date_future > _precip_time and entry["rain"] != {}:
-                    data["precip_accumulate"] += entry["rain"].get(
-                        next(iter(entry["rain"]))
+                if date_future > _precip_time and entry[u"rain"] != {}:
+                    data[u"precip_accumulate"] += entry[u"rain"].get(
+                        next(iter(entry[u"rain"]))
                     )
-            data["temperature_trend"]["tot_elems"] += 1
-            data["humidity_trend"]["tot_elems"] += 1
-            curr_temp_cel = entry["main"]["temp"] - 273.15
-            data["temperature_trend"]["temp_avg"] = (
-                data["temperature_trend"]["temp_avg"]
-                * (data["temperature_trend"]["tot_elems"] - 1)
+            data[u"temperature_trend"][u"tot_elems"] += 1
+            data[u"humidity_trend"][u"tot_elems"] += 1
+            curr_temp_cel = entry[u"main"][u"temp"] - 273.15
+            data[u"temperature_trend"][u"temp_avg"] = (
+                data[u"temperature_trend"][u"temp_avg"]
+                * (data[u"temperature_trend"][u"tot_elems"] - 1)
                 + curr_temp_cel
-            ) / data["temperature_trend"]["tot_elems"]
-            data["temperature_trend"]["trend_up_down"] = (
-                data["temperature_trend"]["temp_avg"] - curr_weather["temp_c"]
+            ) // data[u"temperature_trend"][u"tot_elems"]
+            data[u"temperature_trend"][u"trend_up_down"] = (
+                data[u"temperature_trend"][u"temp_avg"] - curr_weather[u"temp_c"]
             )
-            data["humidity_trend"]["humid_avg"] = (
-                data["humidity_trend"]["humid_avg"]
-                * (data["humidity_trend"]["tot_elems"] - 1)
-                + entry["main"]["humidity"]
-            ) / data["humidity_trend"]["tot_elems"]
-            data["humidity_trend"]["trend_up_down"] = (
-                data["humidity_trend"]["humid_avg"] - curr_weather["humidity"]
+            data[u"humidity_trend"][u"humid_avg"] = (
+                data[u"humidity_trend"][u"humid_avg"]
+                * (data[u"humidity_trend"][u"tot_elems"] - 1)
+                + entry[u"main"][u"humidity"]
+            ) // data[u"humidity_trend"][u"tot_elems"]
+            data[u"humidity_trend"][u"trend_up_down"] = (
+                data[u"humidity_trend"][u"humid_avg"] - curr_weather[u"humidity"]
             )
-            data["wind_average"]["wind_speed_avg"] = (
-                data["wind_average"]["wind_speed_avg"]
-                * (data["wind_average"]["tot_elems"] - 1)
-                + entry["wind"]["speed"]
-            ) / data["wind_average"]["tot_elems"]
-            data["baro_press_trend"]["press_avg"] = (
-                data["baro_press_trend"]["press_avg"]
-                * (data["baro_press_trend"]["tot_elems"] - 1)
-                + entry["main"]["pressure"]
-            ) / data["baro_press_trend"]["tot_elems"]
-            data["baro_press_trend"]["trend_up_down"] = (
-                data["baro_press_trend"]["press_avg"] - curr_weather["pressure"]
+            data[u"wind_average"][u"wind_speed_avg"] = (
+                data[u"wind_average"][u"wind_speed_avg"]
+                * (data[u"wind_average"][u"tot_elems"] - 1)
+                + entry[u"wind"][u"uspeed"]
+            ) // data[u"wind_average"][u"tot_elems"]
+            data[u"baro_press_trend"][u"press_avg"] = (
+                data[u"baro_press_trend"][u"press_avg"]
+                * (data[u"baro_press_trend"][u"tot_elems"] - 1)
+                + entry[u"main"][u"pressure"]
+            ) // data[u"baro_press_trend"][u"tot_elems"]
+            data[u"baro_press_trend"][u"trend_up_down"] = (
+                data[u"baro_press_trend"][u"press_avg"] - curr_weather[u"pressure"]
             )
-            if curr_temp_cel > data["temperature_trend"]["temp_max"]:
-                data["temperature_trend"]["temp_max"] = curr_temp_cel
-            if curr_temp_cel < data["temperature_trend"]["temp_min"]:
-                data["temperature_trend"]["temp_min"] = curr_temp_cel
+            if curr_temp_cel > data[u"temperature_trend"][u"temp_max"]:
+                data[u"temperature_trend"][u"temp_max"] = curr_temp_cel
+            if curr_temp_cel < data[u"temperature_trend"][u"temp_min"]:
+                data[u"temperature_trend"][u"temp_min"] = curr_temp_cel
 
         except KeyError:
             continue
 
-    with open(os.path.join(path, name), "w") as jdata:
-        json.dump(data, jdata)
+    with open(os.path.join(path, name), u"w") as jdata:
+        json.dump(data, jdata, indent=4, sort_keys=True)
 
-    precip_avg = data["precip_accumulate"]
+    precip_avg = data[u"precip_accumulate"]
     precip_cnt = 1
-    temp_avg = data["temperature_trend"]["temp_avg"]
+    temp_avg = data[u"temperature_trend"][u"temp_avg"]
     temp_cnt = 1
-    temp_max = data["temperature_trend"]["temp_max"]
+    temp_max = data[u"temperature_trend"][u"temp_max"]
     temp_max_cnt = 1
-    temp_min = data["temperature_trend"]["temp_min"]
+    temp_min = data[u"temperature_trend"][u"temp_min"]
     temp_min_cnt = 1
     for i, _file in enumerate(hfiles):
-        with open(_file, "r") as fd:
+        with open(_file, u"r") as fd:
             new_old_data = json.loads(fd.read())
-        if "precip_accumulate" in new_old_data:
+        if u"precip_accumulate" in new_old_data:
             precip_avg = (
-                precip_avg * precip_cnt + new_old_data["precip_accumulate"]
-            ) / (precip_cnt + 1)
+                precip_avg * precip_cnt + new_old_data[u"precip_accumulate"]
+            ) // (precip_cnt + 1)
             precip_cnt += 1
-        if "temperature_trend" in new_old_data:
-            if "temp_avg" in new_old_data["temperature_trend"]:
+        if u"temperature_trend" in new_old_data:
+            if u"temp_avg" in new_old_data[u"temperature_trend"]:
                 temp_avg = (
-                    temp_avg * temp_cnt + new_old_data["temperature_trend"]["temp_avg"]
-                ) / (temp_cnt + 1)
+                    temp_avg * temp_cnt + new_old_data[u"temperature_trend"][u"temp_avg"]
+                ) // (temp_cnt + 1)
                 temp_cnt += 1
-            if "temp_max" in new_old_data["temperature_trend"]:
+            if u"temp_max" in new_old_data[u"temperature_trend"]:
                 temp_max = (
                     temp_max * temp_max_cnt
-                    + new_old_data["temperature_trend"]["temp_max"]
-                ) / (temp_max_cnt + 1)
+                    + new_old_data[u"temperature_trend"][u"temp_max"]
+                ) // (temp_max_cnt + 1)
                 temp_max_cnt += 1
-            if "temp_min" in new_old_data["temperature_trend"]:
+            if u"temp_min" in new_old_data[u"temperature_trend"]:
                 temp_min = (
                     temp_min * temp_min_cnt
-                    + new_old_data["temperature_trend"]["temp_min"]
-                ) / (temp_min_cnt + 1)
+                    + new_old_data[u"temperature_trend"][u"temp_min"]
+                ) // (temp_min_cnt + 1)
                 temp_min_cnt += 1
 
-    if abs(data["precip_accumulate"] - precip_avg) / 100 < 0.10:
-        data["precip_accumulate"] = precip_avg
-    if abs(data["temperature_trend"]["temp_avg"] - temp_avg) / 100 < 0.10:
-        data["temperature_trend"]["temp_avg"] = temp_avg
-    if abs(data["temperature_trend"]["temp_max"] - temp_max) / 100 < 0.10:
-        data["temperature_trend"]["temp_max"] = temp_max
-    if abs(data["temperature_trend"]["temp_min"] - temp_min) / 100 < 0.10:
-        data["temperature_trend"]["temp_min"] = temp_min
+    if abs(data[u"precip_accumulate"] - precip_avg) // 100 < 0.10:
+        data[u"precip_accumulate"] = precip_avg
+    if abs(data[u"temperature_trend"][u"temp_avg"] - temp_avg) // 100 < 0.10:
+        data[u"temperature_trend"][u"temp_avg"] = temp_avg
+    if abs(data[u"temperature_trend"][u"temp_max"] - temp_max) // 100 < 0.10:
+        data[u"temperature_trend"][u"temp_max"] = temp_max
+    if abs(data[u"temperature_trend"][u"temp_min"] - temp_min) // 100 < 0.10:
+        data[u"temperature_trend"][u"temp_min"] = temp_min
     return data
 
 

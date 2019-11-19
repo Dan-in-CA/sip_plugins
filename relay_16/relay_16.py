@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
 from __future__ import print_function
+from builtins import str
+from builtins import range
 from blinker import signal
 import web, json, time
 import gv  # Get access to SIP's settings, gv = global variables
@@ -22,18 +24,17 @@ except IOError:
     pass
 
 # Add a new url to open the data entry page.
+# fmt: off
 urls.extend(
     [
-        "/rb16",
-        "plugins.relay_16.settings",
-        # 	'/rbj16', 'plugins.relay_16.settings_json',
-        "/rbu16",
-        "plugins.relay_16.update",
+        u"/rb16", u"plugins.relay_16.settings",
+        u"/rbu16", u"plugins.relay_16.update",
     ]
 )
+# fmt: on
 
 # Add this plugin to the home page plugins menu
-gv.plugin_menu.append(["Relay 16", "/rb16"])
+gv.plugin_menu.append([u"Relay 16", u"/rb16"])
 
 params = {}
 
@@ -41,23 +42,23 @@ params = {}
 def load_params():
     global params
     try:
-        with open("./data/relay_16.json", "r") as f:  # Read the settings from file
+        with open(u"./data/relay_16.json", u"r") as f:  # Read the settings from file
             params = json.load(f)
     except IOError:  #  If file does not exist create file with defaults.
-        params = {"enabled": "off", "relays": 1, "active": "low"}
-        with open("./data/relay_16.json", "w") as f:
-            json.dump(params, f)
+        params = {u"enabled": u"off", u"relays": 1, u"active": u"low"}
+        with open(u"./data/relay_16.json", u"w") as f:
+            json.dump(params, f, indent=4, sort_keys=True)
     return params
 
 
 load_params()
 
-if params["enabled"] == "on":
+if params[u"enabled"] == u"on":
     gv.use_gpio_pins = False  # Signal SIP to not use GPIO pins
 
 #### define the GPIO pins that will be used ####
 try:
-    if gv.platform == "pi":  # If this will run on Raspberry Pi:
+    if gv.platform == u"pi":  # If this will run on Raspberry Pi:
         if not gv.use_pigpio:
             GPIO.setmode(
                 GPIO.BOARD
@@ -71,9 +72,9 @@ try:
         pin_rain_sense = gv.pin_map[8]
         pin_relay = gv.pin_map[10]
     else:
-        print("relay_16 plugin only supported on pi.")
+        print(u"relay_16 plugin only supported on pi.")
 except:
-    print("Relay_16: GPIO pins not set")
+    print(u"Relay_16: GPIO pins not set")
     pass
 
 
@@ -82,12 +83,12 @@ def init_pins():
     global pi
 
     try:
-        for i in range(params["relays"]):
+        for i in range(params[u"relays"]):
             if gv.use_pigpio:
                 pi.set_mode(relay_pins[i], pigpio.OUTPUT)
             else:
                 GPIO.setup(relay_pins[i], GPIO.OUT)
-            if params["active"] == "low":
+            if params[u"active"] == u"low":
                 if gv.use_pigpio:
                     pi.write(relay_pins[i], 1)
                 else:
@@ -109,11 +110,11 @@ def on_zone_change(arg):  #  arg is just a necessary placeholder.
     global pi
 
     with gv.output_srvals_lock:
-        for i in range(params["relays"]):
+        for i in range(params[u"relays"]):
             try:
                 if gv.output_srvals[i]:  # if station is set to on
                     if (
-                        params["active"] == "low"
+                        params[u"active"] == u"low"
                     ):  # if the relay type is active low, set the output low
                         if gv.use_pigpio:
                             pi.write(relay_pins[i], 0)
@@ -124,10 +125,9 @@ def on_zone_change(arg):  #  arg is just a necessary placeholder.
                             pi.write(relay_pins[i], 1)
                         else:
                             GPIO.output(relay_pins[i], GPIO.HIGH)
-                #                     print 'relay switched on', i + 1, "pin", relay_pins[i]  #  for testing #############
                 else:  # station is set to off
                     if (
-                        params["active"] == "low"
+                        params[u"active"] == u"low"
                     ):  # if the relay type is active low, set the output high
                         if gv.use_pigpio:
                             pi.write(relay_pins[i], 1)
@@ -138,15 +138,14 @@ def on_zone_change(arg):  #  arg is just a necessary placeholder.
                             pi.write(relay_pins[i], 0)
                         else:
                             GPIO.output(relay_pins[i], GPIO.LOW)
-            #                     print 'relay switched off', i + 1, "pin", relay_pins[i]  #  for testing ############
             except Exception as e:
-                print("Problem switching relays", e, relay_pins[i])
+                print(u"Problem switching relays", e, relay_pins[i])
                 pass
 
 
 init_pins()
 
-zones = signal("zone_change")
+zones = signal(u"zone_change")
 zones.connect(on_zone_change)
 
 ################################################################################
@@ -158,18 +157,9 @@ class settings(ProtectedPage):
     """Load an html page for entering relay board adjustments"""
 
     def GET(self):
-        with open("./data/relay_16.json", "r") as f:  # Read the settings from file
+        with open(u"./data/relay_16.json", u"r") as f:  # Read the settings from file
             params = json.load(f)
         return template_render.relay_16(params)
-
-
-# class settings_json(ProtectedPage):
-#     """Returns plugin settings in JSON format"""
-#
-#     def GET(self):
-#         web.header('Access-Control-Allow-Origin', '*')
-#         web.header('Content-Type', 'application/json')
-#         return json.dumps(params)
 
 
 class update(ProtectedPage):
@@ -178,26 +168,26 @@ class update(ProtectedPage):
     def GET(self):
         qdict = web.input()
         changed = False
-        if params["enabled"] != (qdict["enabled"]):
-            params["enabled"] = qdict["enabled"]
+        if params[u"enabled"] != (qdict[u"enabled"]):
+            params[u"enabled"] = qdictu[u"enabled"]
             changed = True
-        if params["relays"] != int(
-            qdict["relays"]
+        if params[u"relays"] != int(
+            qdictu["relays"]
         ):  # if the number of relay channels changed, update the params
-            params["relays"] = int(qdict["relays"])
+            params[u"relays"] = int(qdict[u"relays"])
             changed = True
-        if params["active"] != str(
-            qdict["active"]
+        if params[u"active"] != str(
+            qdict[u"active"]
         ):  # if the number of relay channels changed, update the params
-            params["active"] = str(qdict["active"])
+            params[u"active"] = str(qdict[u"active"])
             params[
-                "relays"
+                u"relays"
             ] = (
                 1
             )  # since changing active could turn all the relays on, reduce the relay channels to 1
             changed = True
         if changed:
             init_pins()
-            with open("./data/relay_16.json", "w") as f:  # write the settings to file
-                json.dump(params, f)
-        raise web.seeother("/")
+            with open(u"./data/relay_16.json", u"w") as f:  # write the settings to file
+                json.dump(params, f, indent=4, sort_keys=True)
+        raise web.seeother(u"/")

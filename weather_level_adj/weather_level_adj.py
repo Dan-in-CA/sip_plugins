@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import print_function
+from __future__ import division
 from builtins import next
 from builtins import str
 import datetime
@@ -149,25 +150,26 @@ class WeatherLevelChecker(Thread):
                     # We calculate what we will need to provide using the mean data of X days around today
 
                     ini_water_needed = water_needed = (
-                        float(options[u"daily_irrigation"])
+                        int(options[u"daily_irrigation"])
                         * (int(options[u"days_forecast"]))
                         + 1
                     )  # 4mm per day
                     water_needed *= (
-                        1 + (total_info[u"temp_c"] - 20) // 15
+                        1 + (total_info[u"temp_c"] - 20) / 15.0
                     )  # 5 => 0%, 35 => 200%
                     water_needed *= 1 + (
-                        total_info[u"wind_ms"] // 100
+                        total_info[u"wind_ms"] / 100.0
                     )  # 0 => 100%, 20 => 120%
                     water_needed *= (
-                        1 - (total_info[u"humidity"] - 50) // 200
+                        1 - (total_info[u"humidity"] - 50) / 200.0
                     )  # 0 => 125%, 100 => 75%
                     water_needed = round(water_needed, 1)
+                    print(u"water needed: ", water_needed)
 
                     water_left = water_needed - total_info[u"rain_mm"]
                     water_left = round(max(0, min(100, water_left)), 1)
 
-                    water_adjustment = round((water_left // ini_water_needed) * 100, 1)
+                    water_adjustment = round((water_left / ini_water_needed) * 100.0, 1)
 
                     water_adjustment = max(
                         safe_float(options[u"wl_min"]),
@@ -189,7 +191,7 @@ class WeatherLevelChecker(Thread):
                         self.add_status("________________________________")
                         self.add_status(
                             u"Daily irrigation      : {}{}".format(
-                                to_in(options[u"daily_irrigation"]), u"in"
+                                to_in(safe_float(options[u"daily_irrigation"])), u"in"
                             )
                         )
                         self.add_status(
@@ -234,7 +236,7 @@ class WeatherLevelChecker(Thread):
                         )
                         self.add_status(
                             u"Water needed ({}days)  : {}{}".format(
-                                int(options[u"days_forecast"]) + 1, water_needed, u"mm"
+                                safe_float(options[u"days_forecast"]) + 1, water_needed, u"mm"
                             )
                         )
                         self.add_status(u"________________________________")
@@ -308,7 +310,7 @@ class update(ProtectedPage):
             prior[u"temp_cutoff"] = round(
                 ((float(qdict[u"temp_cutoff"]) - 32) * 5) // 9, 1
             )
-            prior[u"water_needed"] = round(float(qdict[u"daily_irrigation"]) * 25.4, 1)
+            prior[u"water_needed"] = round(safe_float(qdict[u"daily_irrigation"]) * 25.4, 1)
 
         # fmt: off
         if (
@@ -318,8 +320,8 @@ class update(ProtectedPage):
         # fmt: on
             qdict = lwa_options  #  Ignore any other changes
             qdict[u"units"] = u"SI"
-            prior[u"temp_cutoff"] = float(lwa_options[u"temp_cutoff"])
-            prior[u"water_needed"] = float(lwa_options[u"daily_irrigation"])
+            prior[u"temp_cutoff"] = safe_float(lwa_options[u"temp_cutoff"])
+            prior[u"water_needed"] = safe_float(lwa_options[u"daily_irrigation"])
 
         if qdict[u"units"] == u"US":
             temp_setting = round(
@@ -332,13 +334,13 @@ class update(ProtectedPage):
                 qdict[u"temp_cutoff"] = float(lwa_options[u"temp_cutoff"])  #  No change
 
             per_day_setting = round(
-                float(qdict[u"daily_irrigation"]) * 25.4, 1
+                safe_float(qdict[u"daily_irrigation"]) * 25.4, 1
             )  # inches to mm
             if prior[u"water_needed"] != per_day_setting:
                 prior[u"water_needed"] = per_day_setting
                 qdict[u"water_needed"] = per_day_setting
             else:
-                qdict[u"water_needed"] = float(lwa_options[u"daily_irrigation"])  # No change
+                qdict[u"water_needed"] = safe_float(lwa_options[u"daily_irrigation"])  # No change
 
         for (
             key,
@@ -460,8 +462,8 @@ def options_data():
         ) as wd:  # write the settings to file
             json.dump(lwa_decipher, wd, indent=4, sort_keys=True)
 
-    prior[u"temp_cutoff"] = float(lwa_options[u"temp_cutoff"])
-    prior[u"water_needed"] = float(lwa_options[u"daily_irrigation"])
+    prior[u"temp_cutoff"] = safe_float(lwa_options[u"temp_cutoff"])
+    prior[u"water_needed"] = safe_float(lwa_options[u"daily_irrigation"])
 
 
 def get_data(filename, suffix, data_type, options):
@@ -522,7 +524,7 @@ def get_data(filename, suffix, data_type, options):
 def history_info(obj, curr_conditions, options):
 
     time_now = datetime.datetime.now()
-    day_delta = datetime.timedelta(days = int(options[u"days_history"]))
+    day_delta = datetime.timedelta(days = float(options[u"days_history"]))
 
     history = curr_conditions
 

@@ -169,10 +169,10 @@ class update(ProtectedPage):
         qdict = web.input()
         changed = False
         if params[u"enabled"] != (qdict[u"enabled"]):
-            params[u"enabled"] = qdictu[u"enabled"]
+            params[u"enabled"] = qdict[u"enabled"]
             changed = True
         if params[u"relays"] != int(
-            qdictu["relays"]
+            qdict[u"relays"]
         ):  # if the number of relay channels changed, update the params
             params[u"relays"] = int(qdict[u"relays"])
             changed = True

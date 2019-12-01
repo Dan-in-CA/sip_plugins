@@ -92,7 +92,7 @@ class EmailSender(Thread):
         if dataeml[u"emllog"] != u"off":  # if eml_log send email is enable (on)
             body = (
                 u"On "
-                + time.strftime("%d.%m.%Y at %H:%M:%S", time.localtime(time.time()))
+                + time.strftime(u"%d.%m.%Y at %H:%M:%S", time.localtime(time.time()))
                 + u": System was powered on."
             )
             self.try_mail(subject, body, u"data/log.json")
@@ -112,7 +112,7 @@ class EmailSender(Thread):
                             body = (
                                 u"On "
                                 + time.strftime(
-                                    "%d.%m.%Y at %H:%M:%S", time.localtime(time.time())
+                                    u"%d.%m.%Y at %H:%M:%S", time.localtime(time.time())
                                 )
                                 + u": System detected rain."
                             )
@@ -134,16 +134,16 @@ class EmailSender(Thread):
                         if gv.lrun[1] == 98:
                             pgr = u"Run-once"
                         elif gv.lrun[1] == 99:
-                            pgr = "uManual"
+                            pgr = u"Manual"
                         else:
                             pgr = str(gv.lrun[1])
 
                         dur = str(timestr(gv.lrun[2]))
                         start = time.gmtime(gv.now - gv.lrun[2])
                         body = (
-                            "On "
+                            u"On "
                             + time.strftime(
-                                "%d.%m.%Y at %H:%M:%S", time.localtime(time.time())
+                                u"%d.%m.%Y at %H:%M:%S", time.localtime(time.time())
                             )
                             + u"\n"
                             u"SIP has run: Station "
@@ -151,9 +151,9 @@ class EmailSender(Thread):
                             + u", "
                             + gv.snames[gv.lrun[0]]
                             + u"\n"
-                            "Program: " + pgr + "\n"
-                            "Start time: "
-                            + time.strftime("%d.%m.%Y at %H:%M:%S", start)
+                            u"Program: " + pgr + u"\n"
+                            u"Start time: "
+                            + time.strftime(u"%d.%m.%Y at %H:%M:%S", start)
                             + u"\n"
                             u"Duration: " + dur
                         )
@@ -229,7 +229,7 @@ def email(subject, text, attach=None):
         mailServer.ehlo()
         mailServer.login(gmail_user, gmail_pwd)
         mailServer.sendmail(
-            gmail_name, dataeml["emladr"], msg.as_string()
+            gmail_name, dataeml[u"emladr"], msg.as_string()
         )  # name + e-mail address in the From: field
         mailServer.close()
     else:
@@ -270,4 +270,4 @@ class update(ProtectedPage):
             qdict[u"emlrun"] = u"off"
         with open(u"./data/email_adj.json", u"w") as f:  # write the settings to file
             json.dump(qdict, f)
-        raise web.seeother("/")
+        raise web.seeother(u"/")

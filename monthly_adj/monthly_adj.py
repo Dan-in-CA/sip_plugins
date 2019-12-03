@@ -14,17 +14,17 @@ from webpages import ProtectedPage
 
 
 # Add a new url to open the data entry page.
+# fmt: off
 urls.extend(
     [
-        "/ma",
-        "plugins.monthly_adj.monthly_percent",
-        "/uma",
-        "plugins.monthly_adj.update_percents",
+        u"/ma", u"plugins.monthly_adj.monthly_percent",
+        u"/uma", u"plugins.monthly_adj.update_percents",
     ]
 )
+# fmt: on
 
 # Add this plugin to the home page plugins menu
-gv.plugin_menu.append(["Monthly Adjust", "/ma"])
+gv.plugin_menu.append([u"Monthly Adjust", u"/ma"])
 
 
 def set_wl(run_loop=False):
@@ -36,24 +36,24 @@ def set_wl(run_loop=False):
     while True:
         try:
             with open(
-                "./data/levels.json", "r"
+                u"./data/levels.json", u"r"
             ) as f:  # Read the monthly percentages from file
                 levels = json.load(f)
         except IOError:  # If file does not exist
             levels = [100] * 12
             with open(
-                "./data/levels.json", "w"
+                u"./data/levels.json", u"w"
             ) as f:  # write default percentages to file
                 json.dump(levels, f)
         month = time.localtime().tm_mon  # Get current month.
         if month != last_month:
             last_month = month
-            gv.sd["wl_monthly_adj"] = levels[
+            gv.sd[u"wl_monthly_adj"] = levels[
                 month - 1
             ]  # Set the water level% (levels list is zero based).
             print(
-                "Monthly Adjust: Setting water level to {}%".format(
-                    gv.sd["wl_monthly_adj"]
+                u"Monthly Adjust: Setting water level to {}%".format(
+                    gv.sd[u"wl_monthly_adj"]
                 )
             )
 
@@ -68,13 +68,13 @@ class monthly_percent(ProtectedPage):
     def GET(self):
         try:
             with open(
-                "./data/levels.json", "r"
+                u"./data/levels.json", u"r"
             ) as f:  # Read the monthly percentages from file
                 levels = json.load(f)
         except IOError:  # If file does not exist
             levels = [100] * 12
             with open(
-                "./data/levels.json", "w"
+                u"./data/levels.json", u"w"
             ) as f:  # write default percentages to file
                 json.dump(levels, f)
         return template_render.monthly(levels)
@@ -86,28 +86,28 @@ class update_percents(ProtectedPage):
     def GET(self):
         qdict = web.input()
         months = [
-            "jan",
-            "feb",
-            "mar",
-            "apr",
-            "may",
-            "jun",
-            "jul",
-            "aug",
-            "sep",
-            "oct",
-            "nov",
-            "dec",
+            u"jan",
+            u"feb",
+            u"mar",
+            u"apr",
+            u"may",
+            u"jun",
+            u"jul",
+            u"aug",
+            u"sep",
+            u"oct",
+            u"nov",
+            u"dec",
         ]
         vals = []
         for m in months:
             vals.append(int(qdict[m]))
         with open(
-            "./data/levels.json", "w"
+            u"./data/levels.json", u"w"
         ) as f:  # write the monthly percentages to file
             json.dump(vals, f)
         set_wl()
-        raise web.seeother("/")
+        raise web.seeother(u"/")
 
 
 thread.start_new_thread(set_wl, (True,))

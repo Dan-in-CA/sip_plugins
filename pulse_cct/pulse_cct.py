@@ -1,6 +1,8 @@
 #!/usr/bin/env python
+
 """Pulses a selected circuit with a 2.5 Hz signal for 30 sec
 to discover the location of a valve"""
+
 from __future__ import print_function
 import web
 from time import sleep
@@ -11,21 +13,19 @@ from helpers import stop_stations, jsave
 from webpages import ProtectedPage  # Needed for security
 from gpio_pins import set_output
 
-
+# fmt: off
 urls.extend(
     [
-        "/puls",
-        "plugins.pulse_cct.pulse",
-        "/puls-run",
-        "plugins.pulse_cct.p_run",
-        "/puls-stop",
-        "plugins.pulse_cct.p_stop",
-        "/puls-sen",
-        "plugins.pulse_cct.p_save_enabled",
+        u"/puls", u"plugins.pulse_cct.pulse",
+        u"/puls-run", u"plugins.pulse_cct.p_run",
+        u"/puls-stop", u"plugins.pulse_cct.p_stop",
+        u"/puls-sen", u"plugins.pulse_cct.p_save_enabled",
     ]
 )
+# fmt: on
+
 gv.plugin_menu.append(
-    ["Pulse Circuit", "/puls"]
+    [u"Pulse Circuit", u"/puls"]
 )  # Add this plugin to the home page plugins menu
 
 stop = True
@@ -60,10 +60,9 @@ class p_run:
     def GET(self):
         global stop
         qdict = web.input()
-        #       print 'qdict: ', qdict
         stop = False
-        chatter(int(qdict["zone"]))
-        raise web.seeother("/puls")
+        chatter(int(qdict[u"zone"]))
+        raise web.seeother(u"/puls")
 
 
 class p_stop:
@@ -72,23 +71,23 @@ class p_stop:
     def GET(self):
         global stop
         stop = True
-        raise web.seeother("/puls")
+        raise web.seeother(u"/puls")
 
 
 class p_save_enabled:
     def GET(self):
         qdict = web.input()
-        print("qdict: ", qdict)
-        for i in range(gv.sd["nbrd"]):
-            if "sh" + str(i) in qdict:
+        print(u"qdict: ", qdict)
+        for i in range(gv.sd[u"nbrd"]):
+            if u"sh" + str(i) in qdict:
                 try:
-                    gv.sd["show"][i] = int(qdict["sh" + str(i)])
+                    gv.sd[u"show"][i] = int(qdict[u"sh" + str(i)])
                 except ValueError:
-                    gv.sd["show"][i] = 255
+                    gv.sd[u"show"][i] = 255
             if "d" + str(i) in qdict:
                 try:
-                    gv.sd["show"][i] = ~int(qdict["d" + str(i)]) & 255
+                    gv.sd[u"show"][i] = ~int(qdict[u"d" + str(i)]) & 255
                 except ValueError:
-                    gv.sd["show"][i] = 255
-        jsave(gv.sd, "sd")
-        raise web.seeother("/")
+                    gv.sd[u"show"][i] = 255
+        jsave(gv.sd, u"sd")
+        raise web.seeother(u"/")

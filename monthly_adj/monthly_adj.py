@@ -1,7 +1,6 @@
-from __future__ import print_function
-
 # !/usr/bin/env python
 
+from __future__ import print_function
 import thread
 import json
 import time

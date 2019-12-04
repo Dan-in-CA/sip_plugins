@@ -1,7 +1,6 @@
-from __future__ import print_function
-
 # !/usr/bin/env python
 
+from __future__ import print_function
 import web  # web.py framework
 import gv  # Get access to sip's settings
 from urls import urls  # Get access to sip's URLs
@@ -31,19 +30,19 @@ from helpers import (
 )
 
 
-json_data = "./data/telegramBot.json"
+json_data = u"./data/telegramBot.json"
 
 # Add new URLs to access classes in this plugin.
+# fmt: off
 urls.extend(
     [
-        "/telegramBot-sp",
-        "plugins.telegramBot.settings",
-        "/telegramBot-save",
-        "plugins.telegramBot.save_settings",
+        u"/telegramBot-sp", u"plugins.telegramBot.settings",
+        u"/telegramBot-save", u"plugins.telegramBot.save_settings",
     ]
 )
+# fmt: on
 
-gv.plugin_menu.append(["telegram Bot", "/telegramBot-sp"])
+gv.plugin_menu.append([u"telegram Bot", u"/telegramBot-sp"])
 
 
 class SipBot(Thread):
@@ -63,7 +62,7 @@ class SipBot(Thread):
     @currentChats.setter
     def currentChats(self, chatSet):
         d = self.data
-        d["currentChats"] = list(chatSet)
+        d[u"currentChats"] = list(chatSet)
         self._currentChats = chatSet
         self.data = d
 
@@ -77,159 +76,159 @@ class SipBot(Thread):
         return
 
     def _botError(self, bot, update, error):
-        print('Update "%s" caused error "%s"' % (update, error))
+        print(u'Update "%s" caused error "%s"' % (update, error))
 
     def _botCmd_start_chat(self, bot, update):
         b = self.bot.bot
         b.sendMessage(
             update.message.chat_id,
-            text="Hi! Im a Bot to interface with " + gv.sd[u"name"],
+            text=u"Hi! Im a Bot to interface with " + gv.sd[u"name"],
         )
 
     def _botCmd_subscribe(self, bot, update):
-        if self.data["botAccessKey"] in update.message.text:
+        if self.data[u"botAccessKey"] in update.message.text:
             chats = self.currentChats
             chats.add(update.message.chat_id)
             self.currentChats = chats
             bot.sendMessage(
                 update.message.chat_id,
-                text="Hi! you are now added to the *"
+                text=u"Hi! you are now added to the *"
                 + gv.sd[u"name"]
-                + "* announcement ",
-                parse_mode="Markdown",
+                + u"* announcement ",
+                parse_mode=u"Markdown",
             )
         else:
             bot.sendMessage(
                 update.message.chat_id,
-                text="I'm sorry Dave I'm afraid I can't do that, Please enter the correct AccessKey",
+                text=u"I'm sorry Dave I'm afraid I can't do that, Please enter the correct AccessKey",
             )
 
     def _botCmd_info(self, bot, update):
-        print("INFO!")
+        print(u"INFO!")
         chat_id = update.message.chat_id
         if chat_id in self.currentChats:
-            txt = "<b>Info:</b>"
-            if gv.sd["en"] == 1:
-                txt += "\n{} System <b>ON</b>".format(gv.sd[u"name"])
+            txt = u"<b>Info:</b>"
+            if gv.sd[u"en"] == 1:
+                txt += u"\n{} System <b>ON</b>".format(gv.sd[u"name"])
             else:
-                txt += "\n{} System <b>OFF</b>".format(gv.sd[u"name"])
-            if gv.sd["mm"] == 1:
-                txt += " - Manual Mode"
+                txt += u"\n{} System <b>OFF</b>".format(gv.sd[u"name"])
+            if gv.sd[u"mm"] == 1:
+                txt += u" - Manual Mode"
             else:
-                txt += " - Auto Mode"
+                txt += u" - Auto Mode"
             txt += get_running_programs_pon()
             txt += "\n--------------------------------------------"
 
-            if gv.sd["lg"]:
+            if gv.sd[u"lg"]:
                 # Log is enabled, lets get the data from there
                 log = read_log()
                 if len(log) > 0:
-                    txt += "\nLast {} Programs:".format(str(len(log[:5])))
+                    txt += u"\nLast {} Programs:".format(str(len(log[:5])))
                     for l in log[:5]:
-                        l["station"] = gv.snames[l["station"]]
-                        txt += "\n  <b>{station}</b> - Program: <i>{program}</i>".format(
+                        l[u"station"] = gv.snames[l[u"station"]]
+                        txt += u"\n  <b>{station}</b> - Program: <i>{program}</i>".format(
                             **l
                         )
-                        txt += "\n      {date} {start} Duration: <i>{duration}</i>  ".format(
+                        txt += u"\n      {date} {start} Duration: <i>{duration}</i>  ".format(
                             **l
                         )
                 else:
-                    txt += "\nLast program <b>none</b>"
+                    txt += u"\nLast program <b>none</b>"
             else:
                 if gv.lrun[1] == 98:
-                    pgr = "Run-once"
+                    pgr = u"Run-once"
                 elif gv.lrun[1] == 99:
-                    pgr = "Manual"
+                    pgr = u"Manual"
                 else:
                     pgr = str(gv.lrun[1])
                 start = time.gmtime(gv.now - gv.lrun[2])
-                if pgr != "0":
+                if pgr != u"0":
                     txt += (
-                        "\nLast program: <b>"
+                        u"\nLast program: <b>"
                         + pgr
-                        + "</b>,station: <b>"
+                        + u"</b>,station: <b>"
                         + str(gv.lrun[0])
-                        + "</b>,duration: <b>"
+                        + u"</b>,duration: <b>"
                         + timestr(gv.lrun[2])
-                        + "</b>,start: <b>"
-                        + time.strftime("%H:%M:%S - %Y-%m-%d", start)
-                        + "</b>"
+                        + u"</b>,start: <b>"
+                        + time.strftime(u"%H:%M:%S - %Y-%m-%d", start)
+                        + u"</b>"
                     )
                 else:
-                    txt += "\nLast program <b>none</b>"
+                    txt += u"\nLast program <b>none</b>"
         else:
-            txt = "I'm sorry Dave I'm afraid I can't do that."
-        bot.sendMessage(chat_id, text=txt, parse_mode="HTML")
+            txt = u"I'm sorry Dave I'm afraid I can't do that."
+        bot.sendMessage(chat_id, text=txt, parse_mode=u"HTML")
 
     def _botCmd_help(self, bot, update):
         chat_id = update.message.chat_id
         if chat_id in self.currentChats:
-            txt = """Help:
+            txt = u"""Help:
             */subscribe*: Subscribe to the Announcement list, need an access Key
             */{}*: Info Command
             */{}*: Enable Command
             */{}*: Disable Command
             */{}*: Run Once Command, use program number as argument""".format(
-                self.data["info_cmd"],
-                self.data["enable_cmd"],
-                self.data["disable_cmd"],
-                self.data["runOnce_cmd"],
+                self.data[u"info_cmd"],
+                self.data[u"enable_cmd"],
+                self.data[u"disable_cmd"],
+                self.data[u"runOnce_cmd"],
             )
         else:
-            txt = "I'm sorry Dave I'm afraid I can't do that."
+            txt = u"I'm sorry Dave I'm afraid I can't do that."
 
         bot.sendMessage(chat_id, text=txt, parse_mode="Markdown")
 
     def _botCmd_enable(self, bot, update):
         chat_id = update.message.chat_id
         if chat_id in self.currentChats:
-            txt = "{} System <b>ON</b>".format(gv.sd[u"name"])
-            gv.sd["en"] = 1  # enable system SIP
-            gv.sd["mm"] = 0  # Disable Manual Mode
-            jsave(gv.sd, "sd")  # save en = 1
+            txt = u"{} System <b>ON</b>".format(gv.sd[u"name"])
+            gv.sd[u"en"] = 1  # enable system SIP
+            gv.sd[u"mm"] = 0  # Disable Manual Mode
+            jsave(gv.sd, u"sd")  # save en = 1
         else:
-            txt = "I'm sorry Dave I'm afraid I can't do that."
-        bot.sendMessage(chat_id, text=txt, parse_mode="HTML")
+            txt = u"I'm sorry Dave I'm afraid I can't do that."
+        bot.sendMessage(chat_id, text=txt, parse_mode=u"HTML")
 
     def _botCmd_disable(self, bot, update):
         chat_id = update.message.chat_id
         if chat_id in self.currentChats:
-            txt = "{} System <b>OFF</b>".format(gv.sd[u"name"])
-            gv.sd["en"] = 0  # disable system SIP
-            jsave(gv.sd, "sd")  # save en = 0
+            txt = u"{} System <b>OFF</b>".format(gv.sd[u"name"])
+            gv.sd[u"en"] = 0  # disable system SIP
+            jsave(gv.sd, u"sd")  # save en = 0
             stop_stations()
         else:
-            txt = "I'm sorry Dave I'm afraid I can't do that."
+            txt = u"I'm sorry Dave I'm afraid I can't do that."
 
-        bot.sendMessage(chat_id, text=txt, parse_mode="HTML")
+        bot.sendMessage(chat_id, text=txt, parse_mode=u"HTML")
 
     def _botCmd_runOnce(self, bot, update, args):
         chat_id = update.message.chat_id
         if chat_id in self.currentChats:
-            txt = "{} RunOnce: program {} Not yet Implemented!!!!!".format(
+            txt = u"{} RunOnce: program {} Not yet Implemented!!!!!".format(
                 gv.sd[u"name"], args
             )
         #               gv.sd['en'] = 0  # disable system SIP
         #               jsave(gv.sd, 'sd')  # save en = 0
         else:
-            txt = "I'm sorry Dave I'm afraid I can't do that."
+            txt = u"I'm sorry Dave I'm afraid I can't do that."
 
         bot.sendMessage(chat_id, text=txt)
 
     def _initBot(self):
-        updater = Updater(self.data["botToken"])
-        self._currentChats = set(self.data["currentChats"])
+        updater = Updater(self.data[u"botToken"])
+        self._currentChats = set(self.data[u"currentChats"])
         dp = updater.dispatcher
         dp.add_error_handler(self._botError)
-        dp.add_handler(CommandHandler("start", self._botCmd_start_chat))
-        dp.add_handler(CommandHandler("subscribe", self._botCmd_subscribe))
-        dp.add_handler(CommandHandler("help", self._botCmd_help))
-        dp.add_handler(CommandHandler(self.data["info_cmd"], self._botCmd_info))
-        dp.add_handler(CommandHandler(self.data["enable_cmd"], self._botCmd_enable))
-        dp.add_handler(CommandHandler(self.data["disable_cmd"], self._botCmd_disable))
+        dp.add_handler(CommandHandler(u"start", self._botCmd_start_chat))
+        dp.add_handler(CommandHandler(u"subscribe", self._botCmd_subscribe))
+        dp.add_handler(CommandHandler(u"help", self._botCmd_help))
+        dp.add_handler(CommandHandler(self.data[u"info_cmd"], self._botCmd_info))
+        dp.add_handler(CommandHandler(self.data[u"enable_cmd"], self._botCmd_enable))
+        dp.add_handler(CommandHandler(self.data[u"disable_cmd"], self._botCmd_disable))
         dp.add_handler(
             CommandHandler(
-                self.data["runOnce_cmd"], self._botCmd_runOnce, pass_args=True
+                self.data[u"runOnce_cmd"], self._botCmd_runOnce, pass_args=True
             )
         )
         dp.add_handler(MessageHandler(Filters.text, self._echo))
@@ -248,46 +247,46 @@ class SipBot(Thread):
 
     def run(self):
         try:
-            if self.data["botToken"] != "":
+            if self.data[u"botToken"] != "":
                 time.sleep(
                     randint(3, 10)
                 )  # Sleep some time to prevent printing before startup information
-                print("telegramBot plugin is active")
+                print(u"telegramBot plugin is active")
                 self.bot = self._initBot()
                 self._announce(
-                    "Bot on *" + gv.sd[u"name"] + "* has just started!",
-                    parse_mode="Markdown",
+                    u"Bot on *" + gv.sd[u"name"] + u"* has just started!",
+                    parse_mode=u"Markdown",
                 )
                 # Lets Start the bot
                 self.bot.start_polling()
 
         except Exception:
             exc_type, exc_value, exc_traceback = sys.exc_info()
-            err_string = "".join(
+            err_string = u"".join(
                 traceback.format_exception(exc_type, exc_value, exc_traceback)
             )
-            print("telegramBot plugin encountered error: " + err_string)
+            print(u"telegramBot plugin encountered error: " + err_string)
 
     def notifyZoneChange(self, name, **kw):
-        if self.data["zoneChange"] == "on":
-            txt = "There has been a Zone Change: " + str(gv.srvals)
+        if self.data[u"zoneChange"] == u"on":
+            txt = u"There has been a Zone Change: " + str(gv.srvals)
             self._announce(txt)
 
     def notifyStationScheduled(self, name, **kw):
-        if self.data["stationScheduled"] == "on":
+        if self.data[u"stationScheduled"] == u"on":
             time.sleep(
                 2
             )  # Sleep a couple of seconds to let SIP finish setting the gv variables
-            txt = "New Stations had been scheduled"
+            txt = u"New Stations have been scheduled"
             txt += get_running_programs_rs()
-            self._announce(txt, parse_mode="HTML")
+            self._announce(txt, parse_mode=u"HTML")
 
     def notifyAlarmToggled(self, name, **kw):
-        txt = """<b>ALARM!!!</b> from <i>{}</i>:
+        txt = u"""<b>ALARM!!!</b> from <i>{}</i>:
 <pre>{}</pre>""".format(
-            name, kw["txt"]
+            name, kw[u"txt"]
         )
-        self._announce(txt, parse_mode="HTML")
+        self._announce(txt, parse_mode=u"HTML")
 
 
 def get_running_programs_rs():  # From the running schedule info
@@ -295,47 +294,47 @@ def get_running_programs_rs():  # From the running schedule info
     for i in range(len(gv.rs)):
         d = gv.rs[i]
         sname = gv.snames[i]
-        start_time = time.strftime("%H:%M:%S", time.gmtime(d[0]))
+        start_time = time.strftime(u"%H:%M:%S", time.gmtime(d[0]))
         #        stop_time = time.strftime("%H:%M:%S", time.gmtime(d[1]))
         program = str(d[3])
         if d[2] == 0:
-            duration = "forever"
+            duration = u"forever"
         else:
             min = int(round(d[2] / 60))
             sec = int(round(d[2] - 60 * min))
             if sec < 10:
                 sec = 0
-            duration = "{}:{}".format(str(min).zfill(2), str(sec).zfill(2))
+            duration = u"{}:{}".format(str(min).zfill(2), str(sec).zfill(2))
 
-        if program != "0":  # We have a running Station!
-            txt += "\n<b>{}</b> - ".format(sname)
-            if program == "99":
+        if program != u"0":  # We have a running Station!
+            txt += u"\n<b>{}</b> - ".format(sname)
+            if program == u"99":
                 # Run Once is running!
-                txt += "<i>Run Once </i>"
-            elif program == "98":
+                txt += u"<i>Run Once </i>"
+            elif program == u"98":
                 # Manual Mode is running
-                txt += "<i>Manual Program </i>"
+                txt += u"<i>Manual Program </i>"
             else:
                 # a Program is Running
-                txt += " Program: <i>{}</i>".format(program)
+                txt += u" Program: <i>{}</i>".format(program)
 
             if program != 98:
-                txt += "\n  Start: <i>{}</i>".format(start_time)
-                txt += "\n  Duration: <i>{}</i>".format(duration)
+                txt += u"\n  Start: <i>{}</i>".format(start_time)
+                txt += u"\n  Duration: <i>{}</i>".format(duration)
     return txt
 
 
 def get_running_programs_pon():  # From the GUI info
-    txt = ""
+    txt = u""
     if gv.pon == 99:
         # Run Once is running!
-        txt += "\n<b>Run Once </b>"
+        txt += u"\n<b>Run Once </b>"
     elif gv.pon == 98:
         # Manual Mode is running
-        txt += "\n<b>Manual Program </b>"
+        txt += u"\n<b>Manual Program </b>"
     elif gv.pon is not None:
         # a Program is Running
-        txt += "\nRunning Program: <b>{}</b>".format(str(gv.pon))
+        txt += u"\nRunning Program: <b>{}</b>".format(str(gv.pon))
 
     if gv.pon is not None:
         for i in range(len(gv.ps)):
@@ -343,31 +342,31 @@ def get_running_programs_pon():  # From the GUI info
             if p != 0:
                 sname = gv.snames[i]
                 if d == 0:
-                    duration = "forever"
+                    duration = u"forever"
                 else:
                     min = int(round(d / 60))
                     sec = int(round(d - 60 * min))
                     if sec < 10:
                         sec = 0
-                    duration = "{}:{}".format(str(min).zfill(2), str(sec).zfill(2))
-                txt += "\n  <b>{}</b> - Duration: <b>{}</b>".format(sname, duration)
+                    duration = u"{}:{}".format(str(min).zfill(2), str(sec).zfill(2))
+                txt += u"\n  <b>{}</b> - Duration: <b>{}</b>".format(sname, duration)
     return txt
 
 
 def get_telegramBot_options():
     data = {
-        "botToken": "",
-        "botAccessKey": "SIP",
-        "zoneChange": "off",
-        "stationScheduled": "off",
-        "info_cmd": "info",
-        "disable_cmd": "disable",
-        "enable_cmd": "enable",
-        "runOnce_cmd": "runOnce",
-        "currentChats": [],
+        u"botToken": u"",
+        u"botAccessKey": u"SIP",
+        u"zoneChange": u"off",
+        u"stationScheduled": u"off",
+        u"info_cmd": u"info",
+        u"disable_cmd": u"disable",
+        u"enable_cmd": u"enable",
+        u"runOnce_cmd": u"runOnce",
+        u"currentChats": [],
     }
     try:
-        with open(json_data, "r") as f:  # Read the settings from file
+        with open(json_data, u"r") as f:  # Read the settings from file
             file_data = json.load(f)
         for key, value in file_data.iteritems():
             if key in data:
@@ -381,7 +380,7 @@ def set_telegramBot_options(new_data):
     data = get_telegramBot_options()
     for k in new_data.keys():
         data[k] = new_data[k]
-    with open("./data/telegramBot.json", "w") as f:
+    with open(u"./data/telegramBot.json", u"w") as f:
         json.dump(data, f)  # save to file
     return
 
@@ -391,13 +390,13 @@ def run_bot():
     # wait to the bot to start
     time.sleep(10)
     # Connect Signals
-    program_started = signal("stations_scheduled")
+    program_started = signal(u"stations_scheduled")
     program_started.connect(bot.notifyStationScheduled)
 
-    zoneChange = signal("zone_change")
+    zoneChange = signal(u"zone_change")
     zoneChange.connect(bot.notifyZoneChange)
 
-    alarm = signal("alarm_toggled")
+    alarm = signal(u"alarm_toggled")
     alarm.connect(bot.notifyAlarmToggled)
 
 
@@ -421,13 +420,13 @@ class save_settings(ProtectedPage):
 
     def GET(self):
         qdict = web.input()
-        if "zoneChange" not in qdict:
-            qdict["zoneChange"] = "off"
-        if "programToggled" not in qdict:
-            qdict["programToggled"] = "off"
+        if u"zoneChange" not in qdict:
+            qdict[u"zoneChange"] = u"off"
+        if u"programToggled" not in qdict:
+            qdict[u"programToggled"] = u"off"
 
         set_telegramBot_options(qdict)
-        raise web.seeother("/")  # Return user to home page.
+        raise web.seeother(u"/")  # Return user to home page.
 
 
 #  Run when plugin is loaded

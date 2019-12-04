@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
 from __future__ import print_function
-from builtins import str
-from builtins import range
+from future.builtins import str
+from future.builtins import range
 from blinker import signal
 import web, json, time
 import gv  # Get access to SIP's settings, gv = global variables

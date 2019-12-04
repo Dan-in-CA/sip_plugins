@@ -6,7 +6,7 @@ from __future__ import print_function
 """
 __author__ = "Daniel Casner <daniel@danielcasner.org>"
 
-from builtins import zip
+from future.builtins import zip
 import web  # web.py framework
 import gv  # Get access to SIP's settings
 from urls import urls  # Get access to SIP's URLs

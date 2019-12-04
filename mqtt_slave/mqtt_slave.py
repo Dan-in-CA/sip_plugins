@@ -6,7 +6,7 @@ from __future__ import print_function
 """
 __author__ = "Orginally written by Daniel Casner <daniel@danielcasner.org> Modified from mqtt_schedule by Dan K."
 
-from builtins import range
+from future.builtins import range
 import web  # web.py framework
 import gv  # Get access to SIP's settings
 from urls import urls  # Get access to SIP's URLs

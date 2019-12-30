@@ -1,7 +1,10 @@
 # !/usr/bin/env python
 
+# Python 2/3 compatibility imports
 from __future__ import print_function
-import thread
+
+# standard library imports
+from threading import Thread
 import json
 import time
 
@@ -108,5 +111,6 @@ class update_percents(ProtectedPage):
         set_wl()
         raise web.seeother(u"/")
 
-
-thread.start_new_thread(set_wl, (True,))
+wl = Thread(target=set_wl)
+wll.daemon = True
+wl.start()

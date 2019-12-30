@@ -1,14 +1,18 @@
 # !/usr/bin/env python
 
+# Python 2/3 compatibility imports
 from __future__ import print_function
-import _thread
+
+# standard library imports
+from threading import Thread
 import json
 import time
 
-import web
+# local module imports
 import gv  # Get access to SIP's settings
-from urls import urls  # Get access to SIP's URLs
 from sip import template_render
+from urls import urls  # Get access to SIP's URLs
+import web
 from webpages import ProtectedPage
 
 
@@ -158,5 +162,6 @@ class update_percents(ProtectedPage):
         set_wl()
         raise web.seeother("/")
 
-
-_thread.start_new_thread(set_wl, (True,))
+wl = Thread(target=set_wl)
+wl.daemon = True
+wl.start()

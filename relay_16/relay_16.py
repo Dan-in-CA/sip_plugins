@@ -1,24 +1,28 @@
 #!/usr/bin/env python
 
+# Python 2/3 compatibility imports
 from __future__ import print_function
-from future.builtins import str
-from future.builtins import range
+from six.moves import range
+
+# standard library imports
+import json
+import time
+
+# local module imports
 from blinker import signal
-import web, json, time
 import gv  # Get access to SIP's settings, gv = global variables
-from urls import urls  # Get access to SIP's URLs
 from sip import template_render
+from urls import urls  # Get access to SIP's URLs
+import web
 from webpages import ProtectedPage
 
 # Load the Raspberry Pi GPIO (General Purpose Input Output) library
 try:
     if gv.use_pigpio:
         import pigpio
-
         pi = pigpio.pi()
     else:
         import RPi.GPIO as GPIO
-
         pi = 0
 except IOError:
     pass

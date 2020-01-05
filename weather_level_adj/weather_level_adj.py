@@ -1,28 +1,31 @@
 # !/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+# Python 2/3 compatibility imports
 from __future__ import print_function
 from __future__ import division
-from future.builtins import next
-from future.builtins import str
+from six import next
+
+# standard library imports
 import datetime
-from threading import Thread
-import sys
-import traceback
-import json
-import time
-import re
-import os
-# import urllib2
-import urllib.request, urllib.error, urllib.parse
 import errno
+import json
+import os
+import re
+import sys
+from threading import Thread
+import time
+import traceback
+try:
+    from urllib.request import urlopen, Request
+except ImportError:
+    from six.moves.urllib.request import urlopen, Request
 
-import web
+# local module imports
 import gv  # Get access to SIP's settings
-from urls import urls  # Get access to SIP's URLs
-
-# from sip import template_render            altered this to show the webpage for further functionality changes. I guess it works....?
 from sip import template_render
+from urls import urls  # Get access to SIP's URLs
+import web
 from webpages import ProtectedPage
 
 
@@ -348,7 +351,6 @@ class update(ProtectedPage):
         ) in list(qdict.items()):  # Convert format from storage to dictionary
             if key in qdict:
                 lwa_options[key] = value
-        print(u"lwa_options: ", lwa_options)
         lwa_options[u"status"] = u""  #  clear any existing text.
         if u"auto_wl" not in qdict:
             lwa_options[u"auto_wl"] = u"off"
@@ -480,7 +482,7 @@ def get_data(filename, suffix, data_type, options):
     while try_nr <= 2:
         try:
             with open(path, u"wb") as fh:
-                req = urllib.request.urlopen(url + u"&appid=" + options[u"apikey"])
+                req = urlopen(url + u"&appid=" + options[u"apikey"])
                 while True:
                     chunk = req.read(20480)
                     if not chunk:

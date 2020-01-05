@@ -1,20 +1,24 @@
 # !/usr/bin/env python
 
-from __future__ import print_function
-
 """ SIP plugin uses mqtt plugin to broadcast station status every time it changes.
 """
 __author__ = "Daniel Casner <daniel@danielcasner.org>"
 
-from future.builtins import zip
-import web  # web.py framework
-import gv  # Get access to SIP's settings
-from urls import urls  # Get access to SIP's URLs
-from sip import template_render  #  Needed for working with web.py templates
-from webpages import ProtectedPage  # Needed for security
-from blinker import signal  # To receive station notifications
+# Python 2/3 compatibility imports
+from __future__ import print_function
+import six.moves.zip
+
+# standard library imports
 import json  # for working with data file
+
+# local module imports
+from blinker import signal  # To receive station notifications
+import gv  # Get access to SIP's settings
 from plugins import mqtt
+from sip import template_render  #  Needed for working with web.py templates
+from urls import urls  # Get access to SIP's URLs
+import web  # web.py framework
+from webpages import ProtectedPage  # Needed for security
 
 # Add new URLs to access classes in this plugin.
 # fmt: off

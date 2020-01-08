@@ -167,8 +167,6 @@ class WeatherLevelChecker(Thread):
                         1 - (total_info[u"humidity"] - 50) / 200.0
                     )  # 0 => 125%, 100 => 75%
                     water_needed = round(water_needed, 1)
-                    print(_(u"water needed") + u": ", water_needed)
-
                     water_left = water_needed - total_info[u"rain_mm"]
                     water_left = round(max(0, min(100, water_left)), 1)
 
@@ -187,23 +185,23 @@ class WeatherLevelChecker(Thread):
                         water_adjustment = 0
                     if lwa_options[u"units"] == u"US":
                         self.add_status(
-                            _(u"Current temperature") + u"   : {}deg.{}".format(
+                            _(u"Current temperature") + u":" + u"\n{}deg.{}".format(
                                 to_f(today[u"temp_c"]), u"F"
                             )
                         )
                         self.add_status(u"________________________________")
                         self.add_status(
-                            _(u"Daily irrigation") + "      :{}{}".format(
+                            _(u"Daily irrigation") + u":" + u"\n{}{}".format(
                                 to_in(safe_float(options[u"daily_irrigation"])), u"in"
                             )
                         )
                         self.add_status(
-                            _(u"Total rainfall") + u"        : {}{}".format(
+                            _(u"Total rainfall") + u":" + u"\n{}{}".format(
                                 to_in(total_info[u"rain_mm"]), u"in"
                             )
                         )
                         self.add_status(
-                            (_(u"Water needed") + u"({}" + _(u"days)") + " : {}{}").format(
+                            (_(u"Water needed") + u"({}" + _(u"days)") + u":"  + u"\n{}{}").format(
                                 int(options[u"days_forecast"]) + 1,
                                 to_in(water_needed),
                                 u"in",
@@ -211,47 +209,46 @@ class WeatherLevelChecker(Thread):
                         )
                         self.add_status(u"________________________________")
                         self.add_status(
-                            _(u"Irrigation needed") + u"     : {}{}".format(
+                            _(u"Irrigation needed") + u":" + u"\n{}{}".format(
                                 to_in(water_left), u"in"
                             )
                         )
                         self.add_status(
-                            _(u"Weather Adjustment") + u"    : {}{}".format(
+                            _(u"Weather Adjustment") + u":" + u"\n{}{}".format(
                                 water_adjustment, u"%"
                             )
                         )
                     else:
-                        print(u"temp C: ", today[u"temp_c"])
                         self.add_status(
-                            _(u"Current temperature") + u"   : {}deg.{}".format(
+                            _(u"Current temperature") + u":"  + u"\n{}deg.{}".format(
                                 round(today[u"temp_c"], 1), "C"
                             )
                         )
                         self.add_status(u"________________________________")
                         self.add_status(
-                            _(u"Daily irrigation") + u"      : {}{}".format(
+                            _(u"Daily irrigation") + u":"  + u"\n{}{}".format(
                                 safe_float(options[u"daily_irrigation"]), u"mm"
                             )
                         )
                         self.add_status(
-                            _(u"Total rainfall") + u"        : {}{}".format(
+                            _(u"Total rainfall") + u":"  + u"\n{}{}".format(
                                 safe_float(total_info[u"rain_mm"]), u"mm"
                             )
                         )
                         self.add_status(
-                            (_(u"Water needed") + u" ({}" + _(u"days)") + u"  : {}{}").format(
+                            (_(u"Water needed") + u" ({}" + _(u"days)") + u":"  + u"\n{}{}").format(
                                 int(options[u"days_forecast"]) + 1, 
                                 water_needed, u"mm"
                             )
                         )
                         self.add_status(u"________________________________")
                         self.add_status(
-                            _(u"Irrigation needed") + u"     : {}{}".format(
+                            _(u"Irrigation needed") + u":"  + u"\n{}{}".format(
                                 safe_float(water_left), u"mm"
                             )
                         )
                         self.add_status(
-                            _(u"Weather Adjustment") + u"    : {}{}".format(
+                            _(u"Weather Adjustment") + u":" + u"\n{}{}".format(
                                 water_adjustment, u"%"
                             )
                         )

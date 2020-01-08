@@ -203,7 +203,7 @@ class WeatherLevelChecker(Thread):
                             )
                         )
                         self.add_status(
-                            (_(u"Water needed") + u"({}" + _(u"days") + " : {}{}").format(
+                            (_(u"Water needed") + u"({}" + _(u"days)") + " : {}{}").format(
                                 int(options[u"days_forecast"]) + 1,
                                 to_in(water_needed),
                                 u"in",
@@ -239,7 +239,7 @@ class WeatherLevelChecker(Thread):
                             )
                         )
                         self.add_status(
-                            (_(u"Water needed") + u" ({}" + _(u"days") + u"  : {}{}").format(
+                            (_(u"Water needed") + u" ({}" + _(u"days)") + u"  : {}{}").format(
                                 int(options[u"days_forecast"]) + 1, 
                                 water_needed, u"mm"
                             )

@@ -15,10 +15,9 @@ $var page: plugins
 
 
 <script>
-	var SI = "SI", US = "US";
-	var unitType = $m_vals['units'];
+    var SI = "SI", US = "US";
+    var unitType = $m_vals['units'];
 
-    // Initialize behaviors
     jQuery(document).ready(function(){
 
         jQuery("#cSubmit").click(function() {
@@ -71,7 +70,7 @@ $var page: plugins
             <tr>
                 <td style='text-transform: none;'>$_('Preferred Units'):</td>
                 <td>
-					 <select name="units" id="units">
+					<select name="units" id="units">
 					  <option value="SI">SI (mm, &deg;C)</option>
 					  <option value="US">US (inch, &deg;F)</option>
 					</select> 

@@ -96,7 +96,7 @@ class WeatherLevelChecker(Thread):
             self.status = msg
         if msg:
             lwa_options[u"status"] = self.status
-        print(msg)
+        print(msg.encode('utf-8'))
 
     def update(self):
         self._sleep_time = 0
@@ -118,7 +118,7 @@ class WeatherLevelChecker(Thread):
                     if u"wl_weather" in gv.sd:
                         del gv.sd[u"wl_weather"]
                 else:
-                    print(_(u"Checking weather status") + "...")
+                    print((_(u"Checking weather status") + "...").encode('utf-8'))
                     today = today_info(self, options)
                     forecast = forecast_info(self, options, today)
                     history = history_info(self, today, options)
@@ -506,7 +506,7 @@ def get_data(filename, suffix, data_type, options):
 
         except Exception as err:
             if try_nr < 2:
-                print(str(err), u"Retrying.")
+                print(str(err).encode('utf-8'), u"Retrying.")
                 os.remove(path)
                 # If we had an exception, this is where we need to increase
                 # our count retry

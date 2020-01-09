@@ -118,7 +118,7 @@ class WeatherLevelChecker(Thread):
                     if u"wl_weather" in gv.sd:
                         del gv.sd[u"wl_weather"]
                 else:
-                    print(_(u"Checking weather status..."))
+                    print(_(u"Checking weather status") + "...")
                     today = today_info(self, options)
                     forecast = forecast_info(self, options, today)
                     history = history_info(self, today, options)
@@ -263,7 +263,7 @@ class WeatherLevelChecker(Thread):
                     traceback.format_exception(exc_type, exc_value, exc_traceback)
                 )
                 self.add_status(
-                    _(u"Weather-based water level encountered error:\n") + err_string
+                    _(u"Weather-based water level encountered error") + u":\n" + err_string
                 )
                 self._sleep(3600)
             time.sleep(0.5)

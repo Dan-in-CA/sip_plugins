@@ -33,6 +33,7 @@ def safe_float(s):
     """
     Return a valid float regardless of input.
     """
+#     print("safe_float param is: ", s)
     try:
         return float(s)
     except TypeError:
@@ -68,7 +69,7 @@ gv.plugin_menu.append([_(u"Weather-based Water Level"), u"/lwa"])
 
 lwa_options = {}
 lwa_decipher = {}
-prior = {u"temp_cutoff": 0, u"water_needed": 0}
+prior = {u"temp_cutoff": 0, u"water_needed": 0, u"daily_irrigation": 0}
 
 
 ################################################################################
@@ -153,7 +154,7 @@ class WeatherLevelChecker(Thread):
                     # We calculate what we will need to provide using the mean data of X days around today
 
                     ini_water_needed = water_needed = (
-                        int(options[u"daily_irrigation"])
+                        float(options[u"daily_irrigation"])
                         * (int(options[u"days_forecast"]))
                         + 1
                     )  # 4mm per day
@@ -336,14 +337,16 @@ class update(ProtectedPage):
                 qdict[u"temp_cutoff"] = float(lwa_options[u"temp_cutoff"])  #  No change
 
             per_day_setting = round(
-                safe_float(qdict[u"daily_irrigation"]) * 25.4, 1
+                float(qdict[u"daily_irrigation"]) * 25.4, 2
             )  # inches to mm
+            qdict[u"daily_irrigation"] = per_day_setting
             if prior[u"water_needed"] != per_day_setting:
                 prior[u"water_needed"] = per_day_setting
                 qdict[u"water_needed"] = per_day_setting
             else:
                 qdict[u"water_needed"] = safe_float(lwa_options[u"daily_irrigation"])  # No change
 
+        print(u"qdict: ", qdict)
         for (
             key,
             value,
@@ -391,9 +394,13 @@ def to_f(temp_c):
 
 def to_in(len_mm):
     """ convert length in milimeters to inches."""
-    len_in = round(safe_float(len_mm) // 25.4, 1)
+    len_in = round(safe_float(len_mm) / 25.4, 1)
     return len_in
 
+def to_mm(len_in):
+    """ convert length in inches to milimeters."""
+    len_mm = round(safe_float(len_in) * 25.4, 0)
+    return len_mm 
 
 def options_data():
     """

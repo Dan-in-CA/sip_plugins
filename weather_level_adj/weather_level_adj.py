@@ -391,10 +391,9 @@ def to_f(temp_c):
     temp_F = round((temp_c * 1.8) + 32, 1)
     return temp_F
 
-
 def to_in(len_mm):
     """ convert length in milimeters to inches."""
-    len_in = round(safe_float(len_mm) / 25.4, 1)
+    len_in = round(safe_float(len_mm) * 0.03937, 1)
     return len_in
 
 def to_mm(len_in):

@@ -1,16 +1,20 @@
 #!/usr/bin/env python
 
+# Python 2/3 compatibility imports
 from __future__ import print_function
-from blinker import signal
+
+# standard library imports
+import json
 import subprocess
-import web, json, time
+import time
+
+# local module imports
+from blinker import signal
 import gv  # Get access to SIP's settings, gv = global variables
-from urls import urls  # Get access to SIP's URLs
 from sip import template_render
+from urls import urls  # Get access to SIP's URLs
+import web
 from webpages import ProtectedPage
-
-gv.use_gpio_pins = False  # Signal SIP to not use GPIO pins
-
 
 # Add a new url to open the data entry page.
 # fmt: off
@@ -36,7 +40,7 @@ def load_commands():
         with open(u"./data/cli_control.json", u"r") as f:
             commands = json.load(f)  # Read the commands from file
     except IOError:  #  If file does not exist create file with defaults.
-        commands = {u"on": [u""] * gv.sd[u"nst"], u"off": [u""] * gv.sd[u"nst"]}
+        commands = {u"on": [u""] * gv.sd[u"nst"], u"off": [u""] * gv.sd[u"nst"], u"gpio": 0}
         commands[u"on"][0] = u"echo 'example start command for station 1'"
         commands[u"off"][0] = u"echo 'example stop command for station 1'"
         with open(u"./data/cli_control.json", u"w") as f:
@@ -45,6 +49,12 @@ def load_commands():
 
 
 load_commands()
+
+if commands["gpio"]:
+    gv.use_gpio_pins = False
+else:
+    gv.use_gpio_pins = True
+
 
 #### output command when signal received ####
 def on_zone_change(name, **kw):
@@ -107,8 +117,13 @@ class update(ProtectedPage):
                 commands[u"off"] = commands[u"off"][: gv.sd[u"nst"]]
         for i in range(gv.sd[u"nst"]):
             commands[u"on"][i] = qdict[u"con" + str(i)]
-            commands[u"off"][i] = qdict[u"coff" + str(i)]
-
+            commands[u"off"][i] = qdict[u"coff" + str(i)]        
+        if u"gpio" in qdict:
+            commands[u"gpio"] = 1
+            gv.use_gpio_pins = False
+        else:
+            commands[u"gpio"] = 0
+            gv.use_gpio_pins = True
         with open(u"./data/cli_control.json", u"w") as f:  # write the settings to file
             json.dump(commands, f, indent=4)
-        raise web.seeother(u"/")
+        raise web.seeother(u"/restart")

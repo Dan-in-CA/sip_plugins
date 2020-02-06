@@ -43,7 +43,14 @@ $var page: cli_control
 <div id="stations">
     <div class="title">$_(u'Cl Commands')</div>
     <form id="clic" name="clic" action="$app_path('/clicu')" method="get">
+
+        
         <table id="commandList">
+            <tr>
+                <td style='text-transform: none;'>$_(u'Disable GPIO pins'):</td>  <!--Edit-->
+                <td><input type="checkbox" name="gpio"  ${"checked" if commands['gpio'] == 1 else ""}></td>
+            </tr>       
+        
             <tr>
                 <th class="stationNumber">$_(u'Station')</th>
                 <th class="columnName">$_(u'Start Command')</th>

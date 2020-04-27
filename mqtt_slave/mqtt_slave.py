@@ -1,8 +1,9 @@
 # !/usr/bin/env python
 
 """ SIP plugin uses mqtt plugin to receive station status data over MQTT and control local stations
-"""
 __author__ = "Orginally written by Daniel Casner <daniel@danielcasner.org> Modified from mqtt_schedule by Dan K."
+"""
+
 
 # Python 2/3 compatibility imports
 from __future__ import print_function

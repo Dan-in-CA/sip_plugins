@@ -1,8 +1,9 @@
 # !/usr/bin/env python
 
 """ SIP plugin uses mqtt plugin to broadcast station status every time it changes.
-"""
 __author__ = "Daniel Casner <daniel@danielcasner.org>"
+"""
+
 
 # Python 2/3 compatibility imports
 from __future__ import print_function

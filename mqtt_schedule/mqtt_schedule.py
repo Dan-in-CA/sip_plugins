@@ -1,8 +1,8 @@
 # !/usr/bin/env python
 
 """ SIP plugin uses mqtt plugin to receive run once program commands over MQTT
-"""
 __author__ = "Daniel Casner <daniel@danielcasner.org>"
+"""
 
 # Python 2/3 compatibility imports
 from __future__ import print_function

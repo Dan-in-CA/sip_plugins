@@ -7,7 +7,7 @@ __author__ = "Orginally written by Daniel Casner <daniel@danielcasner.org> Modif
 
 # Python 2/3 compatibility imports
 from __future__ import print_function
-import six.moves.range
+from six.moves import range
 
 # standard library imports
 import json  # for working with data file

@@ -7,7 +7,7 @@ __author__ = "Daniel Casner <daniel@danielcasner.org>"
 
 # Python 2/3 compatibility imports
 from __future__ import print_function
-import six.moves.zip
+from six.moves import zip
 
 # standard library imports
 import json  # for working with data file

@@ -1,11 +1,13 @@
 # !/usr/bin/env python
-from __future__ import print_function
+
 
 """ SIP plugin adds an MQTT client to SIP for other plugins to broadcast and receive via MQTT
 The intent is to facilitate joining SIP to larger automation systems
 __author__ = "Daniel Casner <daniel@danielcasner.org>"
 """
 
+# Python 2/3 compatibility imports
+from __future__ import print_function
 
 # standard library imports
 import atexit  # For publishing down message
@@ -23,6 +25,7 @@ try:
 except ImportError:
     print(u"ERROR: MQTT Plugin requires paho mqtt.")
     print(u"\ttry: pip install paho-mqtt")
+    print(u"or for Python 3 pip3 install paho-mqtt ")
     mqtt = None
 
 DATA_FILE = u"./data/mqtt.json"

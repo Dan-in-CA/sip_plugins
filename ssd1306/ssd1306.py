@@ -4,9 +4,9 @@
 
 from __future__ import print_function
 import web  # web.py framework
-import gv  # Get access to ospi's settings
-from urls import urls  # Get access to ospi's URLs
-from ospi import template_render  #  Needed for working with web.py templates
+import gv  # Get access to sip's settings
+from urls import urls  # Get access to sip's URLs
+from sip import template_render  #  Needed for working with web.py templates
 from webpages import ProtectedPage  # Needed for security
 import json  # for working with data file
 
@@ -566,7 +566,7 @@ class LcdPlugin(Thread):
                 isPm = True
             ampmString = u" PM" if isPm else u" AM"
         hrString = str(timeHours)
-        minString = str(timeMinutes / 10 >> 0) + str(timeMinutes % 10 >> 0)
+        minString = str(timeMinutes // 10 >> 0) + str(timeMinutes % 10 >> 0)
         timeStr = hrString + ":" + minString + ampmString
         return timeStr
 

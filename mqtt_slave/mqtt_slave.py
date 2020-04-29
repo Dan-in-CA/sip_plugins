@@ -38,12 +38,9 @@ gv.plugin_menu.append([u"MQTT slave", u"/mr2-sp"])
 class settings(ProtectedPage):
     """Load an html page for entering plugin settings.
     """
-
+    
     def GET(self):
         settings = mqtt.get_settings()
-        settings[u"control_topic"] = ""
-        settings[u"first_station"] = ""
-        settings[u"station_count"] = ""
         return template_render.mqtt_slave(settings, "")  # open settings page
 
 

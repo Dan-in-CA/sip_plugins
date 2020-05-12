@@ -2,6 +2,7 @@ $def with(settings, error_msg)
 
 $var title: $_(u'SIP MQTT Slave Plugin')
 $var page: mqtt_plugin
+
 <script>
 
     // Initialize behaviors
@@ -39,19 +40,19 @@ $var page: mqtt_plugin
             <tr>
                 <td style='text-transform: none;'>$_(u'Zone topic'):</td>
                 <td>The topic to subscribe to for control commands.<br />
-                  <input type="text" name="control_topic" value="${settings['control_topic']}">
+                  <input type="text" name="control_topic" value="${settings.get('control_topic', '')}">
                 </td>
             </tr>
             <tr>
             	<td style='text-transform: none;'>$_(u'First station number'):</td>
                 <td>The number from the master of this slave's first station.<br />
-                  <input type="text" name="first_station" value="${settings['first_station']}">
+                  <input type="text" name="first_station" value="${settings.get('first_station', '')}">
                 </td>
             </tr>
             <tr>
                 <td style='text-transform: none;'>$_(u'Station count'):</td>
                 <td>The number of station this slave uses.<br />
-                  <input type="text" name="station_count" value="${settings['station_count']}">
+                  <input type="text" name="station_count" value="${settings.get('station_count', '')}">
                 </td>
             </tr>
         </table>

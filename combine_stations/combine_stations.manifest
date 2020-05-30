@@ -1,0 +1,9 @@
+A plugin to allow control of multiple stations together as one virtual station even under seqential mode.
+
+##### List all plugin files below preceded by a blank line [file_name.ext path] relative to SIP directory #####
+
+combine_stations.py plugins
+combine_stations.html templates
+combine_stations-docs.html static/docs/plugins
+combine_stations.json data (generated)
+combine_stations.manifest plugins/manifests

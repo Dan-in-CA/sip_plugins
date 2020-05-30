@@ -1,0 +1,39 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML>
+<HEAD>
+	<META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=windows-1252">
+	<TITLE>combine_stations-docs.html</TITLE>
+	<META NAME="GENERATOR" CONTENT="OpenOffice 4.1.1  (Win32)">
+	<META NAME="CREATED" CONTENT="0;0">
+	<META NAME="CHANGED" CONTENT="0;0">
+	<META NAME="viewport" CONTENT="width=device-width, initial-scale=1.0">
+    <link href="../../themes/basic/base.css" rel="stylesheet" type="text/css"/>
+</HEAD>
+<BODY LANG="en-US" BGCOLOR="#ffffff" DIR="LTR" STYLE="border: none; padding: 0in">
+<H1><A NAME="combine_stations-plugin-documentation"></A>combine_stations Plugin
+Documentation</H1>
+<H2 CLASS="western"><A NAME="about-the-combine_stations-plugin"></A>About the
+combine_stations plugin</H2>
+<P>This plugin allows multiple stations to be run at the same time (concurrently) when
+SIP is in sequential mode.</P>
+<p>The stations to be combined are grouped into up to 8 <b>virtual stations</b> which can then be added to an <b>irrigation program</b>, run in <b>manual mode</b> or run from the <b>Run Once</b> page.</p>
+<p>The plugin uses the final 8 stations from SIP's list of stations.</p><br>
+
+<p><B>NOTE:</B> if you are using relay boards to control your sprinkler valves be sure the power supply for the relays can support multiple relays being on at the same time.</p> 
+<p>It is not advised to run multiple relays which are powered only from the Raspberry Pi. A seperate power supply for the relays is recommended</p>
+
+<H2 CLASS="western"><A NAME="using-the-combine_stations-plugin"></A>Using the
+combine_stations plugin</H2>
+
+<P>Before configuring any virtual stations It is necessary to add 8 additional stations to SIP's user interface (UI). 
+You can do this by opening the <b>OPTIONS</b> page and going to <b>Station handling</b>. Increase the <b>Station extensions</b> setting by one.
+This will add 8 stations to SIP's UI.</p>
+<p>These additional stations can then be used as virtual stations that combine actual system stations to operate as one.</P><br>
+
+<p>For each virtual station, enter numbers, separated by commas, for the stations to be combined.</p>
+<p>For example, a station list might look like: 3,6,7</p><br>
+
+<p>After one or more virtual stations are configured, and the settings saved, the plugin renames the virtual stations which then start with "V" followed by the station number, the word "runs" and the list of combined stations.</p>
+<p>The virtual stations can then be added to your irrigation programs with the combined stations shown.</p>
+</BODY>
+</HTML>

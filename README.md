@@ -24,6 +24,10 @@ cli_control
 Replaces rf_control.
 Sends command line commands to control remote stations e.g. RF devices.
 
+combine_stations
+----------
+Allows multiple stations to be run at the same time (concurrently) when SIP is in sequential mode.
+
 email_adj
 ----------
 Sends status email to google email account

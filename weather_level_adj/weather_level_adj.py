@@ -452,6 +452,9 @@ def options_data():
             u"./data/weather_level_adj.json", u"r"
         ) as f:  # Read the settings from file
             lwa_options = json.load(f)
+            if not lwa_options.has_key("mrtm"):
+                lwa_options["mrtm"] = "0"
+                lwa_options["mrts"] = "0"             
     except IOError:
         lwa_options = default_options
         with open(

@@ -1,0 +1,54 @@
+{
+    "alr": 0, 
+    "bsy": 0, 
+    "en": 0, 
+    "htp": 80, 
+    "idd": 1, 
+    "ipas": 1, 
+    "ir": [
+        1
+    ], 
+    "iw": [
+        1
+    ], 
+    "lang": "default", 
+    "lg": 1, 
+    "loc": "Cypress, Texas", 
+    "lr": 500, 
+    "mas": 0, 
+    "mm": 0, 
+    "mo": [
+        0
+    ], 
+    "mtoff": 0, 
+    "mton": 0, 
+    "name": "OConnor Sprinkler", 
+    "nbrd": 1, 
+    "nopts": 13, 
+    "nprogs": 4, 
+    "nst": 8, 
+    "password": "0571d470a06d3d9cffdcddd39048971f31232053", 
+    "pigpio": 0, 
+    "pwd": "b3BlbmRvb3I=", 
+    "rbt": 0, 
+    "rd": 0, 
+    "rdst": 1547327357, 
+    "rs": 0, 
+    "rsn": 0, 
+    "rst": 1, 
+    "salt": "O1Yy(T9L\"42H!cSj-v;CDi/&/cdRT.Xyv;L=R-^(q3EV*$Q,G&tyP)G,iHR$x%Qr", 
+    "sdt": 120, 
+    "seq": 1, 
+    "show": [
+        1
+    ], 
+    "snlen": 32, 
+    "tf": 1, 
+    "theme": "basic", 
+    "tu": "C", 
+    "tz": 48, 
+    "urs": 0, 
+    "wl": 100, 
+    "wl_monthly_adj": 75, 
+    "wl_weather": 105.2
+}

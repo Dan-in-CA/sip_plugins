@@ -28,7 +28,7 @@ $var page: plugins
         });
 
         jQuery("button#docButton").click(function(){
-            window.open(baseUrl + "/static/docs/plugins/weather_level-docs.html", "_blank"); //Edit: replace "proto-docs.html"
+            window.open("static/docs/plugins/weather_level-docs.html", "_blank"); \
         });
 
 		jQuery('#units option[value=$m_vals["units"]]').attr("selected",true);
@@ -66,6 +66,16 @@ $var page: plugins
                 <td>
                     <input name='temp_cutoff_enable' type='checkbox'${" checked" if m_vals['temp_cutoff_enable'] == "on" else ""}>
                 </td>
+            </tr>
+            <tr>
+                <td style='text-transform: none;'>
+                	$_(u'Minimum run time'):
+                </td> 
+                <td>
+	                <input name="mrtm" class="timeInput numbersOnly" type="text" size = "2" maxlength = "3" value=$m_vals["mrtm"]> :
+	                <input name="mrts" class="timeInput numbersOnly" type="text" size="2" maxlength="2" value=$m_vals["mrts"]> (mm:ss)
+                </td>
+                
             </tr>
             <tr>
                 <td style='text-transform: none;'>$_('Preferred Units'):</td>

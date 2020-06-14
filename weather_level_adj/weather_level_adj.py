@@ -22,6 +22,7 @@ except ImportError:
     from six.moves.urllib.request import urlopen, Request
 
 # local module imports
+from blinker import signal
 import gv  # Get access to SIP's settings
 from sip import template_render
 from urls import urls  # Get access to SIP's URLs
@@ -33,7 +34,6 @@ def safe_float(s):
     """
     Return a valid float regardless of input.
     """
-#     print("safe_float param is: ", s)
     try:
         return float(s)
     except TypeError:
@@ -346,7 +346,7 @@ class update(ProtectedPage):
             else:
                 qdict[u"water_needed"] = safe_float(lwa_options[u"daily_irrigation"])  # No change
 
-        print(u"qdict: ", qdict)
+#         print(u"qdict: ", qdict)  # - test
         for (
             key,
             value,
@@ -425,6 +425,8 @@ def options_data():
         u"water_needed": 4,
         u"loc": "",
         u"status": u"",
+        u"mrtm": 0,
+        u"mrts": 0
     }
 
     default_decipher = {
@@ -521,6 +523,26 @@ def get_data(filename, suffix, data_type, options):
                 raise
 
     return data
+
+def min_duration(name, **kw):
+    """
+    Prevent program from running if run time is less than user defined minimum.
+    """
+#     min = int(lwa_options[u"min_duration"])
+    min = (int(lwa_options[u"mrtm"]) * 60) + int(lwa_options[u"mrts"])
+    run_schedule = gv.rs
+    for index, item in enumerate(run_schedule):
+        if (any(item)
+            and item[2] != 0
+            and item[2] < min
+            ):
+            gv.rs[index][0] = gv.rs[index][1]
+            gv.rs[index][2] = 0
+            gv.ps[index] = [0, 0]
+            gv.sd[u"bsy"] = 0            
+               
+scheduled = signal(u"stations_scheduled")
+scheduled.connect(min_duration) 
 
 
 ################################################################################

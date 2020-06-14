@@ -1,5 +1,4 @@
 $def with(zone_topic, error_msg)
-<!-- Edit: Replace "proto_vals" with settings values for your plugin if used-->
 
 $var title: $_('SIP MQTT Zones Plugin')
 $var page: mqtt_plugin
@@ -26,7 +25,7 @@ $var page: mqtt_plugin
 
     <div id="errorMessage">${error_msg}</div>
 
-    <form id="pluginForm" action="${app_path('/zone2mqtt-save')}" method="get">
+    <form id="pluginForm" action="/zone2mqtt-save" method="get">
 
         <table class="optionList">
 

@@ -18,49 +18,53 @@ $var page: plugins
 </script>
 
 <div id="plugin">
-    <div class="title">Email adjustments</div>
-    <p>This plugin can send E-mails. For this plugin you need a GMail account as provider.</p>
+    <div class="title">$_('Email adjustments')</div>
+    <p>$_('This plugin can send E-mails. For this plugin you need an e-mail smtp account as provider.')</p>
     <form id="pluginForm" action="/uemla" method="get">
         <table class="optionList">
             <tr>
-                <td style='text-transform: none;'>Send email with file log.csv after power on:</td>
+                <td style='text-transform: none;'>$_('Send email with file log.csv after power on'):</td>
                 <td>
-                    <input name='emllog' type='checkbox'${" checked" if m_vals['emllog'] == "on" else ""}>   
+                    <input name='emllog' type='checkbox' ${" checked" if m_vals['emllog'] == "on" else ""}>
                 </td>
             </tr>
             <tr>
-                <td style='text-transform: none;'>Send email if rain is detected:</td>
+                <td style='text-transform: none;'>$_('Send email if rain is detected'):</td>
                 <td>
-                    <input name='emlrain' type='checkbox'${" checked" if m_vals['emlrain'] == "on" else ""}>   
+                    <input name='emlrain' type='checkbox' ${" checked" if m_vals['emlrain'] == "on" else ""}>
                 </td>
             </tr>
 
             <tr>
-                <td style='text-transform: none;'>Sends email if program has run:</td>
+                <td style='text-transform: none;'>$_('Sends email if program has run'):</td>
                 <td>
-                    <input name='emlrun' type='checkbox'${" checked" if m_vals['emlrun'] == "on" else ""}> 
+                    <input name='emlrun' type='checkbox' ${" checked" if m_vals['emlrun'] == "on" else ""}>
                 </td>
             </tr>
             <tr>
-                <td style='text-transform: none;'>Your GMail username:</td>
+                <td style='text-transform: none;'>$_('SMTP username'):
+                    <div><small>$_('Your e-mail password')</small></div>
+                </td>
                 <td>
                     <input name='emlusr' type='text' value=$m_vals["emlusr"]>
                 </td>
             </tr>
             <tr>
-                <td style='text-transform: none;'>Your GMail password:</td>
+                <td style='text-transform: none;'>$_('SMTP password'):
+                    <div><small>$_('Your e-mail password')</small></div>
+                </td>
                 <td>
                     <input name='emlpwd' type='password' value=$m_vals["emlpwd"]>
                 </td>
             </tr>
             <tr>
-                <td style='text-transform: none;'>Send mail to:</td>
+                <td style='text-transform: none;'>$_('Send mail to'):</td>
                 <td>
                     <input name='emladr' type='text' value=$m_vals["emladr"]>
                 </td>
             </tr>
             <tr>
-                <td style='text-transform: none;'>Status:</td>
+                <td style='text-transform: none;'>$_('Status'):</td>
                 <td>
                     <textarea style="font-family: monospace;" rows="7" cols="35" readonly>$m_vals['status']</textarea>
                 </td>
@@ -72,5 +76,5 @@ $var page: plugins
     <button id="cSubmit" class="submit"><b>Submit</b></button>
     <button id="cCancel" class="cancel danger">Cancel</button>
 </div>
-                                  
-                     
+
+

@@ -5,13 +5,13 @@ $var page: plugins
 
 <script>
     // Initialize behaviors
-    jQuery(document).ready(function(){
+    jQuery(document).ready(function () {
 
-        jQuery("#cSubmit").click(function() {
+        jQuery("#cSubmit").click(function () {
             jQuery("#pluginForm").submit();
         });
-        jQuery("button#cCancel").click(function(){
-            window.location="/";
+        jQuery("button#cCancel").click(function () {
+            window.location = "/";
         });
 
     });
@@ -42,6 +42,28 @@ $var page: plugins
                 </td>
             </tr>
             <tr>
+                <td style='text-transform: none;'>$_('SMTP server address'):
+                    <div><small>$_('example'): smtp.gmail.com</small></div>
+                </td>
+                <td>
+                    <input name='emlserver' type='text' value=$m_vals["emlserver"]>
+                </td>
+            </tr>
+            <tr>
+                <td style='text-transform: none;'>$_('SMTP port'):
+                    <div><small>$_('example'): 587</small></div>
+                </td>
+                <td>
+                    <input name='emlport' type='text' value=$m_vals["emlport"]>
+                </td>
+            </tr>
+             <td style='text-transform: none;'>$_('Use SMTP username as sender'):
+              <div><small>$_('Some smpt providers prohibit to use another sender than the same mail user')</small></div>
+             </td>
+                <td>
+                    <input name='emlsender' type='checkbox' ${" checked" if m_vals['emlsender'] == "on" else ""}>
+                </td>
+            <tr>
                 <td style='text-transform: none;'>$_('SMTP username'):
                     <div><small>$_('Your e-mail password')</small></div>
                 </td>
@@ -71,10 +93,15 @@ $var page: plugins
             </tr>
         </table>
     </form>
+
 </div>
 <div id="controls">
-    <button id="cSubmit" class="submit"><b>Submit</b></button>
-    <button id="cCancel" class="cancel danger">Cancel</button>
+    <button id="cSubmit" class="submit"><b>$_('Submit')</b></button>
+    <button id="cCancel" class="cancel danger">$_('Cancel')</button>
 </div>
 
+<form id="testEmail" action="/uemltest" method="get">
+    <button class="submit"><b>$_('Send test email')</b></button>
+
+</form>
 

@@ -31,6 +31,7 @@ urls.extend(
         u"/emla", u"plugins.email_adj.settings",
         u"/emlj", u"plugins.email_adj.settings_json",
         u"/uemla", u"plugins.email_adj.update",
+        u"/uemltest", u"plugins.email_adj.send_test_email",
     ]
 )
 # fmt: on
@@ -173,6 +174,7 @@ class EmailSender(Thread):
 
 checker = EmailSender()
 
+
 ################################################################################
 # Helper functions:                                                            #
 ################################################################################
@@ -181,9 +183,12 @@ checker = EmailSender()
 def get_email_options():
     """Returns the defaults data form file."""
     dataeml = {
+        u"emlserver": u"",
+        u"emlport": u"",
         u"emlusr": u"",
         u"emlpwd": u"",
         u"emladr": u"",
+        u"emlsender": u"off",
         u"emllog": u"off",
         u"emlrain": u"off",
         u"emlrun": u"off",
@@ -204,13 +209,16 @@ def get_email_options():
 def email(subject, text, attach=None):
     """Send email with with attachments"""
     dataeml = get_email_options()
-    if dataeml[u"emlusr"] != "" and dataeml[u"emlpwd"] != "" and dataeml[u"emladr"] != "":
-        gmail_user = dataeml[u"emlusr"]  # User name
-        gmail_name = gv.sd[u"name"]  # OSPi name
-        gmail_pwd = dataeml[u"emlpwd"]  # User password
+    if dataeml[u"emlusr"] != "" and dataeml[u"emlpwd"] != "" and dataeml[u"emladr"] != "" and dataeml[
+        u"emlserver"] != "" and dataeml[u"emlport"] != "":
+        mail_user = dataeml[u"emlusr"]  # SMTP username
+        mail_from = mail_user if dataeml[u"emlsender"] != u"off" else gv.sd[u"name"]  # From Name
+        mail_pwd = dataeml[u"emlpwd"]  # SMTP password
+        mail_server = dataeml[u"emlserver"]  # SMTP server address
+        mail_port = dataeml[u"emlport"]  # SMTP port
         # --------------
         msg = MIMEMultipart()
-        msg[u"From"] = gmail_name
+        msg[u"From"] = mail_from
         msg[u"To"] = dataeml[u"emladr"]
         msg[u"Subject"] = subject
         msg.attach(MIMEText(text))
@@ -223,15 +231,15 @@ def email(subject, text, attach=None):
                 u'attachment; filename="%s"' % os.path.basename(attach),
             )
             msg.attach(part)
-        mailServer = smtplib.SMTP(u"smtp.gmail.com", 587)
+        mailServer = smtplib.SMTP(mail_server, int(mail_port))
         mailServer.ehlo()
         mailServer.starttls()
         mailServer.ehlo()
-        mailServer.login(gmail_user, gmail_pwd)
+        mailServer.login(mail_user, mail_pwd)
         mailServer.sendmail(
-            gmail_name, dataeml[u"emladr"], msg.as_string()
+            mail_from, dataeml[u"emladr"], msg.as_string()
         )  # name + e-mail address in the From: field
-        mailServer.close()
+        mailServer.quit()
     else:
         raise Exception(u"E-mail plug-in is not properly configured!")
 
@@ -270,4 +278,12 @@ class update(ProtectedPage):
             qdict[u"emlrun"] = u"off"
         with open(u"./data/email_adj.json", u"w") as f:  # write the settings to file
             json.dump(qdict, f)
-        raise web.seeother(u"/")
+        raise web.seeother(u"/emla")
+
+
+class send_test_email(ProtectedPage):
+    """Send test, dummy, email"""
+
+    def GET(self):
+        checker.try_mail("Test e-mail from SIP", "This is a test email from SIP. You can ignore it.")
+        raise web.seeother(u"/emla")

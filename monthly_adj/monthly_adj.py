@@ -112,5 +112,5 @@ class update_percents(ProtectedPage):
         raise web.seeother(u"/")
 
 wl = Thread(target=set_wl)
-wll.daemon = True
+wl.daemon = True
 wl.start()

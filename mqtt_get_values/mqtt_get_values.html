@@ -1,0 +1,46 @@
+$def with(get_values_topic, error_msg)
+
+$var title: $_('SIP MQTT Get Values Plugin')
+$var page: mqtt_get_values
+<script>
+
+    // Initialize behaviors
+    jQuery(document).ready(function(){
+
+        jQuery("#cSubmit").click(function() {
+            jQuery("#pluginForm").submit();
+        });
+        jQuery("button#cCancel").click(function(){
+            window.location= baseUrl + "/";
+        });
+    });
+</script>
+
+<div id="plugin">
+    <div class="title">MQTT Get Values Plugin</div>
+    <div>
+    <p>Relies on the base MQTT plugin and sends values changes over MQTT</p>
+    <p>Click the Submit button below even if using the default topic.</p>
+    </div>
+
+    <div id="errorMessage">${error_msg}</div>
+
+    <form id="pluginForm" action="/mqtt_get_values-save" method="get">
+
+        <table class="optionList">
+
+            <!--Text fields-->
+            <tr>
+                <td style='text-transform: none;'>$_(u'Get values topic'):</td>
+                <td>The topic to broadcast values updates on<br />
+                  <input type="text" name="get_values_topic" value="${get_values_topic}">
+                </td>
+            </tr>
+        </table>
+    </form>
+
+<div id="controls">
+    <button id="cSubmit" class="submit"><b>$_(u'Submit')</b></button>
+    <button id="cCancel" class="cancel danger">$_(u'Cancel')</button>
+</div>
+</div>

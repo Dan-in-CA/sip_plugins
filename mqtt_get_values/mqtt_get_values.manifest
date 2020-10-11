@@ -1,0 +1,10 @@
+Description: Uses MQTT plugin to send value changes over MQTT
+Modified from mqtt_zones originally written by Daniel Casner
+
+Requirements: MQTT Plugin by Daniel Casner
+
+##### List all plugin files below preceded by a blank line [file_name.ext path] relative to SIP directory #####
+
+mqtt_get_values.py plugins
+mqtt_get_values.html templates
+mqtt_get_values.manifest plugins/manifests

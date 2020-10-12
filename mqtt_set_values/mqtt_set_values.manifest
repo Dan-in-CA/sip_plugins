@@ -1,0 +1,10 @@
+Description: Uses MQTT plugin to set SIP values over MQTT
+Modified from mqtt_schedule originally written by Daniel Casner
+
+Requirements: MQTT Plugin by Daniel Casner
+
+##### List all plugin files below preceded by a blank line [file_name.ext path] relative to SIP directory #####
+
+mqtt_set_values.py plugins
+mqtt_set_values.html templates
+mqtt_set_values.manifest plugins/manifests

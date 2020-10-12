@@ -50,6 +50,18 @@ This is the base mqtt plugin,
 it provides a shared MQTT client object for other plugins.
 Requires paho mqtt.
 
+mqtt_get_values
+----------
+Requires base mqtt plugin. 
+Can be used to read SIP's gv.* settings.
+See gv_reference.txt in the SIP folder for a list of settings.
+
+mqtt_set_values
+----------
+Requires base mqtt plugin. 
+Can be used to change SIP's gv.* settings.
+See gv_reference.txt in the SIP folder for a list of settings.
+
 mqtt_schedule
 --------------
 Relies on MQTT, subscribes to a control topic and schedules

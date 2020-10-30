@@ -5,7 +5,7 @@ from __future__ import print_function
 import web  # web.py framework
 import gv  # Get access to ospi's settings
 from urls import urls  # Get access to ospi's URLs
-from ospi import template_render  #  Needed for working with web.py templates
+from sip import template_render  #  Needed for working with web.py templates
 from webpages import ProtectedPage  # Needed for security
 import json  # for working with data file
 

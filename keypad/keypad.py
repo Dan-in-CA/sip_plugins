@@ -25,7 +25,7 @@ from __future__ import print_function
 import web  # web.py framework
 import gv  # Get access to ospi's settings
 from urls import urls  # Get access to ospi's URLs
-from ospi import template_render  #  Needed for working with web.py templates
+from sip import template_render  #  Needed for working with web.py templates
 from webpages import ProtectedPage  # Needed for security
 import json  # for working with data file
 
@@ -149,7 +149,7 @@ class ScanningKeypad:
                 GPIO.setup(self.keypad_current_column, GPIO.OUT)
                 GPIO.output(self.keypad_current_column, GPIO.HIGH)
         except Exception as err:
-            print("keypad plugin except")
+            print("keypad plugin except:\n{}".format(err))
             print(traceback.format_exc())
             self.pins_initialized = False
         return self.pins_initialized
@@ -171,7 +171,7 @@ class ScanningKeypad:
                     GPIO.setup(v, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
             self.pins_initialized = True
         except Exception as err:
-            print("keypad plugin except")
+            print("keypad plugin except:\n{}".format(err))
             print(traceback.format_exc())
             self.pins_initialized = False
         return self.pins_initialized
@@ -188,7 +188,7 @@ class ScanningKeypad:
                         else:
                             keys[self.indicies[row][col]] = GPIO.input(row_v)
                 except Exception as err:
-                    print("keypad plugin except")
+                    print("keypad plugin except:\n{}".format(err))
                     print(traceback.format_exc())
                     self.pins_initialized = False
             else:
@@ -367,7 +367,6 @@ class KeypadPlugin:
     def __set_runonce_station(stationID, seconds=300):
         """Runs a single station for a given number of seconds. This will override any running program."""
         found = False
-        stop_all_first = False
         newrovals = []
         for i in range(gv.sd["nst"]):
             if i == (stationID - 1):
@@ -767,7 +766,6 @@ class KeypadPlugin:
             if not self.__wait_for_ready():
                 break
             #
-            function_value = []
             down_keys = []
             # First button press
             if self.function_selected:
@@ -792,14 +790,11 @@ class KeypadPlugin:
                 self.buzzerSignal.send(
                     self.cancel_beep
                 )  # Nack for no command or cancel
-                function_value = []
             else:
                 # Check if function key was pressed
                 function_key = self.__get_first_function_key(c)
                 if function_key is not None:
                     self.__function_key_down(function_key)
-                    # Reset command and go to next iteration
-                    function_value = []
                 else:
                     # Check if number key is pressed
                     hasNumberKey = False
@@ -830,8 +825,8 @@ class KeypadPlugin:
         stopped = False
         if self.running_thread is not None:
             self.running = False
-            stopped = self.running_thread.join(0.5)
-            if stopped:
+            self.running_thread.join(0.5)
+            if not self.running_thread.is_alive():
                 self.running_thread = None
         else:
             stopped = True

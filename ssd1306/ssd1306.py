@@ -20,7 +20,7 @@ import sys
 from time import sleep
 
 # threads
-from threading import Thread, Lock
+from threading import Thread, Lock, Condition
 
 # get open sprinkler signals
 from blinker import signal
@@ -44,16 +44,13 @@ import smbus
 # Add this plugin to the PLUGINS menu ['Menu Name', 'URL'], (Optional)
 # gv.plugin_menu.append(['SSD1306 Plugin', '/ssd1306-sp'])
 
-
 class Lcd:
-    # Absolute min/max column and row
-    MINIMUM_COLUMN = 0x00
-    MAXIMUM_COLUMN = 0x7F
-    MINIMUM_ROW = 0x00
-    MAXIMUM_ROW = 0x07
     # LCD control and data byte values
     CONTROL_BYTE = 0x00
     DATA_BYTE = 0x40
+    # Select LCD control bytes
+    LCD_CONTROL_PWR_OFF = 0xAE
+    LCD_CONTROL_PWR_ON = 0xAF
     # Justification values
     JUSTIFY_LEFT = 0
     JUSTIFY_RIGHT = 1
@@ -61,7 +58,7 @@ class Lcd:
     # Offset of 0x20, up to 0x7F
     LCD_ASCII_BEGIN = 0x20
     LCD_ASCII_MAX = 0x7F
-    lcd_ascii = [
+    LCD_ASCII = [
         [0x00, 0x00, 0x00, 0x00, 0x00],  # (space)
         [0x00, 0x00, 0x5F, 0x00, 0x00],  # !
         [0x00, 0x07, 0x00, 0x07, 0x00],  # "
@@ -162,73 +159,90 @@ class Lcd:
     # unknown character value
     char_other = [0x7F, 0x7F, 0x7F, 0x7F, 0x7F]
 
-    def __init__(self, hwAddr=0x3C, busAddr=1):
-        # hardware address of LCD
-        self.hwAddr = hwAddr
+    def __init__(self,
+                 i2c_hw_addr=0x78,
+                 i2c_bus_number=1,
+                 screen_pixel_width=128,
+                 screen_pixel_height=64):
+        """
+        Initializes an Lcd object
+        Inputs: i2c_hw_addr - The hardware address of this Lcd (excluding leading R/W bit)
+                              Note: All I2C operations in this class will be write (0) ex: an
+                                    address value of 0x78 given as the address here will show as
+                                    0x3c in i2cdetect.
+                i2c_bus_number - The I2C bus number passed to SMBus
+                screen_pixel_width - The number of horizontal pixels for this Lcd
+                screen_pixel_height - The number of vertical pixels for this Lcd
+                                      (must be divisible by 8)
+        """
+        # hardware address of LCD (bit shift address 1 to the right to make write operation)
+        self._hw_write_addr = i2c_hw_addr >> 1
         # i2c bus
-        self.bus = smbus.SMBus(busAddr)
+        self._bus = smbus.SMBus(i2c_bus_number)
+        # defined minimum and maximum LCD addresses
+        self._min_col_addr = 0
+        self._max_col_addr = screen_pixel_width - 1
+        self._min_row_addr = 0
+        # note: ssd1306 addresses rows by 8 vertical pixels at a time, so the screen height had
+        #       better be divisible by 8 (rounding up to the nearest 8 here to be sure)
+        self._max_row_addr = (screen_pixel_height + 7) // 8 - 1
         # last selected view range
-        self.gmin_col = Lcd.MINIMUM_COLUMN
-        self.gmax_col = Lcd.MAXIMUM_COLUMN
-        self.gmin_row = Lcd.MINIMUM_ROW
-        self.gmax_row = Lcd.MAXIMUM_ROW
+        self._gmin_col = self._min_col_addr
+        self._gmax_col = self._max_col_addr
+        self._gmin_row = self._min_row_addr
+        self._gmax_row = self._max_row_addr
         # current column and row
-        self.current_col = Lcd.MINIMUM_COLUMN
-        self.current_row = Lcd.MINIMUM_ROW
+        self._current_col = self._min_col_addr
+        self._current_row = self._min_row_addr
         # write failure flag
-        self.writeFailure = False
+        self._write_failure = False
         return
 
     def lcd_increment_current(self, x):
         "Increments the current column/row values based on number of data values written"
-        columns = self.gmax_col - self.gmin_col + 1
-        rows = self.gmax_row - self.gmin_row + 1
-        self.current_col += x
-        self.current_row = (
-            ((self.current_col // columns) + self.current_row) % rows
-        ) + self.gmin_row
-        self.current_col = (self.current_col % columns) + self.gmin_col
+        columns = self._gmax_col - self._gmin_col + 1
+        rows = self._gmax_row - self._gmin_row + 1
+        self._current_col += x
+        self._current_row = (
+            ((self._current_col // columns) + self._current_row) % rows
+        ) + self._gmin_row
+        self._current_col = (self._current_col % columns) + self._gmin_col
         return
 
     def lcd_control(self, byte):
         "Writes a single control byte"
         try:
-            return self.bus.write_byte_data(self.hwAddr, Lcd.CONTROL_BYTE, byte)
+            return self._bus.write_byte_data(self._hw_write_addr, Lcd.CONTROL_BYTE, byte)
         except:
-            if not self.writeFailure:
+            if not self._write_failure:
                 print(u"Failed to write control byte. Is the hardware connected?")
-                self.writeFailure = True
+                self._write_failure = True
             return -1
 
     def lcd_data(self, byte):
         "Writes a single data byte"
         self.lcd_increment_current(1)
         try:
-            return self.bus.write_byte_data(self.hwAddr, Lcd.DATA_BYTE, byte)
+            return self._bus.write_byte_data(self._hw_write_addr, Lcd.DATA_BYTE, byte)
         except:
-            if not self.writeFailure:
+            if not self._write_failure:
                 print(u"Failed to write data byte. Is the hardware connected?")
-                self.writeFailure = True
+                self._write_failure = True
             return -1
 
     def lcd_execute_sequence(self, cmd, sequence):
         "Executes a sequence 32 bytes at a time with a given command"
-        ctrlarr = []
-        try:
-            # write_i2c_block_data() can execute a max of 32 bytes at a time
-            for value in sequence:
-                ctrlarr.append(value)
-                if len(ctrlarr) == 32:
-                    # execute!
-                    self.bus.write_i2c_block_data(self.hwAddr, cmd, ctrlarr)
-                    ctrlarr = []
-            if len(ctrlarr) > 0:
-                # execute the rest
-                self.bus.write_i2c_block_data(self.hwAddr, cmd, ctrlarr)
-        except:
-            if not self.writeFailure:
-                print(u"Failed to execute sequence. Is the hardware connected?")
-                self.writeFailure = True
+        # write_i2c_block_data() can execute a max of 32 bytes at a time
+        n = 32
+        for chunk in [sequence[i:i + n] for i in range(0, len(sequence), n)]:
+            try:
+                # execute this chunk
+                self._bus.write_i2c_block_data(self._hw_write_addr, cmd, chunk)
+            except Exception as e:
+                if not self._write_failure:
+                    print(u"ssd1306 Failed to execute sequence. Is the hardware connected?:\n{}"\
+                        .format(e))
+                    self._write_failure = True
         if cmd == Lcd.DATA_BYTE:
             self.lcd_increment_current(len(sequence))
         return
@@ -248,7 +262,7 @@ class Lcd:
         print(u"LCD initialize...")
         # initialization sequence
         init_sequence = [
-            0xAE,  # turn off oled panel
+            Lcd.LCD_CONTROL_PWR_OFF,  # turn off oled panel
             0x00,  # set low column address
             0x10,  # set high column address
             0x40,  # set start line address
@@ -278,14 +292,17 @@ class Lcd:
         # Clear out the buffer and synchronize with hardware
         self.clear()
         # Turn on OLED panel
-        self.lcd_control(0xAF)
+        self.set_power(on=True)
         print(u"Done (LCD initialize)")
         return
+
+    def set_power(self, on):
+        self.lcd_control(Lcd.LCD_CONTROL_PWR_ON if on else Lcd.LCD_CONTROL_PWR_OFF)
 
     def lcd_set_print_area_max(self):
         "Sets the printable area to max screen"
         return self.lcd_set_print_area(
-            Lcd.MINIMUM_COLUMN, Lcd.MAXIMUM_COLUMN, Lcd.MINIMUM_ROW, Lcd.MAXIMUM_ROW
+            self._min_col_addr, self._max_col_addr, self._min_row_addr, self._max_row_addr
         )
 
     def clear(self):
@@ -298,9 +315,9 @@ class Lcd:
 
     def lcd_set_print_area(self, min_col, max_col, min_row, max_row):
         """Sets the print area of the screen with max of: (0x00, 0x7F, 0x00, 0x07)"""
-        if min_col < 0 or max_col > Lcd.MAXIMUM_COLUMN or max_col < min_col:
+        if min_col < 0 or max_col > self._max_col_addr or max_col < min_col:
             return 0
-        elif min_row < 0 or max_row > Lcd.MAXIMUM_ROW or max_row < min_row:
+        elif min_row < 0 or max_row > self._max_row_addr or max_row < min_row:
             return 0
         seq = []
         seq.append(0x21)
@@ -310,12 +327,12 @@ class Lcd:
         seq.append(min_row)
         seq.append(max_row)
         self.lcd_execute_control_sequence(seq)
-        self.gmin_col = min_col
-        self.gmax_col = max_col
-        self.gmin_row = min_row
-        self.gmax_row = max_row
-        self.current_col = min_col
-        self.current_row = min_row
+        self._gmin_col = min_col
+        self._gmax_col = max_col
+        self._gmin_row = min_row
+        self._gmax_row = max_row
+        self._current_col = min_col
+        self._current_row = min_row
         return 1
 
     @staticmethod
@@ -334,7 +351,7 @@ class Lcd:
         chv = ord(char)
         seq = []
         if chv >= Lcd.LCD_ASCII_BEGIN and chv <= Lcd.LCD_ASCII_MAX:
-            seq = list(Lcd.lcd_ascii[chv - Lcd.LCD_ASCII_BEGIN])
+            seq = list(Lcd.LCD_ASCII[chv - Lcd.LCD_ASCII_BEGIN])
         else:  # unknown
             seq = list(Lcd.char_other)
 
@@ -371,7 +388,7 @@ class Lcd:
     ):
         if min_text_size > max_text_size or min_text_size <= 0 or max_text_size <= 0:
             return 0
-        maxWidth = Lcd.MAXIMUM_COLUMN - Lcd.MINIMUM_COLUMN + 1
+        maxWidth = self._max_col_addr - self._min_col_addr + 1
         words = str.split(" ")
         wordSizes = [0] * len(words)
         # I am assuming that each character is 5 pixel width with 1 pixel space
@@ -442,7 +459,7 @@ class Lcd:
                 justification - One of the Lcd.JUSTIFY_* values (LEFT, RIGHT, or CENTER)
         Returns 1 if successful, 0 if invalid arguments given
         """
-        if row_start < Lcd.MINIMUM_ROW or row_start > Lcd.MAXIMUM_ROW:
+        if row_start < self._min_row_addr or row_start > self._max_row_addr:
             return 0
         if len(str) <= 0:
             str = " "
@@ -456,14 +473,14 @@ class Lcd:
                     seq[i].extend(seqChar[i])
 
         row_end = row_start + text_size_multiplier - 1
-        if row_end > Lcd.MAXIMUM_ROW:
-            row_end = Lcd.MAXIMUM_ROW
+        if row_end > self._max_row_addr:
+            row_end = self._max_row_addr
         self.lcd_set_print_area(
-            Lcd.MINIMUM_COLUMN, Lcd.MAXIMUM_COLUMN, row_start, row_end
+            self._min_col_addr, self._max_col_addr, row_start, row_end
         )
 
-        maxNumRows = self.gmax_row - self.gmin_row + 1
-        maxNumCols = self.gmax_col - self.gmin_col + 1
+        maxNumRows = self._gmax_row - self._gmin_row + 1
+        maxNumCols = self._gmax_col - self._gmin_col + 1
         # Add rows until we get the number of rows in range
         for i in range(len(seq), maxNumRows):
             seq.append([0] * len(seq[0]))
@@ -509,17 +526,17 @@ class Lcd:
 class LcdPlugin(Thread):
     def __init__(self):
         Thread.__init__(self)
-        self.daemon = True
-        self.alarmSignaled = False
-        self.alarmText = u""
-        self.lastWrite = u""
-        self.lastSubVal = u""
-        self.lcd = Lcd()
+        self._daemon = True
+        self._alarmSignaled = False
+        self._alarmText = u""
+        self._lastWrite = u""
+        self._lastSubVal = u""
+        self._lcd = Lcd()
         self.__set_default_settings()
 
     def initialize(self):
-        self.lcd.initialize()
-        self.lcd.clear()
+        self._lcd.initialize()
+        self._lcd.clear()
         return True
 
     def __set_default_settings(self):
@@ -606,40 +623,40 @@ class LcdPlugin(Thread):
                 if programRunning:
                     if gv.pon == 98:
                         aboutToWrite = u"RunningRun-onceProgram"
-                        if self.lastWrite != aboutToWrite:
-                            self.lcd.write_line(u"Running", 0, 2, Lcd.JUSTIFY_CENTER)
-                            self.lcd.write_line("", 2, 1, Lcd.JUSTIFY_LEFT)
-                            self.lcd.write_line(u"Run-once", 3, 2, Lcd.JUSTIFY_CENTER)
-                            self.lcd.write_line("", 5, 1, Lcd.JUSTIFY_LEFT)
-                            self.lcd.write_line(u"Program", 6, 2, Lcd.JUSTIFY_CENTER)
-                            self.lastWrite = aboutToWrite
+                        if self._lastWrite != aboutToWrite:
+                            self._lcd.write_line(u"Running", 0, 2, Lcd.JUSTIFY_CENTER)
+                            self._lcd.write_line("", 2, 1, Lcd.JUSTIFY_LEFT)
+                            self._lcd.write_line(u"Run-once", 3, 2, Lcd.JUSTIFY_CENTER)
+                            self._lcd.write_line("", 5, 1, Lcd.JUSTIFY_LEFT)
+                            self._lcd.write_line(u"Program", 6, 2, Lcd.JUSTIFY_CENTER)
+                            self._lastWrite = aboutToWrite
                     elif gv.pon == 99:
                         aboutToWrite = u"ManualMode"
-                        if self.lastWrite != aboutToWrite:
-                            self.lcd.write_line(u"", 0, 1, Lcd.JUSTIFY_LEFT)
-                            self.lcd.write_line(u"Manual", 1, 2, Lcd.JUSTIFY_CENTER)
-                            self.lcd.write_line(u"", 3, 1, Lcd.JUSTIFY_LEFT)
-                            self.lcd.write_line(u"Mode", 4, 2, Lcd.JUSTIFY_CENTER)
-                            self.lcd.write_line(u"", 6, 2, Lcd.JUSTIFY_LEFT)
-                            self.lastWrite = aboutToWrite
+                        if self._lastWrite != aboutToWrite:
+                            self._lcd.write_line(u"", 0, 1, Lcd.JUSTIFY_LEFT)
+                            self._lcd.write_line(u"Manual", 1, 2, Lcd.JUSTIFY_CENTER)
+                            self._lcd.write_line(u"", 3, 1, Lcd.JUSTIFY_LEFT)
+                            self._lcd.write_line(u"Mode", 4, 2, Lcd.JUSTIFY_CENTER)
+                            self._lcd.write_line(u"", 6, 2, Lcd.JUSTIFY_LEFT)
+                            self._lastWrite = aboutToWrite
                     else:
                         aboutToWrite = u"RunningProgram{}".format(prg)
-                        if self.lastWrite != aboutToWrite:
-                            self.lcd.write_line(u"Running", 0, 2, Lcd.JUSTIFY_CENTER)
-                            self.lcd.write_line("", 2, 1, Lcd.JUSTIFY_LEFT)
-                            self.lcd.write_line(u"Program", 3, 2, Lcd.JUSTIFY_CENTER)
-                            self.lcd.write_line(u"", 5, 1, Lcd.JUSTIFY_LEFT)
-                            self.lcd.write_line(prg, 6, 2, Lcd.JUSTIFY_CENTER)
-                            self.lastWrite = aboutToWrite
+                        if self._lastWrite != aboutToWrite:
+                            self._lcd.write_line(u"Running", 0, 2, Lcd.JUSTIFY_CENTER)
+                            self._lcd.write_line("", 2, 1, Lcd.JUSTIFY_LEFT)
+                            self._lcd.write_line(u"Program", 3, 2, Lcd.JUSTIFY_CENTER)
+                            self._lcd.write_line(u"", 5, 1, Lcd.JUSTIFY_LEFT)
+                            self._lcd.write_line(prg, 6, 2, Lcd.JUSTIFY_CENTER)
+                            self._lastWrite = aboutToWrite
                 else:
                     # It was a lie!
                     prg = u"Idle"
             else:
-                if self.lastWrite != s:
-                    self.lcd.write_block(s, 0, 1, 5, Lcd.JUSTIFY_CENTER)
-                    self.lcd.write_line(" ", 5, 1, Lcd.JUSTIFY_CENTER)
-                    self.lastWrite = s
-                    self.lastSubVal = ""
+                if self._lastWrite != s:
+                    self._lcd.write_block(s, 0, 1, 5, Lcd.JUSTIFY_CENTER)
+                    self._lcd.write_line(" ", 5, 1, Lcd.JUSTIFY_CENTER)
+                    self._lastWrite = s
+                    self._lastSubVal = ""
                 if gv.pon == 99 and stationDuration <= 0:
                     # Manual station on forever
                     aboutToWrite = u"ON"
@@ -662,92 +679,99 @@ class LcdPlugin(Thread):
                             + ":"
                             + aboutToWrite
                         )
-                if self.lastSubVal != aboutToWrite:
-                    self.lcd.write_line(aboutToWrite, 6, 2, Lcd.JUSTIFY_CENTER)
-                    self.lastSubVal = aboutToWrite
+                if self._lastSubVal != aboutToWrite:
+                    self._lcd.write_line(aboutToWrite, 6, 2, Lcd.JUSTIFY_CENTER)
+                    self._lastSubVal = aboutToWrite
         # Check again because prg may have changed to Idle in the above if statement
         if prg == u"Idle":
             if not gv.sd[u"en"]:
-                if self.lastWrite != u"OFF":
-                    self.lcd.write_line(u"OFF", 0, 3, Lcd.JUSTIFY_CENTER)
-                    self.lcd.write_line(u"", 3, 5, Lcd.JUSTIFY_LEFT)
-                    self.lastWrite = u"OFF"
+                if self._lastWrite != u"OFF":
+                    self._lcd.write_line(u"OFF", 0, 3, Lcd.JUSTIFY_CENTER)
+                    self._lcd.write_line(u"", 3, 5, Lcd.JUSTIFY_LEFT)
+                    self._lastWrite = u"OFF"
             elif gv.sd[u"mm"]:
                 aboutToWrite = u"IdleManualMode"
-                if self.lastWrite != aboutToWrite:
-                    self.lcd.write_line(u"Idle", 0, 3, Lcd.JUSTIFY_CENTER)
-                    self.lcd.write_line(u"", 3, 1, Lcd.JUSTIFY_LEFT)
-                    self.lcd.write_line(u"Manual", 4, 2, Lcd.JUSTIFY_CENTER)
-                    self.lcd.write_line(u"Mode", 6, 2, Lcd.JUSTIFY_CENTER)
-                    self.lastWrite = aboutToWrite
+                if self._lastWrite != aboutToWrite:
+                    self._lcd.write_line(u"Idle", 0, 3, Lcd.JUSTIFY_CENTER)
+                    self._lcd.write_line(u"", 3, 1, Lcd.JUSTIFY_LEFT)
+                    self._lcd.write_line(u"Manual", 4, 2, Lcd.JUSTIFY_CENTER)
+                    self._lcd.write_line(u"Mode", 6, 2, Lcd.JUSTIFY_CENTER)
+                    self._lastWrite = aboutToWrite
             elif gv.sd[u"rd"]:
                 aboutToWrite = u"RainDelay"
-                if self.lastWrite != aboutToWrite:
-                    self.lcd.write_line(u"Rain", 0, 2, Lcd.JUSTIFY_CENTER)
-                    self.lcd.write_line(u"", 2, 1, Lcd.JUSTIFY_LEFT)
-                    self.lcd.write_line(u"Delay", 3, 2, Lcd.JUSTIFY_CENTER)
-                    self.lcd.write_line(u"", 5, 1, Lcd.JUSTIFY_LEFT)
-                    self.lastWrite = aboutToWrite
-                    self.lastSubVal = u""
+                if self._lastWrite != aboutToWrite:
+                    self._lcd.write_line(u"Rain", 0, 2, Lcd.JUSTIFY_CENTER)
+                    self._lcd.write_line(u"", 2, 1, Lcd.JUSTIFY_LEFT)
+                    self._lcd.write_line(u"Delay", 3, 2, Lcd.JUSTIFY_CENTER)
+                    self._lcd.write_line(u"", 5, 1, Lcd.JUSTIFY_LEFT)
+                    self._lastWrite = aboutToWrite
+                    self._lastSubVal = u""
                 remainingHrs = (gv.sd[u"rdst"] - gv.now) / 60 / 60
                 aboutToWrite = str(remainingHrs)
-                if self.lastSubVal != aboutToWrite:
+                if self._lastSubVal != aboutToWrite:
                     if remainingHrs < 1:
-                        self.lcd.write_line(u"<1 hr", 6, 2, Lcd.JUSTIFY_CENTER)
+                        self._lcd.write_line(u"<1 hr", 6, 2, Lcd.JUSTIFY_CENTER)
                     elif remainingHrs == 1:
-                        self.lcd.write_line(u"1 hr", 6, 2, Lcd.JUSTIFY_CENTER)
+                        self._lcd.write_line(u"1 hr", 6, 2, Lcd.JUSTIFY_CENTER)
                     else:
-                        self.lcd.write_line(
+                        self._lcd.write_line(
                             str(remainingHrs) + u" hrs", 6, 2, Lcd.JUSTIFY_CENTER
                         )
-                    self.lastSubVal = aboutToWrite
+                    self._lastSubVal = aboutToWrite
             elif gv.sd[u"wl"] < 100:
                 waterLevel = str(gv.sd[u"wl"])
                 aboutToWrite = u"IdleWaterLevel" + waterLevel
-                if self.lastWrite != aboutToWrite:
-                    self.lcd.write_line(u"Idle", 0, 3, Lcd.JUSTIFY_CENTER)
-                    self.lcd.write_line(waterLevel + u"%", 3, 2, Lcd.JUSTIFY_CENTER)
-                    self.lcd.write_line(u"", 5, 1, Lcd.JUSTIFY_LEFT)
-                    self.lastWrite = aboutToWrite
-                    self.lastSubVal = u""
+                if self._lastWrite != aboutToWrite:
+                    self._lcd.write_line(u"Idle", 0, 3, Lcd.JUSTIFY_CENTER)
+                    self._lcd.write_line(waterLevel + u"%", 3, 2, Lcd.JUSTIFY_CENTER)
+                    self._lcd.write_line(u"", 5, 1, Lcd.JUSTIFY_LEFT)
+                    self._lastWrite = aboutToWrite
+                    self._lastSubVal = u""
                 aboutToWrite = LcdPlugin.__get_time_string()
-                if self.lastSubVal != aboutToWrite:
-                    self.lcd.write_line(aboutToWrite, 6, 2, Lcd.JUSTIFY_CENTER)
-                    self.lastSubVal = aboutToWrite
+                if self._lastSubVal != aboutToWrite:
+                    self._lcd.write_line(aboutToWrite, 6, 2, Lcd.JUSTIFY_CENTER)
+                    self._lastSubVal = aboutToWrite
             else:
-                if self.lastWrite != prg:
-                    self.lcd.write_line(prg, 0, 3, Lcd.JUSTIFY_CENTER)
-                    self.lcd.write_line(u"", 3, 3, Lcd.JUSTIFY_LEFT)
-                    self.lastWrite = prg
-                    self.lastSubVal = u""
+                if self._lastWrite != prg:
+                    self._lcd.write_line(prg, 0, 3, Lcd.JUSTIFY_CENTER)
+                    self._lcd.write_line(u"", 3, 3, Lcd.JUSTIFY_LEFT)
+                    self._lastWrite = prg
+                    self._lastSubVal = u""
                 aboutToWrite = LcdPlugin.__get_time_string()
-                if self.lastSubVal != aboutToWrite:
-                    self.lcd.write_line(aboutToWrite, 6, 2, Lcd.JUSTIFY_CENTER)
-                    self.lastSubVal = aboutToWrite
+                if self._lastSubVal != aboutToWrite:
+                    self._lcd.write_line(aboutToWrite, 6, 2, Lcd.JUSTIFY_CENTER)
+                    self._lastSubVal = aboutToWrite
 
     def __display_alarm(self):
-        self.lcd.write_line(u"ALARM!", 0, 3, Lcd.JUSTIFY_CENTER)
-        self.lcd.write_line(u"", 3, 1, Lcd.JUSTIFY_LEFT)
-        self.lcd.write_line(self.alarmText, 4, 2, Lcd.JUSTIFY_CENTER)
-        self.lcd.write_line(u"", 6, 2, Lcd.JUSTIFY_LEFT)
-        self.lastWrite = u""
+        self._lcd.write_line(u"ALARM!", 0, 3, Lcd.JUSTIFY_CENTER)
+        self._lcd.write_line(u"", 3, 1, Lcd.JUSTIFY_LEFT)
+        self._lcd.write_line(self._alarmText, 4, 2, Lcd.JUSTIFY_CENTER)
+        self._lcd.write_line(u"", 6, 2, Lcd.JUSTIFY_LEFT)
+        self._lastWrite = u""
 
     def alarm(self, name, **kw):
-        self.alarmText = kw[u"txt"]
-        self.alarmSignaled = True
+        self._alarmText = kw[u"txt"]
+        self._alarmSignaled = True
 
     def run(self):
         sleep(5)
-        print(u"LCD plugin is active")
+        print(u"ssd1306 plugin is active")
         while True:
-            if self.alarmSignaled:
+            if self._alarmSignaled:
                 self.__display_alarm()
                 sleep(20)
-                self.alarmText = u""
-                self.alarmSignaled = False
+                self._alarmText = u""
+                self._alarmSignaled = False
             else:
                 self.__display_normal()
-            sleep(1)
+                sleep(1)
+
+    ### Restart ###
+    # Restart signal needs to be handled in 1 second or less
+    def notify_restart(self, name, **kw):
+        print(u"ssd1306 plugin received restart signal; turning off LCD...")
+        self._lcd.set_power(on=False)
+        print(u"ssd1306 LCD has been shut off")
 
 
 # Start LCD
@@ -756,6 +780,10 @@ if lcd_plugin.initialize():
     lcd_plugin.start()
     alarm = signal(u"alarm_toggled")
     alarm.connect(lcd_plugin.alarm)
+
+# Attach to restart signal
+restart = signal(u"restart")
+restart.connect(lcd_plugin.notify_restart)
 
 
 ################################################################################

@@ -59,6 +59,8 @@ class Lcd:
     JUSTIFY_RIGHT = 1
     JUSTIFY_CENTER = 2
     # Offset of 0x20, up to 0x7F
+    LCD_ASCII_BEGIN = 0x20
+    LCD_ASCII_MAX = 0x7F
     lcd_ascii = [
         [0x00, 0x00, 0x00, 0x00, 0x00],  # (space)
         [0x00, 0x00, 0x5F, 0x00, 0x00],  # !
@@ -277,7 +279,7 @@ class Lcd:
         self.clear()
         # Turn on OLED panel
         self.lcd_control(0xAF)
-        print(u"Done")
+        print(u"Done (LCD initialize)")
         return
 
     def lcd_set_print_area_max(self):
@@ -289,21 +291,16 @@ class Lcd:
     def clear(self):
         # set print area to max in order to clear the entire screen
         self.lcd_set_print_area_max()
-        # print "Clearing screen..."
         # set all pixels to 0
-        dat = []
-        for i in range(0, 32):
-            dat.append(0x00)
-        for i in range(0, 32):
-            self.lcd_execute_data_sequence(dat)
-        # print "Done"
+        for _ in range(0, 32):
+            self.lcd_execute_data_sequence([0] * 32)
         return
 
     def lcd_set_print_area(self, min_col, max_col, min_row, max_row):
         """Sets the print area of the screen with max of: (0x00, 0x7F, 0x00, 0x07)"""
-        if min_col < 0 or max_col > 0x7F or max_col < min_col:
+        if min_col < 0 or max_col > Lcd.MAXIMUM_COLUMN or max_col < min_col:
             return 0
-        elif min_row < 0 or max_row > 0x07 or max_row < min_row:
+        elif min_row < 0 or max_row > Lcd.MAXIMUM_ROW or max_row < min_row:
             return 0
         seq = []
         seq.append(0x21)
@@ -323,7 +320,7 @@ class Lcd:
 
     @staticmethod
     def __bitShitftRightByteList(lst, num=1):
-        for i in range(num):
+        for _ in range(num):
             addToNext = False
             for j in range(len(lst)):
                 addToCurrent = addToNext
@@ -336,21 +333,21 @@ class Lcd:
     def _generate_char_sequence(self, char, text_size_multiplier=1):
         chv = ord(char)
         seq = []
-        if chv >= 0x20 and chv <= 0x7F:
-            seq = list(self.lcd_ascii[chv - 0x20])
+        if chv >= Lcd.LCD_ASCII_BEGIN and chv <= Lcd.LCD_ASCII_MAX:
+            seq = list(Lcd.lcd_ascii[chv - Lcd.LCD_ASCII_BEGIN])
         else:  # unknown
-            seq = list(char_other)
+            seq = list(Lcd.char_other)
 
         seq.append(0x00)
 
         mask = 0x80
         colMask = [0] * text_size_multiplier
         retSeq = []
-        for i in range(text_size_multiplier):
+        for _ in range(text_size_multiplier):
             colMask[0] = colMask[0] >> 1
             colMask[0] = colMask[0] | 0x80
             retSeq.append([0] * (len(seq) * text_size_multiplier))
-        for i in range(8):
+        for _ in range(8):
             for j in range(len(seq)):
                 v = seq[j]
                 if v & mask:
@@ -437,6 +434,14 @@ class Lcd:
         return printedCount
 
     def write_line(self, str, row_start, text_size_multiplier=1, justification=0):
+        """
+        Writes a horizontal line of text to the LCD.
+        Inputs: str - The ASCII string to print
+                row_start - The vertical position to write to (0-based, from top)
+                text_size_multiplier - Scaling for text (how many rows to occupy)
+                justification - One of the Lcd.JUSTIFY_* values (LEFT, RIGHT, or CENTER)
+        Returns 1 if successful, 0 if invalid arguments given
+        """
         if row_start < Lcd.MINIMUM_ROW or row_start > Lcd.MAXIMUM_ROW:
             return 0
         if len(str) <= 0:

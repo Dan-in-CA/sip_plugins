@@ -20,7 +20,7 @@ import sys
 from time import sleep
 
 # threads
-from threading import Thread, Lock, Condition
+from threading import Thread, Lock
 
 # get open sprinkler signals
 from blinker import signal
@@ -45,6 +45,9 @@ import smbus
 # gv.plugin_menu.append(['SSD1306 Plugin', '/ssd1306-sp'])
 
 class Lcd:
+    """
+    LCD control class for SSD1306 I2C LCD
+    """
     # LCD control and data byte values
     CONTROL_BYTE = 0x00
     DATA_BYTE = 0x40
@@ -198,8 +201,11 @@ class Lcd:
         self._write_failure = False
         return
 
-    def lcd_increment_current(self, x):
-        "Increments the current column/row values based on number of data values written"
+    def _lcd_increment_current(self, x):
+        """
+        Increments the current column/row values based on number of data values written
+        Inputs: x - Number of columns to increment (to the right then down)
+        """
         columns = self._gmax_col - self._gmin_col + 1
         rows = self._gmax_row - self._gmin_row + 1
         self._current_col += x
@@ -207,58 +213,85 @@ class Lcd:
             ((self._current_col // columns) + self._current_row) % rows
         ) + self._gmin_row
         self._current_col = (self._current_col % columns) + self._gmin_col
-        return
 
-    def lcd_control(self, byte):
-        "Writes a single control byte"
+    def _write_control_byte(self, byte):
+        """
+        Writes a single control byte to the SSD1306 display
+        Inputs: byte - The control byte to write
+        Returns: True if successfully written; False if an exception occurred
+        """
         try:
-            return self._bus.write_byte_data(self._hw_write_addr, Lcd.CONTROL_BYTE, byte)
+            self._bus.write_byte_data(self._hw_write_addr, Lcd.CONTROL_BYTE, byte)
+            return True
         except:
             if not self._write_failure:
                 print(u"Failed to write control byte. Is the hardware connected?")
                 self._write_failure = True
-            return -1
+            return False
 
-    def lcd_data(self, byte):
-        "Writes a single data byte"
-        self.lcd_increment_current(1)
+    def _write_data_byte(self, byte):
+        """
+        Writes a single data byte to the SSD1306 display
+        Inputs: byte - The data byte to write
+        Returns: True if successfully written; False if an exception occurred
+        """
+        self._lcd_increment_current(1)
         try:
-            return self._bus.write_byte_data(self._hw_write_addr, Lcd.DATA_BYTE, byte)
+            self._bus.write_byte_data(self._hw_write_addr, Lcd.DATA_BYTE, byte)
+            return True
         except:
             if not self._write_failure:
                 print(u"Failed to write data byte. Is the hardware connected?")
                 self._write_failure = True
-            return -1
+            return False
 
-    def lcd_execute_sequence(self, cmd, sequence):
-        "Executes a sequence 32 bytes at a time with a given command"
+    def _write_sequence(self, cmd, sequence):
+        """
+        Writes a given sequence to the SSD1306 display. Sequence is written 32 bytes at a time.
+        Inputs: cmd - Command byte
+                sequence - List of bytes to write
+        Returns: True if successfully written; False if an exception occurred
+        """
+        status = False
         # write_i2c_block_data() can execute a max of 32 bytes at a time
         n = 32
         for chunk in [sequence[i:i + n] for i in range(0, len(sequence), n)]:
             try:
                 # execute this chunk
                 self._bus.write_i2c_block_data(self._hw_write_addr, cmd, chunk)
+                status = True
             except Exception as e:
                 if not self._write_failure:
                     print(u"ssd1306 Failed to execute sequence. Is the hardware connected?:\n{}"\
                         .format(e))
                     self._write_failure = True
+        # If this was a data byte, then we need to update the display pointers by the number of
+        # bytes given because they would have been incremented by the SSD1306
         if cmd == Lcd.DATA_BYTE:
-            self.lcd_increment_current(len(sequence))
-        return
+            self._lcd_increment_current(len(sequence))
+        return status
 
-    def lcd_execute_control_sequence(self, sequence):
-        "Executes a control byte sequence"
-        self.lcd_execute_sequence(Lcd.CONTROL_BYTE, sequence)
-        return
+    def _write_control_sequence(self, sequence):
+        """
+        Executes a control byte sequence
+        Inputs: sequence - List of control bytes to write
+        Returns: True if successfully written; False if an exception occurred
+        """
+        return self._write_sequence(Lcd.CONTROL_BYTE, sequence)
 
-    def lcd_execute_data_sequence(self, sequence):
-        "Executes a data byte sequence"
-        self.lcd_execute_sequence(Lcd.DATA_BYTE, sequence)
-        return
+    def _write_data_sequence(self, sequence):
+        """
+        Executes a data byte sequence
+        Inputs: sequence - List of data bytes to write
+        Returns: True if successfully written; False if an exception occurred
+        """
+        return self._write_sequence(Lcd.DATA_BYTE, sequence)
 
-    def initialize(self):
-        "Initializes the LCD for this interface - call right after instantiation to initialize and clear display"
+    def write_initialization_sequence(self):
+        """
+        Initializes the LCD for this interface - call right after instantiation to initialize and
+        clear display
+        """
         print(u"LCD initialize...")
         # initialization sequence
         init_sequence = [
@@ -288,37 +321,57 @@ class Lcd:
             0x00,
             0xC8,  # Remapped mode. Scan from ComN-1 to Com0
         ]
-        self.lcd_execute_control_sequence(init_sequence)
+        self._write_control_sequence(init_sequence)
         # Clear out the buffer and synchronize with hardware
         self.clear()
         # Turn on OLED panel
         self.set_power(on=True)
         print(u"Done (LCD initialize)")
-        return
 
     def set_power(self, on):
-        self.lcd_control(Lcd.LCD_CONTROL_PWR_ON if on else Lcd.LCD_CONTROL_PWR_OFF)
+        """
+        Turns the display on or off
+        Inputs: on - True to turn on; False to turn off
+        Returns: True if successfully written; False if an exception occurred
+        """
+        return self._write_control_byte(Lcd.LCD_CONTROL_PWR_ON if on else Lcd.LCD_CONTROL_PWR_OFF)
 
-    def lcd_set_print_area_max(self):
-        "Sets the printable area to max screen"
-        return self.lcd_set_print_area(
+    def clear(self):
+        """
+        Clear all contents of the display
+        Returns: True if successfully written; False if an exception occurred
+        """
+        status = True
+        # set print area to max in order to clear the entire screen
+        self._lcd_set_print_area_max()
+        # set all pixels to 0
+        for _ in range(0, 32):
+            if not self._write_data_sequence([0] * 32):
+                status = False
+        return status
+
+    def _lcd_set_print_area_max(self):
+        """
+        Sets the printable area to max screen
+        Returns: True if successfully set; False if an exception occurred
+        """
+        return self._lcd_set_print_area(
             self._min_col_addr, self._max_col_addr, self._min_row_addr, self._max_row_addr
         )
 
-    def clear(self):
-        # set print area to max in order to clear the entire screen
-        self.lcd_set_print_area_max()
-        # set all pixels to 0
-        for _ in range(0, 32):
-            self.lcd_execute_data_sequence([0] * 32)
-        return
-
-    def lcd_set_print_area(self, min_col, max_col, min_row, max_row):
-        """Sets the print area of the screen with max of: (0x00, 0x7F, 0x00, 0x07)"""
+    def _lcd_set_print_area(self, min_col, max_col, min_row, max_row):
+        """
+        Sets the print area of the screen with max of: (0x00, 0x7F, 0x00, 0x07)
+        Inputs: min_col - minimum column (pixel)
+                max_col - maximum column (pixel)
+                min_row - minimum row (set of 8 pixels)
+                max_row - maximum row (set of 8 pixels)
+        Returns: True if successfully set; False if an exception occurred
+        """
         if min_col < 0 or max_col > self._max_col_addr or max_col < min_col:
-            return 0
+            return False
         elif min_row < 0 or max_row > self._max_row_addr or max_row < min_row:
-            return 0
+            return False
         seq = []
         seq.append(0x21)
         seq.append(min_col)
@@ -326,28 +379,49 @@ class Lcd:
         seq.append(0x22)
         seq.append(min_row)
         seq.append(max_row)
-        self.lcd_execute_control_sequence(seq)
+        status = self._write_control_sequence(seq)
         self._gmin_col = min_col
         self._gmax_col = max_col
         self._gmin_row = min_row
         self._gmax_row = max_row
         self._current_col = min_col
         self._current_row = min_row
-        return 1
+        return status
 
     @staticmethod
-    def __bitShitftRightByteList(lst, num=1):
-        for _ in range(num):
-            addToNext = False
-            for j in range(len(lst)):
-                addToCurrent = addToNext
-                addToNext = (lst[j] & 0x01) > 0
-                lst[j] = lst[j] >> 1
-                if addToCurrent:
-                    lst[j] = lst[j] | 0x80
+    def _bit_shift_right_byte_list(lst, num):
+        """
+        Bit shifts right all bytes in the given list
+        Inputs: lst - List of bytes
+                num - Number of bits to shift right
+        Returns: The transformed list
+        """
+        if sys.version_info.major >= 3: # Python3 version of this
+            original_length = len(lst)
+            # Convert the list to integer in big-endian order
+            list_value = int.from_bytes(bytes(lst), byteorder='big')
+            # Do the bit shifting
+            list_value >>= num
+            # Convert the integer back to a list
+            lst = list(int(list_value).to_bytes(length=original_length, byteorder='big'))
+        else: # Python2 version of this; this will take about 3 to 4 times longer to process
+            original_length = len(lst)
+            # Convert the list to integer in big-endian order
+            list_value = int(''.join(format(val, '02x') for val in lst), 16)
+            # Do the bit shifting
+            list_value >>= num
+            # Convert the integer back to a list
+            list_string = format(list_value, '0' + str(original_length * 2) + 'x')
+            lst = [int(list_string[x:x+2], 16) for x in range(0, original_length * 2, 2)]
         return lst
 
-    def _generate_char_sequence(self, char, text_size_multiplier=1):
+    def _generate_char_sequence(self, char, text_size_multiplier):
+        """
+        Resizes a single character into the rows needed to print
+        Inputs: char - The ascii character to print
+                text_size_multiplier - integer size to size the character to [1,8]
+        Returns: A list of lists, defining what bits to write to each row
+        """
         chv = ord(char)
         seq = []
         if chv >= Lcd.LCD_ASCII_BEGIN and chv <= Lcd.LCD_ASCII_MAX:
@@ -355,37 +429,43 @@ class Lcd:
         else:  # unknown
             seq = list(Lcd.char_other)
 
-        seq.append(0x00)
+        seq.append(0x00) # 1 vertical line of space before next char
 
         mask = 0x80
-        colMask = [0] * text_size_multiplier
-        retSeq = []
+        col_mask = [0] * text_size_multiplier
+        ret_seq = []
         for _ in range(text_size_multiplier):
-            colMask[0] = colMask[0] >> 1
-            colMask[0] = colMask[0] | 0x80
-            retSeq.append([0] * (len(seq) * text_size_multiplier))
+            col_mask[0] = col_mask[0] >> 1
+            col_mask[0] = col_mask[0] | 0x80
+            ret_seq.append([0] * (len(seq) * text_size_multiplier))
         for _ in range(8):
             for j in range(len(seq)):
                 v = seq[j]
                 if v & mask:
                     for k in range(text_size_multiplier):
                         for l in range(text_size_multiplier):
-                            retSeq[text_size_multiplier - k - 1][
+                            ret_seq[text_size_multiplier - k - 1][
                                 (j * text_size_multiplier + l)
                             ] = (
-                                retSeq[text_size_multiplier - k - 1][
+                                ret_seq[text_size_multiplier - k - 1][
                                     (j * text_size_multiplier + l)
                                 ]
-                                | colMask[k]
+                                | col_mask[k]
                             )
-            colMask = Lcd.__bitShitftRightByteList(colMask, text_size_multiplier)
+            col_mask = Lcd._bit_shift_right_byte_list(col_mask, text_size_multiplier)
             mask = mask >> 1
 
-        return retSeq
+        return ret_seq
 
-    def write_block(
-        self, str, row_start, min_text_size, max_text_size, justification=0
-    ):
+    def write_block(self, str, row_start, min_text_size, max_text_size, justification=0):
+        """
+        Writes text to the LCD, autoformatting within the space specified
+        Inputs: str - The string to write
+                row_start - The starting row to print this
+                min_text_size - The minimum size (scale) for this text (int)
+                max_text_size - The maximum size (scale) for this text (int)
+                justification - One of the Lcd.JUSTIFY_* values (LEFT, RIGHT, or CENTER)
+        """
         if min_text_size > max_text_size or min_text_size <= 0 or max_text_size <= 0:
             return 0
         maxWidth = self._max_col_addr - self._min_col_addr + 1
@@ -396,7 +476,7 @@ class Lcd:
         totalSize = numberOfSpaces * 6
         for i in range(len(words)):
             currentSize = 0
-            for j in range(len(words[i])):
+            for _ in range(len(words[i])):
                 currentSize += 6
             wordSizes[i] = currentSize
             totalSize += currentSize
@@ -475,7 +555,7 @@ class Lcd:
         row_end = row_start + text_size_multiplier - 1
         if row_end > self._max_row_addr:
             row_end = self._max_row_addr
-        self.lcd_set_print_area(
+        self._lcd_set_print_area(
             self._min_col_addr, self._max_col_addr, row_start, row_end
         )
 
@@ -519,11 +599,14 @@ class Lcd:
                     # Left justification by default
                     del seq[i][-columnsToRemove:]
         for i in range(len(seq)):
-            self.lcd_execute_data_sequence(seq[i])
+            self._write_data_sequence(seq[i])
         return 1
 
 
 class LcdPlugin(Thread):
+    """
+    LCD Plugin which integrates into SIP
+    """
     def __init__(self):
         Thread.__init__(self)
         self._daemon = True
@@ -532,27 +615,38 @@ class LcdPlugin(Thread):
         self._lastWrite = u""
         self._lastSubVal = u""
         self._lcd = Lcd()
-        self.__set_default_settings()
+        self._set_default_settings()
 
     def initialize(self):
-        self._lcd.initialize()
-        self._lcd.clear()
+        """
+        Initializes this plugin
+        """
+        self._lcd.write_initialization_sequence()
         return True
 
-    def __set_default_settings(self):
+    def _set_default_settings(self):
+        """
+        Sets the json settings to their defaults
+        """
         # Nothing yet
         # self.sample_key = 0
         return
 
     def load_from_dict(self, settings):
-        self.__set_default_settings()
+        """
+        Loads settings from a given dictionary
+        """
+        self._set_default_settings()
         if settings is None:
             return
         # if settings.has_key("sample_key"):
         #    self.sample_key = settings["sample_key"]
         return
 
-    def load_settings(self):
+    def _load_settings(self):
+        """
+        Loads settings from the settings json file for this plugin
+        """
         # Get settings
         # try:
         #    with open('./data/ssd1306.json', 'r') as f:
@@ -562,6 +656,9 @@ class LcdPlugin(Thread):
         return
 
     def save_settings(self):
+        """
+        Saves these settings to the json file for this plugin
+        """
         # settings = {
         #    "sample_key": self.sample_key,
         # }
@@ -570,7 +667,10 @@ class LcdPlugin(Thread):
         return
 
     @staticmethod
-    def __get_time_string():
+    def _get_time_string():
+        """
+        Returns the current time as a string
+        """
         timeStr = u""
         nowt = gv.nowt
         timeHours = nowt.tm_hour
@@ -592,7 +692,10 @@ class LcdPlugin(Thread):
         timeStr = hrString + ":" + minString + ampmString
         return timeStr
 
-    def __display_normal(self):
+    def _display_normal(self):
+        """
+        Refreshes the display for "normal" operation which displays some of the current state
+        """
         if gv.pon is None:
             prg = u"Idle"
         elif gv.pon == 98:  # something is running
@@ -727,7 +830,7 @@ class LcdPlugin(Thread):
                     self._lcd.write_line(u"", 5, 1, Lcd.JUSTIFY_LEFT)
                     self._lastWrite = aboutToWrite
                     self._lastSubVal = u""
-                aboutToWrite = LcdPlugin.__get_time_string()
+                aboutToWrite = LcdPlugin._get_time_string()
                 if self._lastSubVal != aboutToWrite:
                     self._lcd.write_line(aboutToWrite, 6, 2, Lcd.JUSTIFY_CENTER)
                     self._lastSubVal = aboutToWrite
@@ -737,12 +840,15 @@ class LcdPlugin(Thread):
                     self._lcd.write_line(u"", 3, 3, Lcd.JUSTIFY_LEFT)
                     self._lastWrite = prg
                     self._lastSubVal = u""
-                aboutToWrite = LcdPlugin.__get_time_string()
+                aboutToWrite = LcdPlugin._get_time_string()
                 if self._lastSubVal != aboutToWrite:
                     self._lcd.write_line(aboutToWrite, 6, 2, Lcd.JUSTIFY_CENTER)
                     self._lastSubVal = aboutToWrite
 
-    def __display_alarm(self):
+    def _display_alarm(self):
+        """
+        Displays an alarm message
+        """
         self._lcd.write_line(u"ALARM!", 0, 3, Lcd.JUSTIFY_CENTER)
         self._lcd.write_line(u"", 3, 1, Lcd.JUSTIFY_LEFT)
         self._lcd.write_line(self._alarmText, 4, 2, Lcd.JUSTIFY_CENTER)
@@ -750,25 +856,34 @@ class LcdPlugin(Thread):
         self._lastWrite = u""
 
     def alarm(self, name, **kw):
+        """
+        Alarm handler
+        """
         self._alarmText = kw[u"txt"]
         self._alarmSignaled = True
 
     def run(self):
+        """
+        Main execution method which is run by SIP's plugin system
+        """
         sleep(5)
         print(u"ssd1306 plugin is active")
         while True:
             if self._alarmSignaled:
-                self.__display_alarm()
+                self._display_alarm()
                 sleep(20)
                 self._alarmText = u""
                 self._alarmSignaled = False
             else:
-                self.__display_normal()
+                self._display_normal()
                 sleep(1)
 
     ### Restart ###
     # Restart signal needs to be handled in 1 second or less
     def notify_restart(self, name, **kw):
+        """
+        Restart handler
+        """
         print(u"ssd1306 plugin received restart signal; turning off LCD...")
         self._lcd.set_power(on=False)
         print(u"ssd1306 LCD has been shut off")

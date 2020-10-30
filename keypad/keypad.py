@@ -822,15 +822,16 @@ class KeypadPlugin:
         return self.running
 
     def stop(self):
-        stopped = False
+        """
+        Stops the keypad thread
+        Returns True if successfully stopped; False otherwise
+        """
         if self.running_thread is not None:
             self.running = False
             self.running_thread.join(0.5)
             if not self.running_thread.is_alive():
                 self.running_thread = None
-        else:
-            stopped = True
-        return stopped
+        return (self.running_thread is None)
 
     @staticmethod
     def __button_list_to_string(l):

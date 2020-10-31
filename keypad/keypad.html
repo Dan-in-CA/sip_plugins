@@ -2,7 +2,7 @@ $def with(settings)
 <!-- Edit: Replace "proto_vals" with settings values for your plugin if used-->
 
 $var title: $_('SIP Keypad Plugin')
-$var page: keypad_plugin 
+$var page: keypad_plugin
 <script>
     // Initialize behaviors
     jQuery(document).ready(function(){
@@ -12,14 +12,14 @@ $var page: keypad_plugin
                 this.value = newValue;
             }
         });
-        
+
         jQuery(".listonly").keyup(function () {
             var newValue = this.value.replace(/[^0-9,\ ,\,]/g, '');
             if (this.value != newValue) {
                 this.value = newValue;
             }
         });
-        
+
         jQuery("#cSubmit").click(function() {
             jQuery("#pluginForm").submit();
         });
@@ -35,7 +35,7 @@ $var page: keypad_plugin
 <style>
 tr.padBottom > td
 {
-  padding-bottom: 10px; <!--or padding-top -->
+  padding-bottom: 10px;
 }
 input{ width: 100%; }
 select{ width: 100%; }
@@ -94,7 +94,7 @@ select{ width: 100%; }
                 </td>
             </tr>
         </table>
-        
+
         <br>
         <p>$_('Function Keys')</p>
         <p>$_('(e.g. if A is set to Start Manual Station, entering A12# on the keypad will start station 12)')</p>
@@ -234,7 +234,7 @@ select{ width: 100%; }
                 </td>
             </tr>
         </table>
-        
+
         <br>
         <p>$_('Feedback Beeps (on time, off time, on time, ...)')</p>
         <table class="optionList">
@@ -269,7 +269,7 @@ select{ width: 100%; }
                 <td><input class="listonly" type="text" name="cancel_beep" value="${settings['cancel_beep'] if 'cancel_beep' in settings else '100, 100, 500' }"></td>
             </tr>
         </table>
-        
+
         <br>
     </form>
 

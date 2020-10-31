@@ -191,25 +191,34 @@ class Buzzer(Thread):
                     GPIO.output(self.pin, pin_value)
             except Exception as e:
                 self.pin_initialized = False
-                print(u"Buzzer failed:\n{}".format(e))
+                print(u"Buzzer plugin: set failed:\n{}".format(e))
                 return False
 
-    def _buzzer_on(self):
+    def _execute_buzz(self, time_list):
         """
-        Sets the buzzer pin to ON
+        Execute buzzer sequence (blocking)
+        Inputs: time_list - Time values in seconds in the format [on time, off time, on time, ...]
         """
-        self._set_buzzer_pin(is_on=True, force=False)
-
-    def _buzzer_off(self, force=False):
-        """
-        Sets the buzzer pint to OFF
-        Inputs: force - True to force OFF, even when not running
-        """
-        self._set_buzzer_pin(is_on=False, force=force)
+        # First value is buzzer on
+        buzz_on = True
+        # Loop through each time in list
+        for v in time_list:
+            if not self._running:
+                break
+            # If this value is on time, turn on the buzzer
+            if buzz_on and v > 0:
+                self._set_buzzer_pin(True)
+            # Suspend for the given time
+            if v > 0:
+                sleep(v)
+            # Always shut off buzzer before next iteration
+            self._set_buzzer_pin(False)
+            # Invert
+            buzz_on = not buzz_on
 
     def buzz(self, time=0.010):
         """
-        Activate the buzzer for the given time (non blocking)
+        Activate the buzzer for the given time (non-blocking)
         Inputs: time - Time value(s) in seconds
                 If single value, on time for buzzer
                 If array, time values in the format [on time, off time, on time, ...]
@@ -222,20 +231,8 @@ class Buzzer(Thread):
                 time_list = time
             else:
                 time_list.append(time)
-            # Generate a list of timers to call buzzer_on or buzzer_off after each time has
-            # elapsed
-            accumulated_time = 0
-            timer_list = []
-            is_on = False
-            for t in time_list:
-                accumulated_time += t
-                timer_list.append(Timer(accumulated_time,
-                                        self._buzzer_on if is_on else self._buzzer_off))
-                is_on = not is_on
-            # Turn the buzzer on then start each timer
-            self._buzzer_on()
-            for timer in timer_list:
-                timer.start()
+            # Spin off an execute thread so this call is non-blocking
+            Thread(target=self._execute_buzz, kwargs={'time_list':time_list}).start()
         return True
 
     def _wait_for_ready(self):
@@ -250,17 +247,17 @@ class Buzzer(Thread):
         # Wait for buzzer to be ready
         while not self.is_ready() and retry < MAX_INIT_RETRY:
             if retry == 0:
-                print(u"buzzer not ready yet")
-            print(u"Attempting to reinitialize buzzer plugin...")
+                print(u"Buzzer plugin: Waiting for buzzer hardware to be ready")
+            print(u"Buzzer plugin: Attempting to reinitialize buzzer plugin...")
             # sleep for a moment and try to reinit
             sleep(1)
             if self._init_pins():
-                print(u"Done")
+                print(u"Buzzer plugin: Done")
             else:
-                print(u"Failed")
+                print(u"Buzzer plugin: Failed")
             retry += 1
         if retry >= MAX_INIT_RETRY:
-            print(u"Buzzer failure")
+            print(u"Buzzer plugin: Hardware failure")
             return False
         return True
 
@@ -272,9 +269,6 @@ class Buzzer(Thread):
         self._load_settings()
         # Wait for hardware init
         self._wait_for_ready()
-        # Wait a bit because things are still loading and the startup beep can sound choppy if
-        # too much is happening
-        sleep(5)
         # Ring startup beep
         self.buzz(self.startup_beep)
 
@@ -289,7 +283,7 @@ class Buzzer(Thread):
     def notify_restart(self, name, **kw):
         # Make sure whatever timers running don't turn the buzzer on as we are restarting
         self._running = False
-        self._buzzer_off(force=True)
+        self._set_buzzer_pin(is_on=False, force=True)
 
 
 # Our main Buzzer object for this module

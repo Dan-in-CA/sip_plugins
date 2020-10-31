@@ -181,6 +181,8 @@ class Lcd:
         self._hw_write_addr = i2c_hw_addr >> 1
         # i2c bus
         self._bus = smbus.SMBus(i2c_bus_number)
+        # Lock needed for any write operations
+        self._write_lock = Lock()
         # defined minimum and maximum LCD addresses
         self._min_col_addr = 0
         self._max_col_addr = screen_pixel_width - 1
@@ -198,7 +200,18 @@ class Lcd:
         self._current_row = self._min_row_addr
         # write failure flag
         self._write_failure = False
+        # The current power state (True for on; False for off)
+        self._power_state = False
+        # Allow external interface to disable me
+        self._enabled = True
         return
+
+    def disable(self):
+        """
+        Disables any further writing to hardware and powers off display
+        """
+        self._enabled = False
+        self._force_power_off()
 
     def _lcd_increment_current(self, x):
         """
@@ -213,20 +226,29 @@ class Lcd:
         ) + self._gmin_row
         self._current_col = (self._current_col % columns) + self._gmin_col
 
-    def _write_control_byte(self, byte):
+    def _write_control_byte(self, byte, force=False):
         """
         Writes a single control byte to the SSD1306 display
         Inputs: byte - The control byte to write
+                force - Set to true to ignore my disabled flag
         Returns: True if successfully written; False if an exception occurred
         """
+        status = False
+        self._write_lock.acquire()
         try:
-            self._bus.write_byte_data(self._hw_write_addr, Lcd.CONTROL_BYTE, byte)
-            return True
-        except:
-            if not self._write_failure:
-                print(u"Failed to write control byte. Is the hardware connected?")
-                self._write_failure = True
-            return False
+            if self._enabled or force:
+                try:
+                    self._bus.write_byte_data(self._hw_write_addr, Lcd.CONTROL_BYTE, byte)
+                    status = True
+                except Exception as e:
+                    if not self._write_failure:
+                        print(u"SSD1306 plugin: Failed to write control byte. " +
+                                u"Is the hardware connected and the right address selected?" + \
+                                u":\n{}".format(e))
+                        self._write_failure = True
+        finally:
+            self._write_lock.release()
+        return status
 
     def _write_data_byte(self, byte):
         """
@@ -234,15 +256,23 @@ class Lcd:
         Inputs: byte - The data byte to write
         Returns: True if successfully written; False if an exception occurred
         """
-        self._lcd_increment_current(1)
+        status = False
+        self._write_lock.acquire()
         try:
-            self._bus.write_byte_data(self._hw_write_addr, Lcd.DATA_BYTE, byte)
-            return True
-        except:
-            if not self._write_failure:
-                print(u"Failed to write data byte. Is the hardware connected?")
-                self._write_failure = True
-            return False
+            if self._enabled:
+                try:
+                    self._bus.write_byte_data(self._hw_write_addr, Lcd.DATA_BYTE, byte)
+                    self._lcd_increment_current(1)
+                    status = True
+                except Exception as e:
+                    if not self._write_failure:
+                        print(u"SSD1306 plugin: Failed to write data byte. " +
+                                u"Is the hardware connected and the right address selected?" + \
+                                u":\n{}".format(e))
+                        self._write_failure = True
+        finally:
+            self._write_lock.release()
+        return status
 
     def _write_sequence(self, cmd, sequence):
         """
@@ -252,22 +282,29 @@ class Lcd:
         Returns: True if successfully written; False if an exception occurred
         """
         status = False
-        # write_i2c_block_data() can execute a max of 32 bytes at a time
-        n = 32
-        for chunk in [sequence[i:i + n] for i in range(0, len(sequence), n)]:
-            try:
-                # execute this chunk
-                self._bus.write_i2c_block_data(self._hw_write_addr, cmd, chunk)
-                status = True
-            except Exception as e:
-                if not self._write_failure:
-                    print(u"ssd1306 Failed to execute sequence. Is the hardware connected?:\n{}"\
-                        .format(e))
-                    self._write_failure = True
-        # If this was a data byte, then we need to update the display pointers by the number of
-        # bytes given because they would have been incremented by the SSD1306
-        if cmd == Lcd.DATA_BYTE:
-            self._lcd_increment_current(len(sequence))
+        self._write_lock.acquire()
+        try:
+            if self._enabled:
+                # write_i2c_block_data() can execute a max of 32 bytes at a time
+                n = 32
+                for chunk in [sequence[i:i + n] for i in range(0, len(sequence), n)]:
+                    try:
+                        # execute this chunk
+                        self._bus.write_i2c_block_data(self._hw_write_addr, cmd, chunk)
+                        # If this was a data byte, then we need to update the display pointers by
+                        # the number of bytes given because they would have been incremented by the
+                        # SSD1306
+                        if cmd == Lcd.DATA_BYTE:
+                            self._lcd_increment_current(len(sequence))
+                        status = True
+                    except Exception as e:
+                        if not self._write_failure:
+                            print(u"SSD1306 plugin: Failed to execute sequence. " +
+                                u"Is the hardware connected and the right address selected?" + \
+                                u":\n{}".format(e))
+                            self._write_failure = True
+        finally:
+            self._write_lock.release()
         return status
 
     def _write_control_sequence(self, sequence):
@@ -291,7 +328,7 @@ class Lcd:
         Initializes the LCD for this interface - call right after instantiation to initialize and
         clear display
         """
-        print(u"LCD initialize...")
+        print(u"SSD1306 plugin: LCD initialize...")
         # initialization sequence
         init_sequence = [
             Lcd.LCD_CONTROL_PWR_OFF,  # turn off oled panel
@@ -325,7 +362,13 @@ class Lcd:
         self.clear()
         # Turn on OLED panel
         self.set_power(on=True)
-        print(u"Done (LCD initialize)")
+        print(u"SSD1306 plugin: Done (LCD initialize)")
+
+    def is_powered(self):
+        """
+        Returns the current power state
+        """
+        return self._power_state
 
     def set_power(self, on):
         """
@@ -333,7 +376,19 @@ class Lcd:
         Inputs: on - True to turn on; False to turn off
         Returns: True if successfully written; False if an exception occurred
         """
-        return self._write_control_byte(Lcd.LCD_CONTROL_PWR_ON if on else Lcd.LCD_CONTROL_PWR_OFF)
+        status = self._write_control_byte(Lcd.LCD_CONTROL_PWR_ON if on else Lcd.LCD_CONTROL_PWR_OFF)
+        if status:
+            self._power_state = on
+        return status
+
+    def _force_power_off(self):
+        """
+        Force the power off, even if disabled
+        """
+        status = self._write_control_byte(Lcd.LCD_CONTROL_PWR_OFF, force=True)
+        if status:
+            self._power_state = False
+        return status
 
     def clear(self):
         """
@@ -610,6 +665,7 @@ class LcdPlugin(Thread):
         self._daemon = True
         self._reset_lcd_state()
         self._lcd = None
+        self._running = True
         self._set_default_settings()
 
     def _reset_lcd_state(self):
@@ -704,14 +760,18 @@ class LcdPlugin(Thread):
         timeStr = hrString + ":" + minString + ampmString
         return timeStr
 
-    def _idle_type_changed(self):
-        self._lcd.set_power(on=True)
+    def _wake_display(self):
+        """
+        Resets idle entry time and wakes the display if we had previously idled
+        """
         self._idle_entry_time = time.time()
-        self._idled = False
+        if self._idled:
+            self._lcd.set_power(on=True)
+            self._idled = False
 
-    def _idle_exit(self):
-        self._lcd.set_power(on=True)
-        self._idle_entry_time = None
+    def _display_idled(self):
+        self._idled = True
+        self._lcd.set_power(on=False)
 
     def _display_normal(self):
         """
@@ -729,8 +789,7 @@ class LcdPlugin(Thread):
         s = ""
         if prg != u"Idle":
             # If previously idle, reset flag and make sure display is on
-            if self._idle_entry_time is not None:
-                self._idle_exit()
+            self._wake_display()
             # Get Running Stations from gv.ps
             programRunning = False
             stationDuration = 0
@@ -813,14 +872,14 @@ class LcdPlugin(Thread):
         if prg == u"Idle":
             if not gv.sd[u"en"]:
                 if self._last_write != u"OFF":
-                    self._idle_type_changed()
+                    self._wake_display()
                     self._lcd.write_line(u"OFF", 0, 3, Lcd.JUSTIFY_CENTER)
                     self._lcd.write_line(u"", 3, 5, Lcd.JUSTIFY_LEFT)
                     self._last_write = u"OFF"
             elif gv.sd[u"mm"]:
                 aboutToWrite = u"IdleManualMode"
                 if self._last_write != aboutToWrite:
-                    self._idle_type_changed()
+                    self._wake_display()
                     self._lcd.write_line(u"Idle", 0, 3, Lcd.JUSTIFY_CENTER)
                     self._lcd.write_line(u"", 3, 1, Lcd.JUSTIFY_LEFT)
                     self._lcd.write_line(u"Manual", 4, 2, Lcd.JUSTIFY_CENTER)
@@ -829,7 +888,7 @@ class LcdPlugin(Thread):
             elif gv.sd[u"rd"]:
                 aboutToWrite = u"RainDelay"
                 if self._last_write != aboutToWrite:
-                    self._idle_type_changed()
+                    self._wake_display()
                     self._lcd.write_line(u"Rain", 0, 2, Lcd.JUSTIFY_CENTER)
                     self._lcd.write_line(u"", 2, 1, Lcd.JUSTIFY_LEFT)
                     self._lcd.write_line(u"Delay", 3, 2, Lcd.JUSTIFY_CENTER)
@@ -852,7 +911,7 @@ class LcdPlugin(Thread):
                 waterLevel = str(gv.sd[u"wl"])
                 aboutToWrite = u"IdleWaterLevel" + waterLevel
                 if self._last_write != aboutToWrite:
-                    self._idle_type_changed()
+                    self._wake_display()
                     self._lcd.write_line(u"Idle", 0, 3, Lcd.JUSTIFY_CENTER)
                     self._lcd.write_line(waterLevel + u"%", 3, 2, Lcd.JUSTIFY_CENTER)
                     self._lcd.write_line(u"", 5, 1, Lcd.JUSTIFY_LEFT)
@@ -864,7 +923,7 @@ class LcdPlugin(Thread):
                     self._last_sub_val = aboutToWrite
             else:
                 if self._last_write != prg:
-                    self._idle_type_changed()
+                    self._wake_display()
                     self._lcd.write_line(prg, 0, 3, Lcd.JUSTIFY_CENTER)
                     self._lcd.write_line(u"", 3, 3, Lcd.JUSTIFY_LEFT)
                     self._last_write = prg
@@ -879,8 +938,7 @@ class LcdPlugin(Thread):
                 and self._idle_timeout_seconds > 0
                 and (time.time() - self._idle_entry_time) > self._idle_timeout_seconds
             ):
-                self._idled = True
-                self._lcd.set_power(on=False)
+                self._display_idled()
 
     def _display_alarm(self):
         """
@@ -899,12 +957,19 @@ class LcdPlugin(Thread):
         self._display_text = kw[u"txt"]
         self._display_handler_signaled = True
 
+    def wake_signal(self, *args, **kw):
+        """
+        Wakes the display
+        """
+        # TODO: Potential for race condition here
+        self._wake_display()
+
     def run(self):
         """
         Main execution method which is executed when the super class (Thread) is started
         """
         sleep(5)
-        print(u"ssd1306 plugin is active")
+        print(u"SSD1306 plugin: active")
         while True:
             if self._display_handler_signaled:
                 self._display_alarm()
@@ -921,17 +986,19 @@ class LcdPlugin(Thread):
         """
         Restart handler
         """
-        print(u"ssd1306 plugin received restart signal; turning off LCD...")
-        self._lcd.set_power(on=False)
-        print(u"ssd1306 LCD has been shut off")
+        print(u"SSD1306 plugin: received restart signal; turning off LCD...")
+        self._lcd.disable()
+        print(u"SSD1306 plugin: LCD has been shut off")
 
 
 # Start LCD
 lcd_plugin = LcdPlugin()
 if lcd_plugin.initialize(load_settings=True):
     lcd_plugin.start()
-    alarm = signal(u"ssd1306_display")
-    alarm.connect(lcd_plugin.display_signal)
+    display_signal = signal(u"ssd1306_display")
+    display_signal.connect(lcd_plugin.display_signal)
+    wake_signal = signal(u"ssd1306_wake")
+    wake_signal.connect(lcd_plugin.wake_signal)
 
 # Attach to restart signal
 restart = signal(u"restart")

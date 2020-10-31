@@ -34,15 +34,14 @@ import time
 # for i2c bus driver
 import smbus
 
-# TODO - if there are any settings I can think of in the future
 # Add new URLs to access classes in this plugin.
-# urls.extend([
-#    '/ssd1306-sp', 'plugins.ssd1306.settings',
-#    '/ssd1306-save', 'plugins.ssd1306.save_settings'
-#    ])
+urls.extend([
+   '/ssd1306-sp', 'plugins.ssd1306.settings',
+   '/ssd1306-save', 'plugins.ssd1306.save_settings'
+   ])
 
 # Add this plugin to the PLUGINS menu ['Menu Name', 'URL'], (Optional)
-# gv.plugin_menu.append(['SSD1306 Plugin', '/ssd1306-sp'])
+gv.plugin_menu.append(['SSD1306 Plugin', '/ssd1306-sp'])
 
 class Lcd:
     """
@@ -609,17 +608,25 @@ class LcdPlugin(Thread):
     def __init__(self):
         Thread.__init__(self)
         self._daemon = True
-        self._alarmSignaled = False
-        self._alarmText = u""
-        self._lastWrite = u""
-        self._lastSubVal = u""
-        self._lcd = Lcd()
+        self._reset_lcd_state()
+        self._lcd = None
         self._set_default_settings()
 
-    def initialize(self):
+    def _reset_lcd_state(self):
+        self._display_handler_signaled = False
+        self._display_text = u""
+        self._last_write = u""
+        self._last_sub_val = u""
+        self._idle_entry_time = None
+        self._idled = False
+
+    def initialize(self, load_settings):
         """
         Initializes this plugin
         """
+        if load_settings:
+            self._load_settings()
+        self._lcd = Lcd(i2c_hw_addr=self._lcd_hw_address, i2c_bus_number=1)
         self._lcd.write_initialization_sequence()
         return True
 
@@ -627,43 +634,49 @@ class LcdPlugin(Thread):
         """
         Sets the json settings to their defaults
         """
-        # Nothing yet
-        # self.sample_key = 0
-        return
+        self._idle_timeout_seconds = 0
+        self._lcd_hw_address = 0x78
 
-    def load_from_dict(self, settings):
+    def load_from_dict(self, settings, allow_reinit):
         """
         Loads settings from a given dictionary
         """
-        self._set_default_settings()
         if settings is None:
             return
-        # if settings.has_key("sample_key"):
-        #    self.sample_key = settings["sample_key"]
-        return
+        if settings.has_key("idle_timeout"):
+            self._idle_timeout_seconds = int(settings["idle_timeout"])
+        reinit_required = False
+        if settings.has_key("i2c_hw_address"):
+            old_addr = self._lcd_hw_address
+            self._lcd_hw_address = int(settings["i2c_hw_address"], 16)
+            if old_addr != self._lcd_hw_address:
+                reinit_required = True
+        if reinit_required and allow_reinit:
+            self._lcd.set_power(on=False)
+            self.initialize(load_settings=False)
+            self._reset_lcd_state()
 
     def _load_settings(self):
         """
         Loads settings from the settings json file for this plugin
         """
         # Get settings
-        # try:
-        #    with open('./data/ssd1306.json', 'r') as f:
-        #        self.load_from_dict(json.load(f))
-        # except:
-        #    self.__set_default_settings()
-        return
+        try:
+            with open('./data/ssd1306.json', 'r') as f:
+                self.load_from_dict(json.load(f), allow_reinit=False)
+        except:
+            self._set_default_settings()
 
     def save_settings(self):
         """
         Saves these settings to the json file for this plugin
         """
-        # settings = {
-        #    "sample_key": self.sample_key,
-        # }
-        # with open('./data/ssd1306.json', 'w') as f:
-        #    json.dump(settings, f) # save to file
-        return
+        settings = {
+           "idle_timeout": self._idle_timeout_seconds,
+           "i2c_hw_address": str(format(self._lcd_hw_address, '02x'))
+        }
+        with open('./data/ssd1306.json', 'w') as f:
+            json.dump(settings, f) # save to file
 
     @staticmethod
     def _get_time_string():
@@ -691,6 +704,15 @@ class LcdPlugin(Thread):
         timeStr = hrString + ":" + minString + ampmString
         return timeStr
 
+    def _idle_type_changed(self):
+        self._lcd.set_power(on=True)
+        self._idle_entry_time = time.time()
+        self._idled = False
+
+    def _idle_exit(self):
+        self._lcd.set_power(on=True)
+        self._idle_entry_time = None
+
     def _display_normal(self):
         """
         Refreshes the display for "normal" operation which displays some of the current state
@@ -706,6 +728,9 @@ class LcdPlugin(Thread):
 
         s = ""
         if prg != u"Idle":
+            # If previously idle, reset flag and make sure display is on
+            if self._idle_entry_time is not None:
+                self._idle_exit()
             # Get Running Stations from gv.ps
             programRunning = False
             stationDuration = 0
@@ -725,40 +750,40 @@ class LcdPlugin(Thread):
                 if programRunning:
                     if gv.pon == 98:
                         aboutToWrite = u"RunningRun-onceProgram"
-                        if self._lastWrite != aboutToWrite:
+                        if self._last_write != aboutToWrite:
                             self._lcd.write_line(u"Running", 0, 2, Lcd.JUSTIFY_CENTER)
                             self._lcd.write_line("", 2, 1, Lcd.JUSTIFY_LEFT)
                             self._lcd.write_line(u"Run-once", 3, 2, Lcd.JUSTIFY_CENTER)
                             self._lcd.write_line("", 5, 1, Lcd.JUSTIFY_LEFT)
                             self._lcd.write_line(u"Program", 6, 2, Lcd.JUSTIFY_CENTER)
-                            self._lastWrite = aboutToWrite
+                            self._last_write = aboutToWrite
                     elif gv.pon == 99:
                         aboutToWrite = u"ManualMode"
-                        if self._lastWrite != aboutToWrite:
+                        if self._last_write != aboutToWrite:
                             self._lcd.write_line(u"", 0, 1, Lcd.JUSTIFY_LEFT)
                             self._lcd.write_line(u"Manual", 1, 2, Lcd.JUSTIFY_CENTER)
                             self._lcd.write_line(u"", 3, 1, Lcd.JUSTIFY_LEFT)
                             self._lcd.write_line(u"Mode", 4, 2, Lcd.JUSTIFY_CENTER)
                             self._lcd.write_line(u"", 6, 2, Lcd.JUSTIFY_LEFT)
-                            self._lastWrite = aboutToWrite
+                            self._last_write = aboutToWrite
                     else:
                         aboutToWrite = u"RunningProgram{}".format(prg)
-                        if self._lastWrite != aboutToWrite:
+                        if self._last_write != aboutToWrite:
                             self._lcd.write_line(u"Running", 0, 2, Lcd.JUSTIFY_CENTER)
                             self._lcd.write_line("", 2, 1, Lcd.JUSTIFY_LEFT)
                             self._lcd.write_line(u"Program", 3, 2, Lcd.JUSTIFY_CENTER)
                             self._lcd.write_line(u"", 5, 1, Lcd.JUSTIFY_LEFT)
                             self._lcd.write_line(prg, 6, 2, Lcd.JUSTIFY_CENTER)
-                            self._lastWrite = aboutToWrite
+                            self._last_write = aboutToWrite
                 else:
                     # It was a lie!
                     prg = u"Idle"
             else:
-                if self._lastWrite != s:
+                if self._last_write != s:
                     self._lcd.write_block(s, 0, 1, 5, Lcd.JUSTIFY_CENTER)
                     self._lcd.write_line(" ", 5, 1, Lcd.JUSTIFY_CENTER)
-                    self._lastWrite = s
-                    self._lastSubVal = ""
+                    self._last_write = s
+                    self._last_sub_val = ""
                 if gv.pon == 99 and stationDuration <= 0:
                     # Manual station on forever
                     aboutToWrite = u"ON"
@@ -781,36 +806,39 @@ class LcdPlugin(Thread):
                             + ":"
                             + aboutToWrite
                         )
-                if self._lastSubVal != aboutToWrite:
+                if self._last_sub_val != aboutToWrite:
                     self._lcd.write_line(aboutToWrite, 6, 2, Lcd.JUSTIFY_CENTER)
-                    self._lastSubVal = aboutToWrite
+                    self._last_sub_val = aboutToWrite
         # Check again because prg may have changed to Idle in the above if statement
         if prg == u"Idle":
             if not gv.sd[u"en"]:
-                if self._lastWrite != u"OFF":
+                if self._last_write != u"OFF":
+                    self._idle_type_changed()
                     self._lcd.write_line(u"OFF", 0, 3, Lcd.JUSTIFY_CENTER)
                     self._lcd.write_line(u"", 3, 5, Lcd.JUSTIFY_LEFT)
-                    self._lastWrite = u"OFF"
+                    self._last_write = u"OFF"
             elif gv.sd[u"mm"]:
                 aboutToWrite = u"IdleManualMode"
-                if self._lastWrite != aboutToWrite:
+                if self._last_write != aboutToWrite:
+                    self._idle_type_changed()
                     self._lcd.write_line(u"Idle", 0, 3, Lcd.JUSTIFY_CENTER)
                     self._lcd.write_line(u"", 3, 1, Lcd.JUSTIFY_LEFT)
                     self._lcd.write_line(u"Manual", 4, 2, Lcd.JUSTIFY_CENTER)
                     self._lcd.write_line(u"Mode", 6, 2, Lcd.JUSTIFY_CENTER)
-                    self._lastWrite = aboutToWrite
+                    self._last_write = aboutToWrite
             elif gv.sd[u"rd"]:
                 aboutToWrite = u"RainDelay"
-                if self._lastWrite != aboutToWrite:
+                if self._last_write != aboutToWrite:
+                    self._idle_type_changed()
                     self._lcd.write_line(u"Rain", 0, 2, Lcd.JUSTIFY_CENTER)
                     self._lcd.write_line(u"", 2, 1, Lcd.JUSTIFY_LEFT)
                     self._lcd.write_line(u"Delay", 3, 2, Lcd.JUSTIFY_CENTER)
                     self._lcd.write_line(u"", 5, 1, Lcd.JUSTIFY_LEFT)
-                    self._lastWrite = aboutToWrite
-                    self._lastSubVal = u""
+                    self._last_write = aboutToWrite
+                    self._last_sub_val = u""
                 remainingHrs = (gv.sd[u"rdst"] - gv.now) / 60 / 60
                 aboutToWrite = str(remainingHrs)
-                if self._lastSubVal != aboutToWrite:
+                if self._last_sub_val != aboutToWrite:
                     if remainingHrs < 1:
                         self._lcd.write_line(u"<1 hr", 6, 2, Lcd.JUSTIFY_CENTER)
                     elif remainingHrs == 1:
@@ -819,30 +847,40 @@ class LcdPlugin(Thread):
                         self._lcd.write_line(
                             str(remainingHrs) + u" hrs", 6, 2, Lcd.JUSTIFY_CENTER
                         )
-                    self._lastSubVal = aboutToWrite
+                    self._last_sub_val = aboutToWrite
             elif gv.sd[u"wl"] < 100:
                 waterLevel = str(gv.sd[u"wl"])
                 aboutToWrite = u"IdleWaterLevel" + waterLevel
-                if self._lastWrite != aboutToWrite:
+                if self._last_write != aboutToWrite:
+                    self._idle_type_changed()
                     self._lcd.write_line(u"Idle", 0, 3, Lcd.JUSTIFY_CENTER)
                     self._lcd.write_line(waterLevel + u"%", 3, 2, Lcd.JUSTIFY_CENTER)
                     self._lcd.write_line(u"", 5, 1, Lcd.JUSTIFY_LEFT)
-                    self._lastWrite = aboutToWrite
-                    self._lastSubVal = u""
+                    self._last_write = aboutToWrite
+                    self._last_sub_val = u""
                 aboutToWrite = LcdPlugin._get_time_string()
-                if self._lastSubVal != aboutToWrite:
+                if self._last_sub_val != aboutToWrite:
                     self._lcd.write_line(aboutToWrite, 6, 2, Lcd.JUSTIFY_CENTER)
-                    self._lastSubVal = aboutToWrite
+                    self._last_sub_val = aboutToWrite
             else:
-                if self._lastWrite != prg:
+                if self._last_write != prg:
+                    self._idle_type_changed()
                     self._lcd.write_line(prg, 0, 3, Lcd.JUSTIFY_CENTER)
                     self._lcd.write_line(u"", 3, 3, Lcd.JUSTIFY_LEFT)
-                    self._lastWrite = prg
-                    self._lastSubVal = u""
+                    self._last_write = prg
+                    self._last_sub_val = u""
                 aboutToWrite = LcdPlugin._get_time_string()
-                if self._lastSubVal != aboutToWrite:
+                if self._last_sub_val != aboutToWrite:
                     self._lcd.write_line(aboutToWrite, 6, 2, Lcd.JUSTIFY_CENTER)
-                    self._lastSubVal = aboutToWrite
+                    self._last_sub_val = aboutToWrite
+
+            if (
+                not self._idled
+                and self._idle_timeout_seconds > 0
+                and (time.time() - self._idle_entry_time) > self._idle_timeout_seconds
+            ):
+                self._idled = True
+                self._lcd.set_power(on=False)
 
     def _display_alarm(self):
         """
@@ -850,16 +888,16 @@ class LcdPlugin(Thread):
         """
         self._lcd.write_line(u"ALARM!", 0, 3, Lcd.JUSTIFY_CENTER)
         self._lcd.write_line(u"", 3, 1, Lcd.JUSTIFY_LEFT)
-        self._lcd.write_line(self._alarmText, 4, 2, Lcd.JUSTIFY_CENTER)
+        self._lcd.write_line(self._display_text, 4, 2, Lcd.JUSTIFY_CENTER)
         self._lcd.write_line(u"", 6, 2, Lcd.JUSTIFY_LEFT)
-        self._lastWrite = u""
+        self._last_write = u""
 
-    def alarm(self, name, **kw):
+    def display_signal(self, name, **kw):
         """
-        Alarm handler
+        Display signal handler
         """
-        self._alarmText = kw[u"txt"]
-        self._alarmSignaled = True
+        self._display_text = kw[u"txt"]
+        self._display_handler_signaled = True
 
     def run(self):
         """
@@ -868,11 +906,11 @@ class LcdPlugin(Thread):
         sleep(5)
         print(u"ssd1306 plugin is active")
         while True:
-            if self._alarmSignaled:
+            if self._display_handler_signaled:
                 self._display_alarm()
                 sleep(20)
-                self._alarmText = u""
-                self._alarmSignaled = False
+                self._display_text = u""
+                self._display_handler_signaled = False
             else:
                 self._display_normal()
                 sleep(1)
@@ -890,10 +928,10 @@ class LcdPlugin(Thread):
 
 # Start LCD
 lcd_plugin = LcdPlugin()
-if lcd_plugin.initialize():
+if lcd_plugin.initialize(load_settings=True):
     lcd_plugin.start()
-    alarm = signal(u"alarm_toggled")
-    alarm.connect(lcd_plugin.alarm)
+    alarm = signal(u"ssd1306_display")
+    alarm.connect(lcd_plugin.display_signal)
 
 # Attach to restart signal
 restart = signal(u"restart")
@@ -903,7 +941,6 @@ restart.connect(lcd_plugin.notify_restart)
 ################################################################################
 # Web pages:                                                                   #
 ################################################################################
-
 
 class settings(ProtectedPage):
     """
@@ -920,7 +957,6 @@ class settings(ProtectedPage):
             settings = {}  # Default settings. can be list, dictionary, etc.
         return template_render.ssd1306(settings)  # open settings page
 
-
 class save_settings(ProtectedPage):
     """
     Save user input to json file.
@@ -932,6 +968,6 @@ class save_settings(ProtectedPage):
         qdict = (
             web.input()
         )  # Dictionary of values returned as query string from settings page.
-        lcd_plugin.load_from_dict(qdict)  # load settings from dictionary
+        lcd_plugin.load_from_dict(qdict, allow_reinit=True)  # load settings from dictionary
         lcd_plugin.save_settings()  # Save keypad settings
         raise web.seeother(u"/")  # Return user to home page.

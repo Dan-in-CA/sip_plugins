@@ -839,7 +839,8 @@ class KeypadPlugin:
         function_value = []
         if first_key_down is not None:
             function_value = list(first_key_down)
-        self._display_entry_text(function_value, append=True)
+        # Only append this first value (not clear) if a function key was selected (not default)
+        self._display_entry_text(function_value, append=self._function_selected)
         if len(function_value) > 0:
             self._buzzer_signal.send(self.button_pressed_beep)  # Acknowledge first press
         while self._running:
@@ -974,6 +975,7 @@ class KeypadPlugin:
                         self.selected_function != KeypadPlugin.FN_NONE
                     ):
                         self._handle_value(c, down_keys)
+                    self._reset_selected_function()
         print(u"Keypad plugin: Exiting keypad task")
         return
 

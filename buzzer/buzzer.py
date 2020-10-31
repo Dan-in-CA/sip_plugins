@@ -75,6 +75,8 @@ class Buzzer(Thread):
         self.active_high = active_high
         # Set all default settings
         self._set_default_settings()
+        # Running flag just to ensure that we stop buzzing when shutting down
+        self._running = True
 
     def _set_default_settings(self):
         """
@@ -174,33 +176,36 @@ class Buzzer(Thread):
             return False
         return True
 
-    def _set_buzzer_pin(self, is_on):
+    def _set_buzzer_pin(self, is_on, force=False):
         """
         Sets the state of the buzzer pin to ON or OFF
         Inputs: is_on - True for ON; False for OFF
+                force - True to force OFF, even when not running
         """
-        try:
-            pin_value = self.active_high if is_on else not self.active_high
-            if gv.use_pigpio:
-                pi.write(gv.pin_map[self.pin], pin_value)
-            else:
-                GPIO.output(self.pin, pin_value)
-        except Exception as e:
-            self.pin_initialized = False
-            print(u"Buzzer failed:\n{}".format(e))
-            return False
+        if self._running or force:
+            try:
+                pin_value = self.active_high if is_on else not self.active_high
+                if gv.use_pigpio:
+                    pi.write(gv.pin_map[self.pin], pin_value)
+                else:
+                    GPIO.output(self.pin, pin_value)
+            except Exception as e:
+                self.pin_initialized = False
+                print(u"Buzzer failed:\n{}".format(e))
+                return False
 
     def _buzzer_on(self):
         """
         Sets the buzzer pin to ON
         """
-        self._set_buzzer_pin(True)
+        self._set_buzzer_pin(is_on=True, force=False)
 
-    def _buzzer_off(self):
+    def _buzzer_off(self, force=False):
         """
         Sets the buzzer pint to OFF
+        Inputs: force - True to force OFF, even when not running
         """
-        self._set_buzzer_pin(False)
+        self._set_buzzer_pin(is_on=False, force=force)
 
     def buzz(self, time=0.010):
         """
@@ -276,6 +281,14 @@ class Buzzer(Thread):
         """
         self._buzzer_init_task()
 
+    ### Restart ###
+    # Restart signal needs to be handled in 1 second or less
+    def notify_restart(self, name, **kw):
+        # Make sure whatever timers running don't turn the buzzer on as we are restarting
+        self._running = False
+        self._buzzer_off(force=True)
+
+
 # Our main Buzzer object for this module
 buzzer = Buzzer(BUZZER_PIN, BUZZER_ACTIVE_HIGH)
 
@@ -318,6 +331,10 @@ def notify_buzzer_beep(time, **kw):
 # Tell the notification system what to call on buzzer_beep
 buzzer_beep = signal(u"buzzer_beep")
 buzzer_beep.connect(notify_buzzer_beep)
+
+# Attach to restart signal
+restart = signal("restart")
+restart.connect(buzzer.notify_restart)
 
 # Run to get hardware initialized
 buzzer.start()

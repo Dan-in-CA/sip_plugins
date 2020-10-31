@@ -491,6 +491,9 @@ class KeypadPlugin:
             print(u"Keypad plugin: Invalid program: %d" % programID)
             return False
         else:
+            print(u"Keypad plugin: Program entry doesn't currently work")
+            return False
+            # TODO: Fix this! The internal structure has changed
             p = gv.pd[int(pid)]  # program data
             stop_stations()
             extra_adjustment = plugin_adjustment()

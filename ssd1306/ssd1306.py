@@ -1009,6 +1009,7 @@ class LcdPlugin(Thread):
                 self._lcd.write_block(text, row_start, min_text_size, max_text_size, justification)
                 self._displaying_custom = True
                 self._wake_display()
+                self._custom_display_canceled = False
                 # print(u"SSD1306 plugin: displayed: {}".format(queue_item))
             else: # canceled
                 # print(u"SSD1306 plugin: custom display canceled")

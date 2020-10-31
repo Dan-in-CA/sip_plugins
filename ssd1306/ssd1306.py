@@ -396,16 +396,15 @@ class Lcd:
                 num - Number of bits to shift right
         Returns: The transformed list
         """
+        original_length = len(lst)
         if sys.version_info.major >= 3: # Python3 version of this
-            original_length = len(lst)
             # Convert the list to integer in big-endian order
             list_value = int.from_bytes(bytes(lst), byteorder='big')
             # Do the bit shifting
             list_value >>= num
             # Convert the integer back to a list
             lst = list(int(list_value).to_bytes(length=original_length, byteorder='big'))
-        else: # Python2 version of this; this will take about 3 to 4 times longer to process
-            original_length = len(lst)
+        else: # Python2 version of this; this will take about 5 times longer to process
             # Convert the list to integer in big-endian order
             list_value = int(''.join(format(val, '02x') for val in lst), 16)
             # Do the bit shifting
@@ -864,7 +863,7 @@ class LcdPlugin(Thread):
 
     def run(self):
         """
-        Main execution method which is run by SIP's plugin system
+        Main execution method which is executed when the super class (Thread) is started
         """
         sleep(5)
         print(u"ssd1306 plugin is active")

@@ -316,6 +316,13 @@ class KeypadPlugin:
     FN_MANUAL_STATION_TIME = 3
     FN_RAIN_DELAY_TIME = 4
     FN_START_RAIN_DELAY = 5
+    # Function text must be 9 chars or less
+    FUNCTION_TEXT = {FN_MANUAL_STATION:      u"Station",
+                     FN_MANUAL_PROGRAM:      u"Program",
+                     FN_WATER_LEVEL:         u"Water Lvl",
+                     FN_MANUAL_STATION_TIME: u"Sta Time",
+                     FN_RAIN_DELAY_TIME:     u"RDly Time",
+                     FN_START_RAIN_DELAY:    u"Rain Dly"}
     # Instantaneous functions
     HLDFN_NONE = -1
     HLDFN_STOP_ALL = 16
@@ -349,9 +356,11 @@ class KeypadPlugin:
             KEYPAD_PIN_COLUMNS, KEYPAD_PIN_ROWS, KEYPAD_INDICES, KEYPAD_KEY_LIST
         )
         # Buzzer signal for feedback
-        self._buzzer_signal = signal("buzzer_beep")
+        self._buzzer_signal = signal(u"buzzer_beep")
         # Wake signalling for SSD1306 display
-        self._ssd1306_wake_signal = signal("ssd1306_wake")
+        self._ssd1306_wake_signal = signal(u"ssd1306_wake")
+        # Signalling for displaying currently pressed keys
+        self._ssd1306_display_signal = signal(u"ssd1306_display")
 
         # Set all default settings
         self._set_default_settings()
@@ -554,6 +563,35 @@ class KeypadPlugin:
             self._ssd1306_wake_signal.send() # Wake the display
         return c
 
+    def _display_function_text(self, append):
+        self._ssd1306_display_signal.send(
+            txt=u"{}:".format(
+                KeypadPlugin.FUNCTION_TEXT.get(self.selected_function, u"")
+            ),
+            row_start=0,
+            min_text_size=2,
+            max_text_size=2,
+            justification=u"CENTER",
+            append=append,
+            delay=self.keypad_press_timeout_s
+        )
+
+    def _display_entry_text(self, command_value, append):
+        self._display_function_text(append=append)
+        value = "".join(command_value)
+        self._ssd1306_display_signal.send(
+            txt=u"{}".format(value),
+            row_start=4,
+            min_text_size=4,
+            max_text_size=4,
+            justification=u"CENTER",
+            append=True, # This must be appended since write handled in _display_function_text
+            delay=self.keypad_press_timeout_s
+        )
+
+    def _display_cancel(self):
+        self._ssd1306_display_signal.send(cancel=True)
+
     def _set_value_function(self, function_key):
         """
         Set the selected (momentary press) function
@@ -564,6 +602,8 @@ class KeypadPlugin:
         ):
             self.selected_function = self.selectable_functions[function_key]
             self._function_selected = True
+            # Display null entry so far
+            self._display_entry_text([], append=False)
             return True
         return False
 
@@ -757,6 +797,7 @@ class KeypadPlugin:
         function_value = []
         if first_key_down is not None:
             function_value = list(first_key_down)
+        self._display_entry_text(function_value, append=True)
         if len(function_value) > 0:
             self._buzzer_signal.send(self.button_pressed_beep)  # Acknowledge first press
         while self._running:
@@ -769,6 +810,7 @@ class KeypadPlugin:
                 # Timeout occurred with no command
                 self._buzzer_signal.send(self.cancel_beep)  # Nack for timeout
                 function_value = []
+                self._display_cancel()
                 break
             elif KeypadPlugin.ENTER_KEY in c:
                 # Execute command
@@ -781,6 +823,7 @@ class KeypadPlugin:
                         self.cancel_beep
                     )  # Nack for invalid station or exception
                 function_value = []
+                self._display_cancel()
                 # reset selected function to default
                 self._reset_selected_function()
                 break
@@ -788,12 +831,14 @@ class KeypadPlugin:
                 # Canceled
                 self._buzzer_signal.send(self.cancel_beep)  # Nack for canceled
                 function_value = []
+                self._display_cancel()
                 break
             elif len(function_value) + len(c) > KeypadPlugin.MAX_NUMBER_ENTRY:
                 # Too many numbers entered
                 print(u"Keypad plugin: Entered value is too large! Canceling...")
                 self._buzzer_signal.send(self.cancel_beep)  # Error
                 function_value = []
+                self._display_cancel()
                 break
             else:
                 valid_key = True
@@ -813,11 +858,13 @@ class KeypadPlugin:
                         # append pressed key(s)
                         for v in c:
                             function_value.append(v)
+                        self._display_entry_text(function_value, append=True)
                 else:
                     # Invalid key
                     print(u"Keypad plugin: Invalid key! Canceling...")
                     self._buzzer_signal.send(self.cancel_beep)
                     function_value = []
+                    self._display_cancel()
                     break
         return True
 
@@ -852,6 +899,7 @@ class KeypadPlugin:
                     # Timeout with nothing entered
                     self._reset_selected_function()
                     self._buzzer_signal.send(self.cancel_beep)
+                    self._display_cancel()
                     continue
             else:
                 # Wait indefinitely for key
@@ -866,6 +914,7 @@ class KeypadPlugin:
                     self.cancel_beep
                 )  # Nack for no command or cancel
                 self._reset_selected_function()
+                self._display_cancel()
             else:
                 # Check if function key was pressed
                 function_key = self._get_first_function_key(c)

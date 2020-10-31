@@ -20,7 +20,7 @@ import sys
 from time import sleep
 
 # threads
-from threading import Thread, Lock
+from threading import Thread, Lock, RLock, Condition
 
 # get open sprinkler signals
 from blinker import signal
@@ -210,8 +210,9 @@ class Lcd:
         """
         Disables any further writing to hardware and powers off display
         """
-        self._enabled = False
-        self._force_power_off()
+        if self._enabled:
+            self._enabled = False
+            self._force_power_off()
 
     def _lcd_increment_current(self, x):
         """
@@ -666,11 +667,16 @@ class LcdPlugin(Thread):
         self._reset_lcd_state()
         self._lcd = None
         self._running = True
+        self._display_condition = Condition()
+        # All of the idle values need to be read and set as one
+        self._idle_lock = RLock()
+        self._custom_display_lock = RLock()
+        self._custom_display_queue = []
+        self._displaying_custom = False
+        self._custom_display_canceled = False
         self._set_default_settings()
 
     def _reset_lcd_state(self):
-        self._display_handler_signaled = False
-        self._display_text = u""
         self._last_write = u""
         self._last_sub_val = u""
         self._idle_entry_time = None
@@ -764,19 +770,39 @@ class LcdPlugin(Thread):
         """
         Resets idle entry time and wakes the display if we had previously idled
         """
-        self._idle_entry_time = time.time()
-        if self._idled:
-            self._lcd.set_power(on=True)
-            self._idled = False
+        self._idle_lock.acquire()
+        try:
+            self._idle_entry_time = time.time()
+            if self._idled:
+                self._lcd.set_power(on=True)
+                self._idled = False
+        finally:
+            self._idle_lock.release()
 
     def _display_idled(self):
-        self._idled = True
-        self._lcd.set_power(on=False)
+        self._idle_lock.acquire()
+        try:
+            self._idled = True
+            self._lcd.set_power(on=False)
+        finally:
+            self._idle_lock.release()
 
     def _display_normal(self):
         """
         Refreshes the display for "normal" operation which displays some of the current state
         """
+
+        ########################################################################
+        # All of this logic is a gigantic mess! I plan on eventually cleaning
+        # this up. For now, please don't judge :)
+        ########################################################################
+
+        # If previously displayed custom, refresh state
+        if self._displaying_custom:
+            self._reset_lcd_state()
+            self._displaying_custom = False
+            self._custom_display_canceled = False
+            self._wake_display()
         if gv.pon is None:
             prg = u"Idle"
         elif gv.pon == 98:  # something is running
@@ -933,35 +959,80 @@ class LcdPlugin(Thread):
                     self._lcd.write_line(aboutToWrite, 6, 2, Lcd.JUSTIFY_CENTER)
                     self._last_sub_val = aboutToWrite
 
-            if (
-                not self._idled
-                and self._idle_timeout_seconds > 0
-                and (time.time() - self._idle_entry_time) > self._idle_timeout_seconds
-            ):
-                self._display_idled()
+            self._idle_lock.acquire()
+            try:
+                # Save the idle timeout value just in case it gets written to as we are checking
+                # (self._idle_timeout_seconds is not protected by the lock)
+                idle_timeout_seconds = self._idle_timeout_seconds
+                if (
+                    not self._idled
+                    and self._idle_entry_time is not None
+                    and idle_timeout_seconds > 0
+                    and (time.time() - self._idle_entry_time) > idle_timeout_seconds
+                ):
+                    self._display_idled()
+            finally:
+                self._idle_lock.release()
 
-    def _display_alarm(self):
+    def _display_custom(self):
         """
-        Displays an alarm message
+        Displays a custom message
         """
-        self._lcd.write_line(u"ALARM!", 0, 3, Lcd.JUSTIFY_CENTER)
-        self._lcd.write_line(u"", 3, 1, Lcd.JUSTIFY_LEFT)
-        self._lcd.write_line(self._display_text, 4, 2, Lcd.JUSTIFY_CENTER)
-        self._lcd.write_line(u"", 6, 2, Lcd.JUSTIFY_LEFT)
-        self._last_write = u""
+        while self._custom_display_queue:
+            self._custom_display_lock.acquire()
+            try:
+                queue_item = self._custom_display_queue.pop()
+            finally:
+                self._custom_display_lock.release()
+            cancel = queue_item.get(u"cancel", False)
+            if not cancel:
+                text = queue_item.get(u"txt", u"")
+                row_start = queue_item.get(u"row_start", 0)
+                min_text_size = queue_item.get(u"min_text_size", 1)
+                max_text_size = queue_item.get(u"max_text_size", 1)
+                justification_string = queue_item.get(u"justification", u"LEFT").upper()
+                justification_lookup = {u"LEFT": Lcd.JUSTIFY_LEFT,
+                                        u"RIGHT": Lcd.JUSTIFY_RIGHT,
+                                        u"CENTER": Lcd.JUSTIFY_CENTER}
+                justification = justification_lookup.get(justification_string, Lcd.JUSTIFY_LEFT)
+                append = queue_item.get(u"append", False)
+                # Force append to false if we are not already displaying custom
+                if not self._displaying_custom or self._custom_display_canceled:
+                    append = False
+                delay = queue_item.get(u"delay", 1)
+                # Do the thing
+                if not append:
+                    self._lcd.clear()
+                self._lcd.write_block(text, row_start, min_text_size, max_text_size, justification)
+                self._displaying_custom = True
+                self._wake_display()
+                # print(u"SSD1306 plugin: displayed: {}".format(queue_item))
+            else: # canceled
+                # print(u"SSD1306 plugin: custom display canceled")
+                # To force a refresh if there is another thing in the queue after this
+                self._custom_display_canceled = True
+                # Delay of 0 will force the run thread right into the next cycle
+                delay = 0
+        return delay
 
     def display_signal(self, name, **kw):
         """
         Display signal handler
         """
-        self._display_text = kw[u"txt"]
-        self._display_handler_signaled = True
+        self._custom_display_lock.acquire()
+        try:
+            self._custom_display_queue.insert(0, kw)
+        finally:
+            self._custom_display_lock.release()
+        # Notify the run thread that there is new data here
+        self._display_condition.acquire()
+        self._display_condition.notify_all()
+        self._display_condition.release()
 
     def wake_signal(self, *args, **kw):
         """
         Wakes the display
         """
-        # TODO: Potential for race condition here
         self._wake_display()
 
     def run(self):
@@ -970,15 +1041,28 @@ class LcdPlugin(Thread):
         """
         sleep(5)
         print(u"SSD1306 plugin: active")
-        while True:
-            if self._display_handler_signaled:
-                self._display_alarm()
-                sleep(20)
-                self._display_text = u""
-                self._display_handler_signaled = False
+        while self._running:
+            wait_time = 1
+            if self._custom_display_queue:
+                wait_time = self._display_custom()
             else:
                 self._display_normal()
-                sleep(1)
+                wait_time = 1 # Refresh time
+            # Only wait if we are still running by this point
+            if self._running:
+                self._display_condition.acquire()
+                self._display_condition.wait(wait_time)
+                self._display_condition.release()
+
+    def stop(self):
+        """
+        Stops my running process
+        """
+        self._running = False
+        self._lcd.disable()
+        self._display_condition.acquire()
+        self._display_condition.notify_all()
+        self._display_condition.release()
 
     ### Restart ###
     # Restart signal needs to be handled in 1 second or less
@@ -987,7 +1071,7 @@ class LcdPlugin(Thread):
         Restart handler
         """
         print(u"SSD1306 plugin: received restart signal; turning off LCD...")
-        self._lcd.disable()
+        self.stop()
         print(u"SSD1306 plugin: LCD has been shut off")
 
 

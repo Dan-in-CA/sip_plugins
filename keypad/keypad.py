@@ -335,6 +335,17 @@ class KeypadPlugin:
     HLDFN_RESET_WATER_LEVEL = 23
     HLDFN_TOGGLE_RAIN_DELAY = 24
     HLDFN_TOGGLE_SYSTEM_EN = 25
+    # Function text must be 10 chars or less
+    HOLD_FUNCTION_TEXT = {HLDFN_STOP_ALL:              u"Stop All",
+                          HLDFN_ACTIVATE_RAIN_DELAY:   u"RDelay On",
+                          HLDFN_DEACTIVATE_RAIN_DELAY: u"RDelay Off",
+                          HLDFN_SYSTEM_ON:             u"System On",
+                          HLDFN_SYSTEM_OFF:            u"System Off",
+                          HLDFN_RESTART_SYSTEM:        u"Restarting",
+                          HLDFN_REBOOT_OS:             u"Rebooting",
+                          HLDFN_RESET_WATER_LEVEL:     u"WLvl=100%",
+                          HLDFN_TOGGLE_RAIN_DELAY:     u"Tgl RDelay",
+                          HLDFN_TOGGLE_SYSTEM_EN:      u"Tgl Sys En"}
     # Execution enumeration
     EXECUTE_FAILED = 0
     EXECUTE_COMPLETE = 1
@@ -565,6 +576,7 @@ class KeypadPlugin:
 
     def _display_function_text(self, append):
         self._ssd1306_display_signal.send(
+            activator=u"keypad",
             txt=u"{}:".format(
                 KeypadPlugin.FUNCTION_TEXT.get(self.selected_function, u"")
             ),
@@ -580,6 +592,7 @@ class KeypadPlugin:
         self._display_function_text(append=append)
         value = "".join(command_value)
         self._ssd1306_display_signal.send(
+            activator=u"keypad",
             txt=u"{}".format(value),
             row_start=4,
             min_text_size=4,
@@ -589,8 +602,33 @@ class KeypadPlugin:
             delay=self.keypad_press_timeout_s
         )
 
+    def _display_hold_function(self, hold_function):
+        if hold_function in KeypadPlugin.HOLD_FUNCTION_TEXT:
+            self._ssd1306_display_signal.send(
+                activator=u"keypad",
+                txt=u"Hold Fn:",
+                row_start=0,
+                min_text_size=2,
+                max_text_size=2,
+                justification=u"CENTER",
+                append=False,
+                delay=2
+            )
+            self._ssd1306_display_signal.send(
+                activator=u"keypad",
+                txt=u"{}".format(
+                    KeypadPlugin.HOLD_FUNCTION_TEXT.get(hold_function, u"")
+                ),
+                row_start=4,
+                min_text_size=2,
+                max_text_size=2,
+                justification=u"CENTER",
+                append=True,
+                delay=2
+            )
+
     def _display_cancel(self):
-        self._ssd1306_display_signal.send(cancel=True)
+        self._ssd1306_display_signal.send(activator=u"keypad", cancel=True)
 
     def _set_value_function(self, function_key):
         """
@@ -614,6 +652,7 @@ class KeypadPlugin:
         hold_function = KeypadPlugin.HLDFN_NONE
         if function_key in self.hold_functions:
             hold_function = self.hold_functions[function_key]
+        self._display_hold_function(hold_function)
         if hold_function == KeypadPlugin.HLDFN_STOP_ALL:
             # Stop all stations
             print(u"Keypad plugin: Stop all stations")
@@ -1136,8 +1175,8 @@ class save_settings(ProtectedPage):
 
 
 # Attach to restart signal
-restart = signal("restart")
-restart.connect(keypad_plugin.notify_restart)
+restart_signal = signal("restart")
+restart_signal.connect(keypad_plugin.notify_restart)
 
 #  Run when plugin is loaded
 keypad_plugin.run()

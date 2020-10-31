@@ -984,6 +984,8 @@ class LcdPlugin(Thread):
                 queue_item = self._custom_display_queue.pop()
             finally:
                 self._custom_display_lock.release()
+            # Activator name needed for future use
+            # activator_name = queue_item.get(u"activator", None)
             cancel = queue_item.get(u"cancel", False)
             if not cancel:
                 text = queue_item.get(u"txt", u"")
@@ -1079,6 +1081,8 @@ class LcdPlugin(Thread):
 lcd_plugin = LcdPlugin()
 if lcd_plugin.initialize(load_settings=True):
     lcd_plugin.start()
+    # Note about this signal: It shouldn't be used by multiple external modules at once. Nothing
+    # handles such concurrent calls internally. See how _display_custom dissects the message.
     display_signal = signal(u"ssd1306_display")
     display_signal.connect(lcd_plugin.display_signal)
     wake_signal = signal(u"ssd1306_wake")

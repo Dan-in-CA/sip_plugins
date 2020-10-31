@@ -272,6 +272,9 @@ class Buzzer(Thread):
         self._load_settings()
         # Wait for hardware init
         self._wait_for_ready()
+        # Wait a bit because things are still loading and the startup beep can sound choppy if
+        # too much is happening
+        sleep(5)
         # Ring startup beep
         self.buzz(self.startup_beep)
 
@@ -291,6 +294,25 @@ class Buzzer(Thread):
 
 # Our main Buzzer object for this module
 buzzer = Buzzer(BUZZER_PIN, BUZZER_ACTIVE_HIGH)
+
+# Setup buzzer signal notification
+def notify_buzzer_beep(time, **kw):
+    return buzzer.buzz(time)
+
+# Tell the notification system what to call on buzzer_beep
+buzzer_beep = signal(u"buzzer_beep")
+buzzer_beep.connect(notify_buzzer_beep)
+
+# Attach to restart signal
+restart = signal("restart")
+restart.connect(buzzer.notify_restart)
+
+# Run to get hardware initialized
+buzzer.start()
+
+################################################################################
+# Web pages:                                                                   #
+################################################################################
 
 class settings(ProtectedPage):
     """
@@ -322,19 +344,3 @@ class save_settings(ProtectedPage):
         buzzer.load_from_dict(qdict)  # load settings from dictionary
         buzzer.save_settings()  # Save keypad settings
         raise web.seeother(u"/")  # Return user to home page.
-
-
-# Setup buzzer signal notification
-def notify_buzzer_beep(time, **kw):
-    return buzzer.buzz(time)
-
-# Tell the notification system what to call on buzzer_beep
-buzzer_beep = signal(u"buzzer_beep")
-buzzer_beep.connect(notify_buzzer_beep)
-
-# Attach to restart signal
-restart = signal("restart")
-restart.connect(buzzer.notify_restart)
-
-# Run to get hardware initialized
-buzzer.start()

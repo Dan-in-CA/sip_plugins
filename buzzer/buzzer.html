@@ -1,7 +1,7 @@
 $def with(settings)
 
 $var title: $_('SIP Buzzer Plugin')
-$var page: buzzer_plugin 
+$var page: buzzer_plugin
 <script>
     // Initialize behaviors
     jQuery(document).ready(function(){
@@ -11,14 +11,14 @@ $var page: buzzer_plugin
                 this.value = newValue;
             }
         });
-        
+
         jQuery(".listonly").keyup(function () {
             var newValue = this.value.replace(/[^0-9,\ ,\,]/g, '');
             if (this.value != newValue) {
                 this.value = newValue;
             }
         });
-        
+
         jQuery("#cSubmit").click(function() {
             jQuery("#pluginForm").submit();
         });
@@ -37,11 +37,11 @@ $var page: buzzer_plugin
         <p>$_('Feedback Beeps (on time, off time, on time, ...)')</p>
         <table class="optionList">
             <tr>
-                <td style='text-transform: none;'>$_('Startup Beep List (milliseconds)'):</td>
+                <td style='text-transform: none;'>$_('Startup Beep List (milliseconds):')</td>
                 <td><input class="listonly" type="text" name="startup_beep" value="${settings['startup_beep'] if 'startup_beep' in settings else '50, 50, 50, 50, 50, 50, 100' }"></td>
             </tr>
         </table>
-        
+
         <br>
     </form>
 

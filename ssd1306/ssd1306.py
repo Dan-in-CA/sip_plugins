@@ -668,6 +668,7 @@ class LcdPlugin(Thread):
         self._lcd = None
         self._running = True
         self._display_condition = Condition()
+        self._display_notify_thread = Thread(target=self._notify_display_condition)
         # All of the idle values need to be read and set as one
         self._idle_lock = RLock()
         self._custom_display_lock = RLock()
@@ -1017,6 +1018,11 @@ class LcdPlugin(Thread):
                 delay = 0
         return delay
 
+    def _notify_display_condition(self):
+        self._display_condition.acquire()
+        self._display_condition.notify_all()
+        self._display_condition.release()
+
     def display_signal(self, name, **kw):
         """
         Display signal handler
@@ -1027,9 +1033,7 @@ class LcdPlugin(Thread):
         finally:
             self._custom_display_lock.release()
         # Notify the run thread that there is new data here
-        self._display_condition.acquire()
-        self._display_condition.notify_all()
-        self._display_condition.release()
+        self._notify_display_condition()
 
     def wake_signal(self, *args, **kw):
         """
@@ -1044,16 +1048,18 @@ class LcdPlugin(Thread):
         sleep(5)
         print(u"SSD1306 plugin: active")
         while self._running:
-            wait_time = 1
-            if self._custom_display_queue:
-                wait_time = self._display_custom()
-            else:
-                self._display_normal()
-                wait_time = 1 # Refresh time
-            # Only wait if we are still running by this point
-            if self._running:
-                self._display_condition.acquire()
-                self._display_condition.wait(wait_time)
+            self._display_condition.acquire()
+            try:
+                wait_time = 1
+                if self._custom_display_queue:
+                    wait_time = self._display_custom()
+                else:
+                    self._display_normal()
+                    wait_time = 1 # Refresh time
+                # Only wait if we are still running by this point
+                if self._running:
+                    self._display_condition.wait(wait_time)
+            finally:
                 self._display_condition.release()
 
     def stop(self):
@@ -1062,9 +1068,7 @@ class LcdPlugin(Thread):
         """
         self._running = False
         self._lcd.disable()
-        self._display_condition.acquire()
-        self._display_condition.notify_all()
-        self._display_condition.release()
+        self._notify_display_condition()
 
     ### Restart ###
     # Restart signal needs to be handled in 1 second or less

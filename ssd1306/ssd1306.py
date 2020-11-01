@@ -1048,9 +1048,9 @@ class LcdPlugin(Thread):
         """
         sleep(5)
         print(u"SSD1306 plugin: active")
-        while self._running:
-            self._display_condition.acquire()
-            try:
+        self._display_condition.acquire()
+        try:
+            while self._running:
                 wait_time = 1
                 if self._custom_display_queue:
                     wait_time = self._display_custom()
@@ -1060,8 +1060,8 @@ class LcdPlugin(Thread):
                 # Only wait if we are still running by this point
                 if self._running:
                     self._display_condition.wait(wait_time)
-            finally:
-                self._display_condition.release()
+        finally:
+            self._display_condition.release()
 
     def stop(self):
         """

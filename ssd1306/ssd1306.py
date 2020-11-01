@@ -706,12 +706,12 @@ class LcdPlugin(Thread):
         """
         if settings is None:
             return
-        if settings.has_key("idle_timeout"):
-            self._idle_timeout_seconds = int(settings["idle_timeout"])
+        if u"idle_timeout" in settings:
+            self._idle_timeout_seconds = int(settings[u"idle_timeout"])
         reinit_required = False
-        if settings.has_key("i2c_hw_address"):
+        if u"i2c_hw_address" in settings:
             old_addr = self._lcd_hw_address
-            self._lcd_hw_address = int(settings["i2c_hw_address"], 16)
+            self._lcd_hw_address = int(settings[u"i2c_hw_address"], 16)
             if old_addr != self._lcd_hw_address:
                 reinit_required = True
         if reinit_required and allow_reinit:
@@ -735,8 +735,8 @@ class LcdPlugin(Thread):
         Saves these settings to the json file for this plugin
         """
         settings = {
-           "idle_timeout": self._idle_timeout_seconds,
-           "i2c_hw_address": str(format(self._lcd_hw_address, '02x'))
+           u"idle_timeout": self._idle_timeout_seconds,
+           u"i2c_hw_address": str(format(self._lcd_hw_address, '02x'))
         }
         with open('./data/ssd1306.json', 'w') as f:
             json.dump(settings, f) # save to file

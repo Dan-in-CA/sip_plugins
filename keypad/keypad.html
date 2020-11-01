@@ -120,7 +120,7 @@ select{ width: 100%; }
                   <option value="2" ${"selected" if 'bkeyfn' in settings and settings['bkeyfn'] == '2' else ""}>Set Water Level</option>
                   <option value="3" ${"selected" if 'bkeyfn' in settings and settings['bkeyfn'] == '3' else ""}>Set Default Manual Station Time (minutes)</option>
                   <option value="4" ${"selected" if 'bkeyfn' in settings and settings['bkeyfn'] == '4' else ""}>Set Default Rain Delay Time (hours)</option>
-                  <option value="5" ${"selected" if 'bkeyfn' in settings and settings['bkeyfn'] == '5' else ""}>Start Rain Delay (hours)</option>
+                  <option value="5" ${"selected" if 'bkeyfn' not in settings or settings['bkeyfn'] == '5' else ""}>Start Rain Delay (hours)</option>
                 </select>
                 </td>
             </tr>

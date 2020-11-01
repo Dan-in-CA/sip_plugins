@@ -405,7 +405,7 @@ class KeypadPlugin:
         self.key_hold_time_s = 1
         self.selectable_functions = {
             "A": KeypadPlugin.FN_MANUAL_STATION,
-            "B": KeypadPlugin.FN_MANUAL_PROGRAM,
+            "B": KeypadPlugin.FN_START_RAIN_DELAY,
             "C": KeypadPlugin.FN_WATER_LEVEL,
             "D": KeypadPlugin.FN_MANUAL_STATION_TIME,
         }

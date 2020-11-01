@@ -4,11 +4,11 @@
 from __future__ import print_function
 
 # standard library imports
-from threading import Thread
 import json
 import time
 
 # local module imports
+from blinker import signal
 import gv  # Get access to SIP's settings
 from sip import template_render
 from urls import urls  # Get access to SIP's URLs
@@ -30,39 +30,29 @@ urls.extend(
 gv.plugin_menu.append([u"California Monthly", u"/cama"])
 
 
-def set_wl(run_loop=False):
-    """Adjust irrigation time by percent based on historical California climate data."""
-    if run_loop:
-        time.sleep(2)  # Sleep some time to prevent printing before startup information
+def set_wl(month):
+    """Adjust irrigation time by percent per month."""
+    
+    try:
+        with open(
+            u"./data/ca_levels.json", u"r"
+        ) as f:  # Read the monthly percentages from file
+            levels = json.load(f)
+    except IOError:  # If file does not exist
+        levels = [100] * 12
+        with open(
+            u"./data/ca_levels.json", u"w"
+        ) as f:  # write default percentages to file
+            json.dump(levels, f)
+    gv.sd[u"wl_monthly_adj"] = levels[
+        month - 1
+    ]  # Set the water level % (levels list is zero based).
+    print(
+        u"Monthly Adjust: Setting water level to {}%".format(
+            gv.sd[u"wl_monthly_adj"]
+        )
+    )
 
-    last_month = 0
-    while True:
-        try:
-            with open(
-                u"./data/ca_levels.json", u"r"
-            ) as f:  # Read the monthly percentages from file
-                levels = json.load(f)
-        except IOError as e:  # If file does not exist
-            levels = [100] * 12
-            with open(
-                u"./data/ca_levels.json", u"w"
-            ) as f:  # write default percentages to file
-                json.dump(levels, f)
-        month = time.localtime().tm_mon  # Get current month.
-        if month != last_month:
-            last_month = month
-            gv.sd[u"wl_monthly_adj"] = levels[
-                month - 1
-            ]  # Set the water level% (levels list is zero based).
-            print(
-                u"California Monthly Setting water level to {}%".format(
-                    gv.sd[u"wl_monthly_adj"]
-                )
-            )
-
-        if not run_loop:
-            break
-        time.sleep(3600)
 
 
 class monthly_percent(ProtectedPage):
@@ -159,9 +149,18 @@ class update_percents(ProtectedPage):
                 json.dump(vals, f)
         except Exeption as e:
             print(u"File error: ", e)
-        set_wl()
+        set_wl(gv.sd["month"])
         raise web.seeother("/")
 
-wl = Thread(target=set_wl)
-wl.daemon = True
-wl.start()
+def update_wl_monthly(name, **kw):
+    month = time.localtime().tm_mon
+    if not u"month" in gv.sd:
+        gv.sd["month"] = month
+        set_wl(month)
+    elif  month != gv.sd["month"]:
+        gv.sd["month"] = month
+        set_wl(month)
+
+# check for new month each day
+new_day = signal(u"new_day")
+new_day.connect(update_wl_monthly)

@@ -11,7 +11,7 @@ $var page: mqtt_plugin
             jQuery("#pluginForm").submit();
         });
         jQuery("button#cCancel").click(function(){
-            window.location= baseUrl + "/";
+            window.location= "/";
         });
     });
 </script>
@@ -39,7 +39,7 @@ $var page: mqtt_plugin
         </table>
     </form>
 
-<div id="controls">
+<div class="controls">
     <button id="cSubmit" class="submit"><b>$_(u'Submit')</b></button>
     <button id="cCancel" class="cancel danger">$_(u'Cancel')</button>
 </div>

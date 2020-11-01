@@ -12,11 +12,11 @@ $var page: mqtt_plugin
             jQuery("#pluginForm").submit();
         });
         jQuery("button#cCancel").click(function(){
-            window.location= baseUrl + "/";
+            window.location= "/";
         });
 
         jQuery("button#docButton").click(function(){
-            window.open(baseUrl + "/static/docs/plugins/slave-docs.html", "_blank"); //Edit: replace "proto-docs.html"
+            window.open("/static/docs/plugins/slave-docs.html", "_blank"); //Edit: replace "proto-docs.html"
         });        
     });
 </script>
@@ -58,7 +58,7 @@ $var page: mqtt_plugin
         </table>
     </form>
 
-<div id="controls">
+<div class="controls">
     <button id="cSubmit" class="submit"><b>$_(u'Submit')</b></button>
     <button id="cCancel" class="cancel danger">$_(u'Cancel')</button>
 </div>

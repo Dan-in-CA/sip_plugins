@@ -11,11 +11,11 @@ $var page: combine_stations
             jQuery("#stnForm").submit();
         });
         jQuery("button#cCancel").click(function(){
-            window.location= baseUrl + "/";
+            window.location= "/";
         });
 
         jQuery("button#docButton").click(function(){
-            window.open(baseUrl + "/static/docs/plugins/combine_stations-docs.html", "_blank"); //Edit: replace "proto-docs.html"
+            window.open("/static/docs/plugins/combine_stations-docs.html", "_blank"); //Edit: replace "proto-docs.html"
         });
 
     });
@@ -50,7 +50,7 @@ $var page: combine_stations
         </table>
     </form>
 
-<div id="controls">
+<div class="controls">
     <button id="cSubmit" class="submit"><b>$_(u'Submit')</b></button>
     <button id="cCancel" class="cancel danger">$_(u'Cancel')</button>
 </div>

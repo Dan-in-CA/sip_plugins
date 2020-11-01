@@ -12,13 +12,8 @@ $var page: cli_control
         	jQuery("#clic").submit();
         });
         jQuery("button#cCancel").click(function(){
-            window.location= baseUrl + "/";
+            window.location= "/";
         });
-
-//         jQuery("button#docButton").click(function(){
-//             window.open(baseUrl + "/static/docs/plugins/cli_control-docs.html", "_blank");
-//         });
-
     });
 </script>
 
@@ -77,7 +72,7 @@ $var page: cli_control
             <p></p>
 </div>
 
-<div id="controls">
+<div class="controls">
     <button id="cSubmit" class="submit"><b>$_(u'Submit')</b></button>
     <button id="cCancel" class="cancel danger">$_(u'Cancel')</button>
 </div>

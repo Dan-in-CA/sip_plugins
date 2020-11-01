@@ -546,7 +546,7 @@ class Lcd:
         maxLines = 0
         while currentTextSize > min_text_size:
             currentTextSize -= 1
-            maxLines = max_text_size / currentTextSize
+            maxLines = max_text_size // currentTextSize
             currentLine = 0
             lines = [words[0]]
             currentSize = wordSizes[0]
@@ -875,19 +875,19 @@ class LcdPlugin(Thread):
                     aboutToWrite = u"ON"
                 else:
                     stationSec = int(stationDuration) % 60
-                    stationMin = int(stationDuration) / 60
-                    stationHrs = stationMin / 60
+                    stationMin = int(stationDuration) // 60
+                    stationHrs = stationMin // 60
                     stationMin = stationMin % 60
                     aboutToWrite = (
-                        str(stationMin / 10)
+                        str(stationMin // 10)
                         + str(stationMin % 10)
                         + ":"
-                        + str(stationSec / 10)
+                        + str(stationSec // 10)
                         + str(stationSec % 10)
                     )
                     if stationHrs > 0:
                         aboutToWrite = (
-                            str(stationHrs / 10)
+                            str(stationHrs // 10)
                             + str(stationHrs % 10)
                             + ":"
                             + aboutToWrite
@@ -922,7 +922,7 @@ class LcdPlugin(Thread):
                     self._lcd.write_line(u"", 5, 1, Lcd.JUSTIFY_LEFT)
                     self._last_write = aboutToWrite
                     self._last_sub_val = u""
-                remainingHrs = (gv.sd[u"rdst"] - gv.now) / 60 / 60
+                remainingHrs = (gv.sd[u"rdst"] - gv.now) // 60 // 60
                 aboutToWrite = str(remainingHrs)
                 if self._last_sub_val != aboutToWrite:
                     if remainingHrs < 1:

@@ -471,7 +471,7 @@ class KeypadPlugin:
                     gv.rs[i][3] = 98
                     gv.ps[i][0] = 98
                     gv.ps[i][1] = v
-                    stations[i / 8] += 2 ** (i % 8)
+                    stations[i // 8] += 2 ** (i % 8)
 
             schedule_stations(stations)
         return run_schedule

@@ -1,0 +1,92 @@
+$def with(settings)
+
+$var title: $_('SIP SSD1306 Plugin')
+$var page: ssd1306_plugin
+<script>
+    // Initialize behaviors
+    jQuery(document).ready(function(){
+        jQuery(".numbersOnly").keyup(function () {
+            var newValue = this.value.replace(/[^0-9]/g, '');
+            if (this.value != newValue) {
+                this.value = newValue;
+            }
+        });
+
+        jQuery(".hexOnly").keyup(function () {
+            var newValue = this.value.replace(/[^0-9,A-F,a-f]/g, '');
+            if (this.value != newValue) {
+                this.value = newValue;
+            }
+        });
+
+        jQuery(".listonly").keyup(function () {
+            var newValue = this.value.replace(/[^0-9,\ ,\,]/g, '');
+            if (this.value != newValue) {
+                this.value = newValue;
+            }
+        });
+
+        jQuery("#cSubmit").click(function() {
+            jQuery("#pluginForm").submit();
+        });
+        jQuery("button#cCancel").click(function(){
+            window.location="/";
+        });
+    });
+</script>
+
+<div id="plugin">
+    <div class="title">SSD1306 Plugin Settings
+    </div>
+
+    <form id="pluginForm" action="/ssd1306-save" method="get">
+        <br>
+        <p>$_('Display Settings')</p>
+        <table class="optionList">
+            <tr>
+                <td style='text-transform: none;'>$_('Idle Display Timeout in Seconds (0 for always on)')</td>
+            </tr>
+            <tr>
+                <td><input class="numbersOnly" type="text" name="idle_timeout" value="${settings['idle_timeout'] if 'idle_timeout' in settings else '300' }"></td>
+            </tr>
+            <tr>
+                <td style='text-transform: none;'>$_('Hardware Address in Hex*')</td>
+            </tr>
+            <tr>
+                <td>$_('0x')<input class="hexOnly" type="text" name="i2c_hw_address" value="${settings['i2c_hw_address'] if 'i2c_hw_address' in settings else '78' }"></td>
+            </tr>
+            <tr>
+                <td style='text-transform: none;'>$_('I2C Bus')</td>
+            </tr>
+            <tr>
+                <td><input class="numbersOnly" type="text" name="i2c_bus" value="1" readonly>$_('(not modifiable)')</td>
+            </tr>
+            <tr>
+                <td style='text-transform: none;'>$_('Width in Pixels')</td>
+            </tr>
+            <tr>
+                <td><input class="numbersOnly" type="text" name="width" value="128" readonly>$_('(not modifiable)')</td>
+            </tr>
+            <tr>
+                <td style='text-transform: none;'>$_('Height in Pixels')</td>
+            </tr>
+            <tr>
+                <td><input class="numbersOnly" type="text" name="width" value="64" readonly>$_('(not modifiable)')</td>
+            </tr>
+        </table>
+        <tr>
+            <td style='text-transform: none;'>$_('*This is the address printed on the hardware. The retrieved value in i2cdetect will be this value shifted 1 bit to the right ex: a value of 78 (0b01111000) here will correspond to 3C (0b00111100) in i2cdetect.')</td>
+        </tr>
+        <br>
+        <tr>
+            <td style='text-transform: none;'>$_('Note: For this plugin to work, you need to enable the I2C interface. I also recommend setting the BAUD rate to 400000 so the display refreshes more quickly.')</td>
+        </tr>
+
+        <br>
+    </form>
+
+<div id="controls">
+    <button id="cSubmit" class="submit"><b>$_('Submit')</b></button>
+    <button id="cCancel" class="cancel danger">$_('Cancel')</button>
+</div>
+</div>

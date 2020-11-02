@@ -34,7 +34,8 @@ Sends status email to google email account
 
 keypad
 ----------
-A plugin for using an 4X4 scanning keypad and buzzer to execute simple functions without the use of an external peripheral
+A plugin for using an 4X4 scanning keypad to execute simple functions without the use of an external peripheral.
+This plugin interfaces with buzzer and ssd1306 plugins through signals.
 
 lcd_adj
 ----------
@@ -52,13 +53,13 @@ Requires paho mqtt.
 
 mqtt_get_values
 ----------
-Requires base mqtt plugin. 
+Requires base mqtt plugin.
 Can be used to read SIP's gv.* settings.
 See gv_reference.txt in the SIP folder for a list of settings.
 
 mqtt_set_values
 ----------
-Requires base mqtt plugin. 
+Requires base mqtt plugin.
 Can be used to change SIP's gv.* settings.
 See gv_reference.txt in the SIP folder for a list of settings.
 
@@ -118,7 +119,7 @@ Control your SIP using SMS (Short Message Service)
 
 ssd1306
 ----------
-Plugin for SSD1306 128x64 pixel display connected to I2C interface with HW address 0x3c.
+Plugin for SSD1306 128x64 pixel display connected to I2C interface.
 
 system_update
 ----------

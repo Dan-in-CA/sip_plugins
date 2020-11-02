@@ -25,7 +25,7 @@ from __future__ import print_function
 import web  # web.py framework
 import gv  # Get access to ospi's settings
 from urls import urls  # Get access to ospi's URLs
-from ospi import template_render  #  Needed for working with web.py templates
+from sip import template_render  #  Needed for working with web.py templates
 from webpages import ProtectedPage  # Needed for security
 import json  # for working with data file
 
@@ -54,12 +54,9 @@ import time
 try:
     if gv.use_pigpio:
         import pigpio
-
         pi = pigpio.pi()
     else:
         import RPi.GPIO as GPIO
-
-        pi = 0
 except IOError:
     pass
 
@@ -69,7 +66,7 @@ KEYPAD_PIN_COLUMNS = [29, 31, 33, 35]  # C1  # C2  # C3  # C4
 # Keypad row pins
 KEYPAD_PIN_ROWS = [37, 40, 38, 36]  # R1  # R2  # R3  # R4
 # Maps keypad key to index
-KEYPAD_INDICIES = [
+KEYPAD_INDICES = [
     #    C1  C2  C3  C4
     [1, 2, 3, 10],  # R1
     [4, 5, 6, 11],  # R2
@@ -109,113 +106,151 @@ urls.extend(
 # Add this plugin to the PLUGINS menu ['Menu Name', 'URL'], (Optional)
 gv.plugin_menu.append(["Keypad Plugin", "/keypad-sp"])
 
-# This class handles the keypad hardware
 class ScanningKeypad:
-    def __init__(self, pin_columns, pin_rows, indicies, char_list):
-        self.pin_columns = pin_columns
-        self.pin_rows = pin_rows
-        self.indicies = indicies
-        self.char_list = char_list
+    """ This class handles the keypad hardware """
+    def __init__(self, pin_columns, pin_rows, indices, char_list):
+        """
+        Initializes a ScanningKeypad object
+        Inputs: pin_columns - List of pin numbers for the keypad columns
+                pin_rows - List of pin numbers for the keypad rows
+                indices - A 2-dimensional table of the resulting index for each key when a column
+                          meets with a row
+                char_list - List of characters where the key is a value within indices
+        """
+        self._pin_columns = pin_columns
+        self._pin_rows = pin_rows
+        self._indices = indices
+        self._char_list = char_list
         # Current energized column
-        self.keypad_current_column = -1
+        self._keypad_current_column = -1
         # set to true after keypad pins are first initialized; set to false on exception
-        self.pins_initialized = False
-        return
+        self._pins_initialized = False
+        # Boolean to help force blocking calls to exit once this transitions to False
+        self._running = True
+
+    def set_running(self, is_running):
+        """
+        Sets the running flag (forces some blocking calls to unblock when set to False)
+        """
+        self._running = is_running
 
     def isReady(self):
-        return self.pins_initialized
+        """
+        Returns True if the hardware is ready; False otherwise
+        """
+        return self._pins_initialized
 
     @staticmethod
-    def __set_floating_input(pin):
+    def _set_floating_input(pin):
+        """
+        Set the hardware input as floating (not pulled up or down by a resistor)
+        """
         if gv.use_pigpio:
             pi.set_mode(gv.pin_map[pin], pigpio.INPUT)
             pi.set_pull_up_down(gv.pin_map[pin], pigpio.PUD_OFF)
         else:
             GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_OFF)
 
-    def __set_column(self, col):
-        if not self.pins_initialized:
-            return False
-        try:
-            if self.keypad_current_column >= 0:
-                # Set old value as floating input so it won't affect anyone else
-                ScanningKeypad.__set_floating_input(self.keypad_current_column)
-            # set current pin and make output HIGH
-            self.keypad_current_column = col
-            if gv.use_pigpio:
-                pi.set_mode(gv.pin_map[self.keypad_current_column], pigpio.OUTPUT)
-                pi.write(gv.pin_map[self.keypad_current_column], 1)
-            else:
-                GPIO.setup(self.keypad_current_column, GPIO.OUT)
-                GPIO.output(self.keypad_current_column, GPIO.HIGH)
-        except Exception as err:
-            print("keypad plugin except")
-            print(traceback.format_exc())
-            self.pins_initialized = False
-        return self.pins_initialized
+    def _set_column(self, col):
+        """
+        Output LOW to the previous column and output HIGH to the given column
+        Inputs: col - The column index to set
+        Returns: True if operation succeeded; False otherwise
+        """
+        if self._pins_initialized:
+            try:
+                if self._keypad_current_column >= 0:
+                    # Set old value as floating input so it won't affect anyone else
+                    ScanningKeypad._set_floating_input(self._keypad_current_column)
+                # set current pin and make output HIGH
+                self._keypad_current_column = col
+                if gv.use_pigpio:
+                    pi.set_mode(gv.pin_map[self._keypad_current_column], pigpio.OUTPUT)
+                    pi.write(gv.pin_map[self._keypad_current_column], 1)
+                else:
+                    GPIO.setup(self._keypad_current_column, GPIO.OUT)
+                    GPIO.output(self._keypad_current_column, GPIO.HIGH)
+            except Exception as err:
+                print(u"Keypad plugin: except:\n{}".format(err))
+                print(traceback.format_exc())
+                self._pins_initialized = False
+        return self._pins_initialized
 
-    def init_pins(self):
+    def _init_pins(self):
+        """
+        Initializes the pins used by this ScanningKeypad
+        Returns: True if operation succeeded; False otherwise
+        """
         try:
             if not gv.use_pigpio:
                 GPIO.setmode(GPIO.BOARD)
             # set column pins as floating to start with
-            for v in self.pin_columns:
-                ScanningKeypad.__set_floating_input(v)
-            self.keypad_current_column = -1
+            for v in self._pin_columns:
+                ScanningKeypad._set_floating_input(v)
+            self._keypad_current_column = -1
             # row pins will be used as input with pull down resistors
-            for v in self.pin_rows:
+            for v in self._pin_rows:
                 if gv.use_pigpio:
                     pi.set_mode(gv.pin_map[v], pigpio.INPUT)
                     pi.set_pull_up_down(gv.pin_map[v], pigpio.PUD_DOWN)
                 else:
                     GPIO.setup(v, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-            self.pins_initialized = True
+            self._pins_initialized = True
         except Exception as err:
-            print("keypad plugin except")
+            print(u"Keypad plugin: except:\n{}".format(err))
             print(traceback.format_exc())
-            self.pins_initialized = False
-        return self.pins_initialized
+            self._pins_initialized = False
+        return self._pins_initialized
 
-    def sample(self):
-        keys = [False] * len(self.char_list)
-        for col, col_v in enumerate(self.pin_columns):
-            if self.__set_column(col_v):
+    def _sample(self):
+        """
+        Samples all rows and returns the depressed keys for the current column
+        """
+        keys = [False] * len(self._char_list)
+        for col, col_v in enumerate(self._pin_columns):
+            if self._set_column(col_v):
                 sleep(0.001)  # just to make sure the output is fully charged
                 try:
-                    for row, row_v in enumerate(self.pin_rows):
+                    for row, row_v in enumerate(self._pin_rows):
                         if gv.use_pigpio:
-                            keys[self.indicies[row][col]] = pi.read(gv.pin_map[row_v])
+                            keys[self._indices[row][col]] = pi.read(gv.pin_map[row_v])
                         else:
-                            keys[self.indicies[row][col]] = GPIO.input(row_v)
+                            keys[self._indices[row][col]] = GPIO.input(row_v)
                 except Exception as err:
-                    print("keypad plugin except")
+                    print(u"Keypad plugin: except:\n{}".format(err))
                     print(traceback.format_exc())
-                    self.pins_initialized = False
+                    self._pins_initialized = False
             else:
-                keys = [False] * len(self.char_list)
+                keys = [False] * len(self._char_list)
                 break
         return keys
 
     def wait_for_any_key(self):
-        c = self.sample()
+        """
+        Waits for any key to be pressed
+        """
+        c = self._sample()
         while True not in c:
             sleep(0.01)
-            c = self.sample()
-        return
+            c = self._sample()
 
-    def getc(self, down_keys=None, timeout_s=-1, running=True):
-        "Gets next key press"
+    def getc(self, down_keys=None, timeout_s=-1):
+        """
+        Gets next key press
+        Inputs: down_keys - Updated to the currently depressed keys on return
+                timeout_s - The amount of time in seconds to block before giving up
+        """
         # Get starting time
         start_time = time.time()
         # Get initial sample
-        last = keys = self.sample()
+        last = keys = self._sample()
         c = []
-        while running and self.pins_initialized:
+        while self._running and self._pins_initialized:
             # Check for error
             if keys is None:
                 return None  # There was a fatal error
             # Add any new keys to c
-            for i, v in enumerate(self.char_list):
+            for i, v in enumerate(self._char_list):
                 if last[i] != keys[i] and keys[i]:
                     c.append(v)
             # If any new keys have been added, we are done
@@ -225,29 +260,29 @@ class ScanningKeypad:
             current_time = time.time()
             if timeout_s > 0 and (current_time - start_time) >= timeout_s:
                 break  # Timeout occurred
-            sleep(
-                0.025
-            )  # Check for change every 25 ms so we don't bog anything down. This also serves as a debounce
+            # Check for change every 25 ms so we don't bog anything down.
+            # This also serves as a debounce.
+            sleep(0.025)
             # Next sample
             last = keys
-            keys = self.sample()
+            keys = self._sample()
         # Copy keys to down_keys
         if (
             down_keys is not None
-            and len(down_keys) >= len(self.char_list)
+            and len(down_keys) >= len(self._char_list)
             and keys is not None
         ):
-            for i in range(0, len(self.char_list)):
+            for i in range(0, len(self._char_list)):
                 down_keys[i] = keys[i]
         return c
 
     def wait_for_key_index_up(self, key_index, timeout_s=-1, running=True):
-        if key_index >= 0 and key_index < len(self.char_list):
+        if key_index >= 0 and key_index < len(self._char_list):
             timeout_reached = False
             # Get starting time
             start_time = time.time()
-            while running and self.pins_initialized and not timeout_reached:
-                keys = self.sample()
+            while running and self._pins_initialized and not timeout_reached:
+                keys = self._sample()
                 current_time = time.time()
                 # Check to see if the selected key is up
                 if not keys[key_index]:
@@ -262,7 +297,7 @@ class ScanningKeypad:
 
     def wait_for_key_char_up(self, key_char, timeout_s=-1, running=True):
         key_index = -1
-        for i, c in enumerate(self.char_list):
+        for i, c in enumerate(self._char_list):
             if c == key_char:
                 key_index = i
                 break
@@ -281,6 +316,13 @@ class KeypadPlugin:
     FN_MANUAL_STATION_TIME = 3
     FN_RAIN_DELAY_TIME = 4
     FN_START_RAIN_DELAY = 5
+    # Function text must be 9 chars or less
+    FUNCTION_TEXT = {FN_MANUAL_STATION:      u"Station",
+                     FN_MANUAL_PROGRAM:      u"Program",
+                     FN_WATER_LEVEL:         u"Water Lvl",
+                     FN_MANUAL_STATION_TIME: u"Sta Time",
+                     FN_RAIN_DELAY_TIME:     u"RDly Time",
+                     FN_START_RAIN_DELAY:    u"Rain Dly"}
     # Instantaneous functions
     HLDFN_NONE = -1
     HLDFN_STOP_ALL = 16
@@ -293,6 +335,17 @@ class KeypadPlugin:
     HLDFN_RESET_WATER_LEVEL = 23
     HLDFN_TOGGLE_RAIN_DELAY = 24
     HLDFN_TOGGLE_SYSTEM_EN = 25
+    # Function text must be 10 chars or less
+    HOLD_FUNCTION_TEXT = {HLDFN_STOP_ALL:              u"Stop All",
+                          HLDFN_ACTIVATE_RAIN_DELAY:   u"RDelay On",
+                          HLDFN_DEACTIVATE_RAIN_DELAY: u"RDelay Off",
+                          HLDFN_SYSTEM_ON:             u"System On",
+                          HLDFN_SYSTEM_OFF:            u"System Off",
+                          HLDFN_RESTART_SYSTEM:        u"Restarting",
+                          HLDFN_REBOOT_OS:             u"Rebooting",
+                          HLDFN_RESET_WATER_LEVEL:     u"WLvl=100%",
+                          HLDFN_TOGGLE_RAIN_DELAY:     u"Tgl RDelay",
+                          HLDFN_TOGGLE_SYSTEM_EN:      u"Tgl Sys En"}
     # Execution enumeration
     EXECUTE_FAILED = 0
     EXECUTE_COMPLETE = 1
@@ -310,27 +363,41 @@ class KeypadPlugin:
 
     def __init__(self):
         # Keypad object to get key presses
-        self.keypad = ScanningKeypad(
-            KEYPAD_PIN_COLUMNS, KEYPAD_PIN_ROWS, KEYPAD_INDICIES, KEYPAD_KEY_LIST
+        self._keypad = ScanningKeypad(
+            KEYPAD_PIN_COLUMNS, KEYPAD_PIN_ROWS, KEYPAD_INDICES, KEYPAD_KEY_LIST
         )
         # Buzzer signal for feedback
-        self.buzzerSignal = signal("buzzer_beep")
+        self._buzzer_signal = signal(u"buzzer_beep")
+        # Wake signalling for SSD1306 display
+        self._ssd1306_wake_signal = signal(u"ssd1306_wake")
+        # Signalling for displaying currently pressed keys
+        self._ssd1306_display_signal = signal(u"ssd1306_display")
 
         # Set all default settings
-        self.__set_default_settings()
+        self._set_default_settings()
         # Currently selected function
-        self.__reset_selected_function()
+        self._reset_selected_function()
 
         # Set to True when running and False to exit task
-        self.running = False
+        self._set_running(False)
         # Handle to the running thread for this plugin
-        self.running_thread = None
+        self._running_thread = None
 
         # Set to True when function is selected by user
-        self.function_selected = False
+        self._function_selected = False
         return
 
-    def __set_default_settings(self):
+    def _set_running(self, is_running):
+        """
+        Sets the running flag (forces some blocking calls to unblock when set to False)
+        """
+        self._running = is_running
+        self._keypad.set_running(is_running)
+
+    def _set_default_settings(self):
+        """
+        Sets the json settings to their defaults
+        """
         # settings
         self.keypad_press_timeout_s = 5
         self.keypad_manual_station_time_s = 300
@@ -338,7 +405,7 @@ class KeypadPlugin:
         self.key_hold_time_s = 1
         self.selectable_functions = {
             "A": KeypadPlugin.FN_MANUAL_STATION,
-            "B": KeypadPlugin.FN_MANUAL_PROGRAM,
+            "B": KeypadPlugin.FN_START_RAIN_DELAY,
             "C": KeypadPlugin.FN_WATER_LEVEL,
             "D": KeypadPlugin.FN_MANUAL_STATION_TIME,
         }
@@ -360,14 +427,18 @@ class KeypadPlugin:
         self.button_pressed_beep = 0.025
 
     def init_pins(self):
-        return self.keypad.init_pins()
+        """
+        Initializes hardware pins
+        """
+        return self._keypad._init_pins()
 
     # This function is based on change_runonce class in webpages.py
     @staticmethod
-    def __set_runonce_station(stationID, seconds=300):
-        """Runs a single station for a given number of seconds. This will override any running program."""
+    def _set_runonce_station(stationID, seconds=300):
+        """
+        Runs a single station for a given number of seconds. This will override any running program.
+        """
         found = False
-        stop_all_first = False
         newrovals = []
         for i in range(gv.sd["nst"]):
             if i == (stationID - 1):
@@ -377,13 +448,13 @@ class KeypadPlugin:
                 newrovals.append(0)
         run_schedule = False
         if found:
-            print("Running station %d for %d seconds." % (stationID, seconds))
+            print(u"Keypad plugin: Running station %d for %d seconds." % (stationID, seconds))
             run_schedule = True
         elif stationID == 0:
-            print("Stopping all stations.")
+            print(u"Keypad plugin: Stopping all stations.")
             run_schedule = True
         else:
-            print("Station %d not found. Ignoring entry." % stationID)
+            print(u"Keypad plugin: Station %d not found. Ignoring entry." % stationID)
             run_schedule = False
         if run_schedule:
             gv.rovals = newrovals
@@ -400,25 +471,29 @@ class KeypadPlugin:
                     gv.rs[i][3] = 98
                     gv.ps[i][0] = 98
                     gv.ps[i][1] = v
-                    stations[i / 8] += 2 ** (i % 8)
+                    stations[i // 8] += 2 ** (i % 8)
 
             schedule_stations(stations)
         return run_schedule
 
     # This function is based on run_now class in webpages.py
     @staticmethod
-    def __set_runonce_program(programID):
-        """Run a scheduled program now. This will override any running programs."""
-
+    def _set_runonce_program(programID):
+        """
+        Run a scheduled program now. This will override any running programs.
+        """
         if programID == 0:
-            print("Stopping all stations.")
+            print(u"Keypad plugin: Stopping all stations.")
             stop_stations()
             return True
         pid = programID - 1
         if len(gv.pd) <= pid:
-            print("Invalid program: %d" % programID)
+            print(u"Keypad plugin: Invalid program: %d" % programID)
             return False
         else:
+            print(u"Keypad plugin: Program entry doesn't currently work")
+            return False
+            # TODO: Fix this! The internal structure has changed
             p = gv.pd[int(pid)]  # program data
             stop_stations()
             extra_adjustment = plugin_adjustment()
@@ -441,125 +516,205 @@ class KeypadPlugin:
                         gv.rs[sid][3] = pid + 1  # store program number in schedule
                         gv.ps[sid][0] = pid + 1  # store program number for display
                         gv.ps[sid][1] = duration  # duration
-            print("Running program #%d" % programID)
+            print(u"Keypad plugin: Running program #%d" % programID)
             schedule_stations(p[7 : 7 + gv.sd["nbrd"]])
             return True
 
     @staticmethod
-    def __set_water_level(level):
-        print("Set water level for %d%%" % level)
+    def _set_water_level(level):
+        print(u"Keypad plugin: Set water level for %d%%" % level)
         if level >= 0:
             gv.sd["wl"] = level
             return True
         return False
 
-    def __set_manual_station_time(self, time):
-        print("Set manual station time for %d seconds" % time)
+    def _set_manual_station_time(self, time):
+        print(u"Keypad plugin: Set manual station time for %d seconds" % time)
         self.keypad_manual_station_time_s = time
         self.save_keypad_settings()
         return True
 
-    def __set_rain_delay_time(self, time):
-        print("Set rain delay for %d hours" % time)
+    def _set_rain_delay_time(self, time):
+        print(u"Keypad plugin: Set rain delay for %d hours" % time)
         self.rain_delay_hrs = time
         self.save_keypad_settings()
         return True
 
-    def __wait_for_ready(self):
-        if not self.running:
+    def _wait_for_ready(self):
+        """
+        Waits for hardware to be ready
+        Returns: True if hardware is ready; False if timeout occurred
+        """
+        if not self._running:
             return False
         MAX_INIT_RETRY = 3
         retry = 0
         # Wait for keypad to be ready
-        while self.running and (not self.keypad.isReady()) and retry < MAX_INIT_RETRY:
+        while self._running and (not self._keypad.isReady()) and retry < MAX_INIT_RETRY:
             if retry == 0:
-                print("keypad or button not ready")
+                print(u"Keypad plugin: keypad or button not ready")
             # sleep for a moment and try to reinit
             sleep(5)
-            print("Attempting to reinitialize keypad plugin...")
+            print(u"Keypad plugin: Attempting to reinitialize keypad plugin...")
             if self.init_pins():
-                print("Done")
+                print(u"Keypad plugin: Done")
             else:
-                print("Failed")
+                print(u"Keypad plugin: Failed")
             retry += 1
         if retry >= MAX_INIT_RETRY:
-            print("Keypad failure")
-            self.running = False
-        return self.running
+            print(u"Keypad plugin: Keypad failure")
+            self._set_running(False)
+        return self._running
 
-    def __set_value_function(self, function_key):
+    def _getc(self, down_keys=None, timeout_s=-1):
+        """
+        Gets next key press from my Keypad
+        Inputs: down_keys - Updated to the currently depressed keys on return
+                timeout_s - The amount of time in seconds to block before giving up
+        """
+        c = self._keypad.getc(down_keys=down_keys, timeout_s=timeout_s)
+        if len(c) > 0:
+            self._ssd1306_wake_signal.send() # Wake the display
+        return c
+
+    def _display_function_text(self, append):
+        self._ssd1306_display_signal.send(
+            activator=u"keypad",
+            txt=u"{}:".format(
+                KeypadPlugin.FUNCTION_TEXT.get(self.selected_function, u"")
+            ),
+            row_start=0,
+            min_text_size=2,
+            max_text_size=2,
+            justification=u"CENTER",
+            append=append,
+            delay=self.keypad_press_timeout_s
+        )
+
+    def _display_entry_text(self, command_value, append):
+        self._display_function_text(append=append)
+        value = "".join(command_value)
+        self._ssd1306_display_signal.send(
+            activator=u"keypad",
+            txt=u"{}".format(value),
+            row_start=4,
+            min_text_size=4,
+            max_text_size=4,
+            justification=u"CENTER",
+            append=True, # This must be appended since write handled in _display_function_text
+            delay=self.keypad_press_timeout_s
+        )
+
+    def _display_hold_function(self, hold_function):
+        if hold_function in KeypadPlugin.HOLD_FUNCTION_TEXT:
+            self._ssd1306_display_signal.send(
+                activator=u"keypad",
+                txt=u"Hold Fn:",
+                row_start=0,
+                min_text_size=2,
+                max_text_size=2,
+                justification=u"CENTER",
+                append=False,
+                delay=2
+            )
+            self._ssd1306_display_signal.send(
+                activator=u"keypad",
+                txt=u"{}".format(
+                    KeypadPlugin.HOLD_FUNCTION_TEXT.get(hold_function, u"")
+                ),
+                row_start=4,
+                min_text_size=2,
+                max_text_size=2,
+                justification=u"CENTER",
+                append=True,
+                delay=2
+            )
+
+    def _display_cancel(self):
+        self._ssd1306_display_signal.send(activator=u"keypad", cancel=True)
+
+    def _set_value_function(self, function_key):
+        """
+        Set the selected (momentary press) function
+        """
         if (
             function_key in self.selectable_functions
             and self.selectable_functions[function_key] != KeypadPlugin.FN_NONE
         ):
             self.selected_function = self.selectable_functions[function_key]
-            self.function_selected = True
+            self._function_selected = True
+            # Display null entry so far
+            self._display_entry_text([], append=False)
             return True
         return False
 
-    def __execute_hold_function(self, function_key):
+    def _execute_hold_function(self, function_key):
+        """
+        Executes a hold function (when a function key is held down)
+        """
         hold_function = KeypadPlugin.HLDFN_NONE
         if function_key in self.hold_functions:
             hold_function = self.hold_functions[function_key]
+        self._display_hold_function(hold_function)
         if hold_function == KeypadPlugin.HLDFN_STOP_ALL:
             # Stop all stations
-            print("Stop all stations")
+            print(u"Keypad plugin: Stop all stations")
             stop_stations()
             return KeypadPlugin.EXECUTE_COMPLETE
         elif hold_function == KeypadPlugin.HLDFN_ACTIVATE_RAIN_DELAY:
             # Activate rain delay
-            print("Activating rain delay for %d hours" % self.rain_delay_hrs)
+            print(u"Keypad plugin: Activating rain delay for %d hours" % self.rain_delay_hrs)
             gv.sd["rd"] = self.rain_delay_hrs
             gv.sd["rdst"] = int(gv.now + gv.sd["rd"] * 3600)
             stop_onrain()
             return KeypadPlugin.EXECUTE_COMPLETE
         elif hold_function == KeypadPlugin.HLDFN_DEACTIVATE_RAIN_DELAY:
             # Deactivate rain delay
-            print("Deactivating rain delay")
+            print(u"Keypad plugin: Deactivating rain delay")
             gv.sd["rd"] = 0
             gv.sd["rdst"] = 0
             jsave(gv.sd, "sd")
             return KeypadPlugin.EXECUTE_COMPLETE
         elif hold_function == KeypadPlugin.HLDFN_SYSTEM_ON:
             # Enable system
-            print("Enabling system")
+            print(u"Keypad plugin: Enabling system")
             gv.sd["en"] = 1
             return KeypadPlugin.EXECUTE_COMPLETE
         elif hold_function == KeypadPlugin.HLDFN_SYSTEM_OFF:
             # Disable system
-            print("Disabling system")
+            print(u"Keypad plugin: Disabling system")
             gv.sd["en"] = 0
             return KeypadPlugin.EXECUTE_COMPLETE
         elif hold_function == KeypadPlugin.HLDFN_RESTART_SYSTEM:
             # Restart system
-            print("Restarting system")
+            print(u"Keypad plugin: Restarting system")
             # Beep now because we won't get a chance to later
-            self.buzzerSignal.send(self.hold_function_executed_beep)
+            self._buzzer_signal.send(self.hold_function_executed_beep)
             restart()
             return KeypadPlugin.EXECUTE_COMPLETE
         elif hold_function == KeypadPlugin.HLDFN_REBOOT_OS:
             # Reboot operating system
-            print("Rebooting system")
+            print(u"Keypad plugin: Rebooting system")
             # Beep now because we won't get a chance to later
-            self.buzzerSignal.send(self.hold_function_executed_beep)
+            self._buzzer_signal.send(self.hold_function_executed_beep)
             reboot()
             return KeypadPlugin.EXECUTE_COMPLETE
         elif hold_function == KeypadPlugin.HLDFN_RESET_WATER_LEVEL:
             # Reset water level to 100%
-            print("Resetting water level to 100%")
-            KeypadPlugin.__set_water_level(100)
+            print(u"Keypad plugin: Resetting water level to 100%")
+            KeypadPlugin._set_water_level(100)
             return KeypadPlugin.EXECUTE_COMPLETE
         elif hold_function == KeypadPlugin.HLDFN_TOGGLE_RAIN_DELAY:
             if gv.sd["rd"] > 0:
                 # Deactivate rain delay
-                print("Deactivating rain delay")
+                print(u"Keypad plugin: Deactivating rain delay")
                 gv.sd["rd"] = 0
                 gv.sd["rdst"] = 0
                 jsave(gv.sd, "sd")
                 return KeypadPlugin.EXECUTE_TOGGLE_OFF
             else:
                 # Activate rain delay
-                print("Activating rain delay for %d hours" % self.rain_delay_hrs)
+                print(u"Keypad plugin: Activating rain delay for %d hours" % self.rain_delay_hrs)
                 gv.sd["rd"] = self.rain_delay_hrs
                 gv.sd["rdst"] = int(gv.now + gv.sd["rd"] * 3600)
                 stop_onrain()
@@ -567,19 +722,22 @@ class KeypadPlugin:
         elif hold_function == KeypadPlugin.HLDFN_TOGGLE_SYSTEM_EN:
             if gv.sd["en"]:
                 # Disable system
-                print("Disabling system")
+                print(u"Keypad plugin: Disabling system")
                 gv.sd["en"] = 0
                 return KeypadPlugin.EXECUTE_TOGGLE_OFF
             else:
                 # Enable system
-                print("Enabling system")
+                print(u"Keypad plugin: Enabling system")
                 gv.sd["en"] = 1
                 return KeypadPlugin.EXECUTE_TOGGLE_ON
         else:
-            print("Hold function not implemented")
+            print(u"Keypad plugin: Hold function not implemented")
             return KeypadPlugin.EXECUTE_FAILED
 
-    def __execute_value_function(self, command_value):
+    def _execute_value_function(self, command_value):
+        """
+        Executes the value function for the given value
+        """
         value = -1
         # Parse value
         try:
@@ -592,33 +750,33 @@ class KeypadPlugin:
             or self.selected_function == KeypadPlugin.FN_NONE
         ):
             if gv.sd["rd"] > 0:
-                print("Deactivating rain delay")
+                print(u"Keypad plugin: Deactivating rain delay")
                 gv.sd["rd"] = 0
                 gv.sd["rdst"] = 0
                 jsave(gv.sd, "sd")
             stationID = value
             # Start station and provide feedback
-            return stationID >= 0 and KeypadPlugin.__set_runonce_station(
+            return stationID >= 0 and KeypadPlugin._set_runonce_station(
                 stationID, self.keypad_manual_station_time_s
             )
         elif self.selected_function == KeypadPlugin.FN_MANUAL_PROGRAM:
             programID = value
             # Execute program and provide feedback
-            return programID >= 0 and KeypadPlugin.__set_runonce_program(programID)
+            return programID >= 0 and KeypadPlugin._set_runonce_program(programID)
         elif self.selected_function == KeypadPlugin.FN_WATER_LEVEL:
             water_level = value
-            return water_level >= 0 and KeypadPlugin.__set_water_level(water_level)
+            return water_level >= 0 and KeypadPlugin._set_water_level(water_level)
         elif self.selected_function == KeypadPlugin.FN_MANUAL_STATION_TIME:
             manual_station_time = value * 60
-            return manual_station_time > 0 and self.__set_manual_station_time(
+            return manual_station_time > 0 and self._set_manual_station_time(
                 manual_station_time
             )
         elif self.selected_function == KeypadPlugin.FN_RAIN_DELAY_TIME:
             rain_delay_time = value
-            return rain_delay_time > 0 and self.__set_rain_delay_time(rain_delay_time)
+            return rain_delay_time > 0 and self._set_rain_delay_time(rain_delay_time)
         elif self.selected_function == KeypadPlugin.FN_START_RAIN_DELAY:
             # Actvate rain delay
-            print("Activating rain delay for %d hours" % value)
+            print(u"Keypad plugin: Activating rain delay for %d hours" % value)
             gv.sd["rd"] = value
             if gv.sd["rd"] > 0:
                 gv.sd["rdst"] = int(gv.now + gv.sd["rd"] * 3600)
@@ -627,10 +785,10 @@ class KeypadPlugin:
             stop_onrain()
             return True
         else:
-            print("Keypad function not implemented")
+            print(u"Keypad plugin: Keypad function not implemented")
             return False
 
-    def __function_key_down(self, function_key):
+    def _function_key_down(self, function_key):
         if (
             function_key in self.hold_functions
             and self.hold_functions[function_key] != KeypadPlugin.HLDFN_NONE
@@ -639,16 +797,16 @@ class KeypadPlugin:
             and self.selectable_functions[function_key] != KeypadPlugin.FN_NONE
         ):
             # This key has either a value function or a hold function!
-            self.buzzerSignal.send(self.button_pressed_beep)  # Acknowledge press
+            self._buzzer_signal.send(self.button_pressed_beep)  # Acknowledge press
             use_hold_fn = False
             if (
                 function_key in self.hold_functions
                 and self.hold_functions[function_key] != KeypadPlugin.HLDFN_NONE
             ):
-                # There is a hold function assinged to this key; wait for up before deciding what to do
+                # There is a hold function assigned to this key; wait for up before deciding what to do
                 if (
-                    self.keypad.wait_for_key_char_up(
-                        function_key, self.key_hold_time_s, self.running
+                    self._keypad.wait_for_key_char_up(
+                        function_key, self.key_hold_time_s, self._running
                     )
                     >= self.key_hold_time_s
                 ):
@@ -656,68 +814,74 @@ class KeypadPlugin:
                     use_hold_fn = True
             if use_hold_fn:
                 # execute hold function
-                executionValue = self.__execute_hold_function(function_key)
+                executionValue = self._execute_hold_function(function_key)
                 if executionValue == KeypadPlugin.EXECUTE_COMPLETE:
                     # Executed
-                    self.buzzerSignal.send(self.hold_function_executed_beep)
+                    self._buzzer_signal.send(self.hold_function_executed_beep)
                 elif executionValue == KeypadPlugin.EXECUTE_TOGGLE_ON:
                     # Toggle On
-                    self.buzzerSignal.send(self.hold_function_toggle_on_beep)
+                    self._buzzer_signal.send(self.hold_function_toggle_on_beep)
                 elif executionValue == KeypadPlugin.EXECUTE_TOGGLE_OFF:
                     # Toggle Off
-                    self.buzzerSignal.send(self.hold_function_toggle_off_beep)
+                    self._buzzer_signal.send(self.hold_function_toggle_off_beep)
                 else:
-                    self.buzzerSignal.send(self.cancel_beep)
+                    self._buzzer_signal.send(self.cancel_beep)
             else:
                 # Set value function
-                if not self.__set_value_function(function_key):
-                    self.buzzerSignal.send(self.cancel_beep)
+                if not self._set_value_function(function_key):
+                    self._buzzer_signal.send(self.cancel_beep)
         else:
-            print("Nothing assigned to this key")
-            self.buzzerSignal.send(self.cancel_beep)
+            print(u"Keypad plugin: Nothing assigned to this key")
+            self._buzzer_signal.send(self.cancel_beep)
 
-    def __handle_value(self, first_key_down, down_keys):
+    def _handle_value(self, first_key_down, down_keys):
         # copy first button(s) pressed
         function_value = []
         if first_key_down is not None:
             function_value = list(first_key_down)
+        # Only append this first value (not clear) if a function key was selected (not default)
+        self._display_entry_text(function_value, append=self._function_selected)
         if len(function_value) > 0:
-            self.buzzerSignal.send(self.button_pressed_beep)  # Acknowledge first press
-        while self.running:
+            self._buzzer_signal.send(self.button_pressed_beep)  # Acknowledge first press
+        while self._running:
             # wait for up to timeout value for next key
-            c = self.keypad.getc(down_keys, self.keypad_press_timeout_s, self.running)
+            c = self._getc(down_keys, self.keypad_press_timeout_s)
             if c is None:
                 # There was an error; go to top of loop to wait for ready
                 return False
             elif len(c) == 0:
                 # Timeout occurred with no command
-                self.buzzerSignal.send(self.cancel_beep)  # Nack for timeout
+                self._buzzer_signal.send(self.cancel_beep)  # Nack for timeout
                 function_value = []
+                self._display_cancel()
                 break
             elif KeypadPlugin.ENTER_KEY in c:
                 # Execute command
-                if self.__execute_value_function(function_value):
-                    self.buzzerSignal.send(
+                if self._execute_value_function(function_value):
+                    self._buzzer_signal.send(
                         self.acknowledge_command_beep
                     )  # Acknowledge execution
                 else:
-                    self.buzzerSignal.send(
+                    self._buzzer_signal.send(
                         self.cancel_beep
                     )  # Nack for invalid station or exception
                 function_value = []
+                self._display_cancel()
                 # reset selected function to default
-                self.__reset_selected_function()
+                self._reset_selected_function()
                 break
             elif KeypadPlugin.CANCEL_KEY in c:
                 # Canceled
-                self.buzzerSignal.send(self.cancel_beep)  # Nack for canceled
+                self._buzzer_signal.send(self.cancel_beep)  # Nack for canceled
                 function_value = []
+                self._display_cancel()
                 break
             elif len(function_value) + len(c) > KeypadPlugin.MAX_NUMBER_ENTRY:
                 # Too many numbers entered
-                print("Entered value is too large! Canceling...")
-                self.buzzerSignal.send(self.cancel_beep)  # Error
+                print(u"Keypad plugin: Entered value is too large! Canceling...")
+                self._buzzer_signal.send(self.cancel_beep)  # Error
                 function_value = []
+                self._display_cancel()
                 break
             else:
                 valid_key = True
@@ -731,21 +895,23 @@ class KeypadPlugin:
                 if valid_key:
                     # Only save number and sound buzzer if function selected
                     if self.selected_function != KeypadPlugin.FN_NONE:
-                        self.buzzerSignal.send(
+                        self._buzzer_signal.send(
                             self.button_pressed_beep
                         )  # Acknowledge press
                         # append pressed key(s)
                         for v in c:
                             function_value.append(v)
+                        self._display_entry_text(function_value, append=True)
                 else:
                     # Invalid key
-                    print("Invalid key! Canceling...")
-                    self.buzzerSignal.send(self.cancel_beep)
+                    print(u"Keypad plugin: Invalid key! Canceling...")
+                    self._buzzer_signal.send(self.cancel_beep)
                     function_value = []
+                    self._display_cancel()
                     break
         return True
 
-    def __get_first_function_key(self, c):
+    def _get_first_function_key(self, c):
         function_key = None
         for v in c:
             if v in KeypadPlugin.FUNCTION_KEYS:
@@ -753,53 +919,50 @@ class KeypadPlugin:
                 break
         return function_key
 
-    def __reset_selected_function(self):
+    def _reset_selected_function(self):
         self.selected_function = self.default_function
-        self.function_selected = False
+        self._function_selected = False
 
-    def __keypad_plugin_task(self):
+    def _keypad_plugin_task(self):
         # Load settings from file
         keypad_plugin.load_keypad_settings()
         # set selected function to default
-        self.__reset_selected_function()
-        while self.running:
+        self._reset_selected_function()
+        while self._running:
             # Wait for hardware
-            if not self.__wait_for_ready():
+            if not self._wait_for_ready():
                 break
             #
-            function_value = []
             down_keys = []
             # First button press
-            if self.function_selected:
+            if self._function_selected:
                 # User has selected a function; wait up until timeout for next key
-                c = self.keypad.getc(
-                    down_keys, self.keypad_press_timeout_s, self.running
-                )
+                c = self._getc(down_keys, self.keypad_press_timeout_s)
                 if len(c) == 0:
                     # Timeout with nothing entered
-                    self.__reset_selected_function()
-                    self.buzzerSignal.send(self.cancel_beep)
+                    self._reset_selected_function()
+                    self._buzzer_signal.send(self.cancel_beep)
+                    self._display_cancel()
                     continue
             else:
                 # Wait indefinitely for key
-                c = self.keypad.getc(down_keys, -1, self.running)
+                c = self._getc(down_keys, -1)
             if c is None or len(c) == 0:
                 # There was an error; go to top of loop to wait for ready
                 continue
             elif KeypadPlugin.ENTER_KEY in c or KeypadPlugin.CANCEL_KEY in c:
                 # No command or cancel received
                 # buzz for cancel, reset, and go to next iteration
-                self.buzzerSignal.send(
+                self._buzzer_signal.send(
                     self.cancel_beep
                 )  # Nack for no command or cancel
-                function_value = []
+                self._reset_selected_function()
+                self._display_cancel()
             else:
                 # Check if function key was pressed
-                function_key = self.__get_first_function_key(c)
+                function_key = self._get_first_function_key(c)
                 if function_key is not None:
-                    self.__function_key_down(function_key)
-                    # Reset command and go to next iteration
-                    function_value = []
+                    self._function_key_down(function_key)
                 else:
                     # Check if number key is pressed
                     hasNumberKey = False
@@ -811,31 +974,36 @@ class KeypadPlugin:
                     if (not hasNumberKey) or (
                         self.selected_function != KeypadPlugin.FN_NONE
                     ):
-                        self.__handle_value(c, down_keys)
-        print("Exiting keypad task")
+                        self._handle_value(c, down_keys)
+                    self._reset_selected_function()
+        print(u"Keypad plugin: Exiting keypad task")
         return
 
     def run(self):
-        if self.running and self.running_thread is not None:
-            print("Keypad plugin is already running")
-        elif not keypad_plugin.init_pins():
-            print("Could not start keypad plugin: GPIO pins init failed")
+        """
+        Starts the Keypad thread
+        """
+        if self._running and self._running_thread is not None:
+            print(u"Keypad plugin: Run called when already running")
+        elif not self.init_pins():
+            print(u"Keypad plugin: Could not start keypad plugin: GPIO pins init failed")
         else:
-            self.running = True
-            self.running_thread = Thread(target=keypad_plugin.__keypad_plugin_task)
-            self.running_thread.start()
-        return self.running
+            self._set_running(True)
+            self._running_thread = Thread(target=keypad_plugin._keypad_plugin_task)
+            self._running_thread.start()
+        return self._running
 
     def stop(self):
-        stopped = False
-        if self.running_thread is not None:
-            self.running = False
-            stopped = self.running_thread.join(0.5)
-            if stopped:
-                self.running_thread = None
-        else:
-            stopped = True
-        return stopped
+        """
+        Stops the keypad thread
+        Returns True if successfully stopped; False otherwise
+        """
+        if self._running_thread is not None:
+            self._set_running(False)
+            self._running_thread.join(0.5)
+            if not self._running_thread.is_alive():
+                self._running_thread = None
+        return (self._running_thread is None)
 
     @staticmethod
     def __button_list_to_string(l):
@@ -863,7 +1031,7 @@ class KeypadPlugin:
         return flist
 
     def load_from_dict(self, settings):
-        self.__set_default_settings()
+        self._set_default_settings()
         if settings is None:
             return
         if "mstationtime" in settings:
@@ -900,7 +1068,7 @@ class KeypadPlugin:
             }
         if "defaultfn" in settings:
             self.default_function = int(settings["defaultfn"])
-            self.__reset_selected_function()
+            self._reset_selected_function()
         if "acknowledge_command_beep" in settings:
             self.acknowledge_command_beep = KeypadPlugin.__string_to_button_list(
                 settings["acknowledge_command_beep"]
@@ -929,7 +1097,7 @@ class KeypadPlugin:
             with open("./data/keypad.json", "r") as f:
                 self.load_from_dict(json.load(f))
         except:
-            self.__set_default_settings()
+            self._set_default_settings()
         return
 
     def save_keypad_settings(self):
@@ -968,11 +1136,11 @@ class KeypadPlugin:
     ### Restart ###
     # Restart signal needs to be handled in 1 second or less
     def notify_restart(self, name, **kw):
-        print("Keypad plugin received restart signal; stopping keypad task...")
+        print(u"Keypad plugin: Received restart signal; stopping keypad task...")
         if self.stop():
-            print("Keypad task stopped")
+            print(u"Keypad plugin: Keypad task stopped")
         else:
-            print("Could not stop keypad task")
+            print(u"Keypad plugin: Could not stop keypad task")
 
 
 # Keypad plugin object
@@ -1012,8 +1180,8 @@ class save_settings(ProtectedPage):
 
 
 # Attach to restart signal
-restart = signal("restart")
-restart.connect(keypad_plugin.notify_restart)
+restart_signal = signal("restart")
+restart_signal.connect(keypad_plugin.notify_restart)
 
 #  Run when plugin is loaded
 keypad_plugin.run()

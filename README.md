@@ -18,6 +18,7 @@ plugins through the "buzzer_beep" signal. Buzzer should be connected to GPIO pin
 california_monthly
 ---------
 Provides automatic monthly adjustment of irrigation times based on historical weather data.
+Requires SIP version 4.1.7 or later.
 
 cli_control
 ----------
@@ -43,7 +44,8 @@ Uses I2C for LCD 16x2 char data display
 
 monthly_adj
 ----------
-Adjust irrigation time each month
+Adjust irrigation time each month.
+Requires SIP version 4.1.7 or later.
 
 mqtt
 ----------

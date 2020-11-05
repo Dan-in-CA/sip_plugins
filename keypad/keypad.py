@@ -304,6 +304,9 @@ class ScanningKeypad:
         return self.wait_for_key_index_up(key_index, timeout_s, running)
 
 
+def float_to_field_str(value):
+    return format(value, '0.2f').rstrip('0').rstrip('.')
+
 # This class contains the functionality for this plugin
 class KeypadPlugin:
     # Constants
@@ -420,7 +423,8 @@ class KeypadPlugin:
 
         # Beeps
         self.acknowledge_command_beep = 0.100
-        self.cancel_beep = [0.100, 0.100, 0.500]
+        self.cancel_beep = [0.050, 0.050, 0.050]
+        self.error_beep = [0.100, 0.100, 0.500]
         self.hold_function_executed_beep = [0.100, 0.050, 0.100]
         self.hold_function_toggle_on_beep = [0.050, 0.050, 0.200]
         self.hold_function_toggle_off_beep = [0.200, 0.050, 0.050]
@@ -825,14 +829,15 @@ class KeypadPlugin:
                     # Toggle Off
                     self._buzzer_signal.send(self.hold_function_toggle_off_beep)
                 else:
-                    self._buzzer_signal.send(self.cancel_beep)
+                    # Something else
+                    self._buzzer_signal.send(self.error_beep)
             else:
                 # Set value function
                 if not self._set_value_function(function_key):
-                    self._buzzer_signal.send(self.cancel_beep)
+                    self._buzzer_signal.send(self.error_beep)
         else:
             print(u"Keypad plugin: Nothing assigned to this key")
-            self._buzzer_signal.send(self.cancel_beep)
+            self._buzzer_signal.send(self.error_beep)
 
     def _handle_value(self, first_key_down, down_keys):
         # copy first button(s) pressed
@@ -851,7 +856,7 @@ class KeypadPlugin:
                 return False
             elif len(c) == 0:
                 # Timeout occurred with no command
-                self._buzzer_signal.send(self.cancel_beep)  # Nack for timeout
+                self._buzzer_signal.send(self.error_beep)  # Nack for timeout
                 function_value = []
                 self._display_cancel()
                 break
@@ -863,7 +868,7 @@ class KeypadPlugin:
                     )  # Acknowledge execution
                 else:
                     self._buzzer_signal.send(
-                        self.cancel_beep
+                        self.error_beep
                     )  # Nack for invalid station or exception
                 function_value = []
                 self._display_cancel()
@@ -879,7 +884,7 @@ class KeypadPlugin:
             elif len(function_value) + len(c) > KeypadPlugin.MAX_NUMBER_ENTRY:
                 # Too many numbers entered
                 print(u"Keypad plugin: Entered value is too large! Canceling...")
-                self._buzzer_signal.send(self.cancel_beep)  # Error
+                self._buzzer_signal.send(self.error_beep)  # Error
                 function_value = []
                 self._display_cancel()
                 break
@@ -905,7 +910,7 @@ class KeypadPlugin:
                 else:
                     # Invalid key
                     print(u"Keypad plugin: Invalid key! Canceling...")
-                    self._buzzer_signal.send(self.cancel_beep)
+                    self._buzzer_signal.send(self.error_beep)
                     function_value = []
                     self._display_cancel()
                     break
@@ -941,7 +946,7 @@ class KeypadPlugin:
                 if len(c) == 0:
                     # Timeout with nothing entered
                     self._reset_selected_function()
-                    self._buzzer_signal.send(self.cancel_beep)
+                    self._buzzer_signal.send(self.error_beep)
                     self._display_cancel()
                     continue
             else:
@@ -950,14 +955,16 @@ class KeypadPlugin:
             if c is None or len(c) == 0:
                 # There was an error; go to top of loop to wait for ready
                 continue
-            elif KeypadPlugin.ENTER_KEY in c or KeypadPlugin.CANCEL_KEY in c:
-                # No command or cancel received
+            elif KeypadPlugin.CANCEL_KEY in c:
+                # Cancel received
                 # buzz for cancel, reset, and go to next iteration
-                self._buzzer_signal.send(
-                    self.cancel_beep
-                )  # Nack for no command or cancel
+                self._buzzer_signal.send(self.cancel_beep)
                 self._reset_selected_function()
                 self._display_cancel()
+            elif KeypadPlugin.ENTER_KEY in c:
+                # No function or value with enter key pressed
+                # Just give press acknowledgement
+                self._buzzer_signal.send(self.button_pressed_beep)
             else:
                 # Check if function key was pressed
                 function_key = self._get_first_function_key(c)
@@ -1035,13 +1042,13 @@ class KeypadPlugin:
         if settings is None:
             return
         if "mstationtime" in settings:
-            self.keypad_manual_station_time_s = int(settings["mstationtime"]) * 60
+            self.keypad_manual_station_time_s = float(settings["mstationtime"]) * 60
         if "keytimeout" in settings:
-            self.keypad_press_timeout_s = int(settings["keytimeout"])
+            self.keypad_press_timeout_s = float(settings["keytimeout"])
         if "hrraindelay" in settings:
-            self.rain_delay_hrs = int(settings["hrraindelay"])
+            self.rain_delay_hrs = float(settings["hrraindelay"])
         if "keyholdtime" in settings:
-            self.key_hold_time_s = int(settings["keyholdtime"])
+            self.key_hold_time_s = float(settings["keyholdtime"])
         if (
             "akeyfn" in settings
             and "bkeyfn" in settings
@@ -1077,6 +1084,10 @@ class KeypadPlugin:
             self.cancel_beep = KeypadPlugin.__string_to_button_list(
                 settings["cancel_beep"]
             )
+        if "error_beep" in settings:
+            self.error_beep = KeypadPlugin.__string_to_button_list(
+                settings["error_beep"]
+            )
         if "hold_function_executed_beep" in settings:
             self.hold_function_executed_beep = KeypadPlugin.__string_to_button_list(
                 settings["hold_function_executed_beep"]
@@ -1102,10 +1113,10 @@ class KeypadPlugin:
 
     def save_keypad_settings(self):
         settings = {
-            "mstationtime": str(self.keypad_manual_station_time_s / 60),
-            "keytimeout": str(self.keypad_press_timeout_s),
-            "hrraindelay": str(self.rain_delay_hrs),
-            "keyholdtime": str(self.key_hold_time_s),
+            "mstationtime": float_to_field_str(self.keypad_manual_station_time_s / 60),
+            "keytimeout": float_to_field_str(self.keypad_press_timeout_s),
+            "hrraindelay": float_to_field_str(self.rain_delay_hrs),
+            "keyholdtime": float_to_field_str(self.key_hold_time_s),
             "akeyfn": str(self.selectable_functions["A"]),
             "bkeyfn": str(self.selectable_functions["B"]),
             "ckeyfn": str(self.selectable_functions["C"]),
@@ -1119,6 +1130,7 @@ class KeypadPlugin:
                 self.acknowledge_command_beep
             ),
             "cancel_beep": KeypadPlugin.__button_list_to_string(self.cancel_beep),
+            "error_beep": KeypadPlugin.__button_list_to_string(self.error_beep),
             "hold_function_executed_beep": KeypadPlugin.__button_list_to_string(
                 self.hold_function_executed_beep
             ),

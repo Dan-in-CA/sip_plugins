@@ -680,16 +680,8 @@ class Lcd:
                 else:
                     # Left justification by default
                     del seq[i][-columnsToRemove:]
-        for i in range(len(seq)):
-            self._write_data_sequence(seq[i])
-        #screen_copy = list(self._screen)
-        #for i in range(len(self._screen)):
-        #    screen_copy[i] = bytearray(self._screen[i])
-        #sleep(0.25)
-        #self.clear()
-        #self._lcd_set_print_area_max()
-        #for row in screen_copy:
-        #    self._write_data_sequence(row)
+        for row in seq:
+            self._write_data_sequence(row)
         return 1
 
 

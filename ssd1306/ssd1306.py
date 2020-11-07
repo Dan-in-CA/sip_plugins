@@ -3,6 +3,7 @@
 # This plugin handles a 128x64 SSD1306 LCD
 
 from __future__ import print_function
+import traceback
 import web  # web.py framework
 import gv  # Get access to sip's settings
 from urls import urls  # Get access to sip's URLs
@@ -34,15 +35,6 @@ import time
 # for i2c bus driver
 import smbus
 
-# Add new URLs to access classes in this plugin.
-urls.extend([
-   '/ssd1306-sp', 'plugins.ssd1306.settings',
-   '/ssd1306-save', 'plugins.ssd1306.save_settings'
-   ])
-
-# Add this plugin to the PLUGINS menu ['Menu Name', 'URL'], (Optional)
-gv.plugin_menu.append(['SSD1306 Plugin', '/ssd1306-sp'])
-
 class Lcd:
     """
     LCD control class for SSD1306 I2C LCD
@@ -61,105 +53,105 @@ class Lcd:
     LCD_ASCII_BEGIN = 0x20
     LCD_ASCII_MAX = 0x7F
     LCD_ASCII = [
-        [0x00, 0x00, 0x00, 0x00, 0x00],  # (space)
-        [0x00, 0x00, 0x5F, 0x00, 0x00],  # !
-        [0x00, 0x07, 0x00, 0x07, 0x00],  # "
-        [0x14, 0x7F, 0x14, 0x7F, 0x14],  # #
-        [0x24, 0x2A, 0x7F, 0x2A, 0x12],  # $
-        [0x23, 0x13, 0x08, 0x64, 0x62],  # %
-        [0x36, 0x49, 0x55, 0x22, 0x50],  # &
-        [0x00, 0x05, 0x03, 0x00, 0x00],  # '
-        [0x00, 0x1C, 0x22, 0x41, 0x00],  # (
-        [0x00, 0x41, 0x22, 0x1C, 0x00],  # )
-        [0x08, 0x2A, 0x1C, 0x2A, 0x08],  # *
-        [0x08, 0x08, 0x3E, 0x08, 0x08],  # +
-        [0x00, 0x50, 0x30, 0x00, 0x00],  # ,
-        [0x08, 0x08, 0x08, 0x08, 0x08],  # -
-        [0x00, 0x60, 0x60, 0x00, 0x00],  # .
-        [0x20, 0x10, 0x08, 0x04, 0x02],  # /
-        [0x3E, 0x51, 0x49, 0x45, 0x3E],  # 0
-        [0x00, 0x42, 0x7F, 0x40, 0x00],  # 1
-        [0x42, 0x61, 0x51, 0x49, 0x46],  # 2
-        [0x21, 0x41, 0x45, 0x4B, 0x31],  # 3
-        [0x18, 0x14, 0x12, 0x7F, 0x10],  # 4
-        [0x27, 0x45, 0x45, 0x45, 0x39],  # 5
-        [0x3C, 0x4A, 0x49, 0x49, 0x30],  # 6
-        [0x01, 0x71, 0x09, 0x05, 0x03],  # 7
-        [0x36, 0x49, 0x49, 0x49, 0x36],  # 8
-        [0x06, 0x49, 0x49, 0x29, 0x1E],  # 9
-        [0x00, 0x36, 0x36, 0x00, 0x00],  # :
-        [0x00, 0x56, 0x36, 0x00, 0x00],  # ;
-        [0x00, 0x08, 0x14, 0x22, 0x41],  # <
-        [0x14, 0x14, 0x14, 0x14, 0x14],  # =
-        [0x41, 0x22, 0x14, 0x08, 0x00],  # >
-        [0x02, 0x01, 0x51, 0x09, 0x06],  # ?
-        [0x32, 0x49, 0x79, 0x41, 0x3E],  # @
-        [0x7E, 0x11, 0x11, 0x11, 0x7E],  # A
-        [0x7F, 0x49, 0x49, 0x49, 0x36],  # B
-        [0x3E, 0x41, 0x41, 0x41, 0x22],  # C
-        [0x7F, 0x41, 0x41, 0x22, 0x1C],  # D
-        [0x7F, 0x49, 0x49, 0x49, 0x41],  # E
-        [0x7F, 0x09, 0x09, 0x01, 0x01],  # F
-        [0x3E, 0x41, 0x41, 0x51, 0x32],  # G
-        [0x7F, 0x08, 0x08, 0x08, 0x7F],  # H
-        [0x00, 0x41, 0x7F, 0x41, 0x00],  # I
-        [0x20, 0x40, 0x41, 0x3F, 0x01],  # J
-        [0x7F, 0x08, 0x14, 0x22, 0x41],  # K
-        [0x7F, 0x40, 0x40, 0x40, 0x40],  # L
-        [0x7F, 0x02, 0x04, 0x02, 0x7F],  # M
-        [0x7F, 0x04, 0x08, 0x10, 0x7F],  # N
-        [0x3E, 0x41, 0x41, 0x41, 0x3E],  # O
-        [0x7F, 0x09, 0x09, 0x09, 0x06],  # P
-        [0x3E, 0x41, 0x51, 0x21, 0x5E],  # Q
-        [0x7F, 0x09, 0x19, 0x29, 0x46],  # R
-        [0x46, 0x49, 0x49, 0x49, 0x31],  # S
-        [0x01, 0x01, 0x7F, 0x01, 0x01],  # T
-        [0x3F, 0x40, 0x40, 0x40, 0x3F],  # U
-        [0x1F, 0x20, 0x40, 0x20, 0x1F],  # V
-        [0x7F, 0x20, 0x18, 0x20, 0x7F],  # W
-        [0x63, 0x14, 0x08, 0x14, 0x63],  # X
-        [0x03, 0x04, 0x78, 0x04, 0x03],  # Y
-        [0x61, 0x51, 0x49, 0x45, 0x43],  # Z
-        [0x00, 0x00, 0x7F, 0x41, 0x41],  # [
-        [0x02, 0x04, 0x08, 0x10, 0x20],  # \
-        [0x41, 0x41, 0x7F, 0x00, 0x00],  # ]
-        [0x04, 0x02, 0x01, 0x02, 0x04],  # ^
-        [0x40, 0x40, 0x40, 0x40, 0x40],  # _
-        [0x00, 0x01, 0x02, 0x04, 0x00],  # `
-        [0x20, 0x54, 0x54, 0x54, 0x78],  # a
-        [0x7F, 0x48, 0x44, 0x44, 0x38],  # b
-        [0x38, 0x44, 0x44, 0x44, 0x20],  # c
-        [0x38, 0x44, 0x44, 0x48, 0x7F],  # d
-        [0x38, 0x54, 0x54, 0x54, 0x18],  # e
-        [0x08, 0x7E, 0x09, 0x01, 0x02],  # f
-        [0x08, 0x14, 0x54, 0x54, 0x3C],  # g
-        [0x7F, 0x08, 0x04, 0x04, 0x78],  # h
-        [0x00, 0x44, 0x7D, 0x40, 0x00],  # i
-        [0x20, 0x40, 0x44, 0x3D, 0x00],  # j
-        [0x00, 0x7F, 0x10, 0x28, 0x44],  # k
-        [0x00, 0x41, 0x7F, 0x40, 0x00],  # l
-        [0x7C, 0x04, 0x18, 0x04, 0x78],  # m
-        [0x7C, 0x08, 0x04, 0x04, 0x78],  # n
-        [0x38, 0x44, 0x44, 0x44, 0x38],  # o
-        [0x7C, 0x14, 0x14, 0x14, 0x08],  # p
-        [0x08, 0x14, 0x14, 0x18, 0x7C],  # q
-        [0x7C, 0x08, 0x04, 0x04, 0x08],  # r
-        [0x48, 0x54, 0x54, 0x54, 0x20],  # s
-        [0x04, 0x3F, 0x44, 0x40, 0x20],  # t
-        [0x3C, 0x40, 0x40, 0x20, 0x7C],  # u
-        [0x1C, 0x20, 0x40, 0x20, 0x1C],  # v
-        [0x3C, 0x40, 0x30, 0x40, 0x3C],  # w
-        [0x44, 0x28, 0x10, 0x28, 0x44],  # x
-        [0x0C, 0x50, 0x50, 0x50, 0x3C],  # y
-        [0x44, 0x64, 0x54, 0x4C, 0x44],  # z
-        [0x00, 0x08, 0x36, 0x41, 0x00],  # {
-        [0x00, 0x00, 0x7F, 0x00, 0x00],  # |
-        [0x00, 0x41, 0x36, 0x08, 0x00],  # }
-        [0x08, 0x08, 0x2A, 0x1C, 0x08],  # ->
-        [0x08, 0x1C, 0x2A, 0x08, 0x08],  # <-
+        bytearray([0x00, 0x00, 0x00, 0x00, 0x00]),  # (space)
+        bytearray([0x00, 0x00, 0x5F, 0x00, 0x00]),  # !
+        bytearray([0x00, 0x07, 0x00, 0x07, 0x00]),  # "
+        bytearray([0x14, 0x7F, 0x14, 0x7F, 0x14]),  # #
+        bytearray([0x24, 0x2A, 0x7F, 0x2A, 0x12]),  # $
+        bytearray([0x23, 0x13, 0x08, 0x64, 0x62]),  # %
+        bytearray([0x36, 0x49, 0x55, 0x22, 0x50]),  # &
+        bytearray([0x00, 0x05, 0x03, 0x00, 0x00]),  # '
+        bytearray([0x00, 0x1C, 0x22, 0x41, 0x00]),  # (
+        bytearray([0x00, 0x41, 0x22, 0x1C, 0x00]),  # )
+        bytearray([0x08, 0x2A, 0x1C, 0x2A, 0x08]),  # *
+        bytearray([0x08, 0x08, 0x3E, 0x08, 0x08]),  # +
+        bytearray([0x00, 0x50, 0x30, 0x00, 0x00]),  # ,
+        bytearray([0x08, 0x08, 0x08, 0x08, 0x08]),  # -
+        bytearray([0x00, 0x60, 0x60, 0x00, 0x00]),  # .
+        bytearray([0x20, 0x10, 0x08, 0x04, 0x02]),  # /
+        bytearray([0x3E, 0x51, 0x49, 0x45, 0x3E]),  # 0
+        bytearray([0x00, 0x42, 0x7F, 0x40, 0x00]),  # 1
+        bytearray([0x42, 0x61, 0x51, 0x49, 0x46]),  # 2
+        bytearray([0x21, 0x41, 0x45, 0x4B, 0x31]),  # 3
+        bytearray([0x18, 0x14, 0x12, 0x7F, 0x10]),  # 4
+        bytearray([0x27, 0x45, 0x45, 0x45, 0x39]),  # 5
+        bytearray([0x3C, 0x4A, 0x49, 0x49, 0x30]),  # 6
+        bytearray([0x01, 0x71, 0x09, 0x05, 0x03]),  # 7
+        bytearray([0x36, 0x49, 0x49, 0x49, 0x36]),  # 8
+        bytearray([0x06, 0x49, 0x49, 0x29, 0x1E]),  # 9
+        bytearray([0x00, 0x36, 0x36, 0x00, 0x00]),  # :
+        bytearray([0x00, 0x56, 0x36, 0x00, 0x00]),  # ;
+        bytearray([0x00, 0x08, 0x14, 0x22, 0x41]),  # <
+        bytearray([0x14, 0x14, 0x14, 0x14, 0x14]),  # =
+        bytearray([0x41, 0x22, 0x14, 0x08, 0x00]),  # >
+        bytearray([0x02, 0x01, 0x51, 0x09, 0x06]),  # ?
+        bytearray([0x32, 0x49, 0x79, 0x41, 0x3E]),  # @
+        bytearray([0x7E, 0x11, 0x11, 0x11, 0x7E]),  # A
+        bytearray([0x7F, 0x49, 0x49, 0x49, 0x36]),  # B
+        bytearray([0x3E, 0x41, 0x41, 0x41, 0x22]),  # C
+        bytearray([0x7F, 0x41, 0x41, 0x22, 0x1C]),  # D
+        bytearray([0x7F, 0x49, 0x49, 0x49, 0x41]),  # E
+        bytearray([0x7F, 0x09, 0x09, 0x01, 0x01]),  # F
+        bytearray([0x3E, 0x41, 0x41, 0x51, 0x32]),  # G
+        bytearray([0x7F, 0x08, 0x08, 0x08, 0x7F]),  # H
+        bytearray([0x00, 0x41, 0x7F, 0x41, 0x00]),  # I
+        bytearray([0x20, 0x40, 0x41, 0x3F, 0x01]),  # J
+        bytearray([0x7F, 0x08, 0x14, 0x22, 0x41]),  # K
+        bytearray([0x7F, 0x40, 0x40, 0x40, 0x40]),  # L
+        bytearray([0x7F, 0x02, 0x04, 0x02, 0x7F]),  # M
+        bytearray([0x7F, 0x04, 0x08, 0x10, 0x7F]),  # N
+        bytearray([0x3E, 0x41, 0x41, 0x41, 0x3E]),  # O
+        bytearray([0x7F, 0x09, 0x09, 0x09, 0x06]),  # P
+        bytearray([0x3E, 0x41, 0x51, 0x21, 0x5E]),  # Q
+        bytearray([0x7F, 0x09, 0x19, 0x29, 0x46]),  # R
+        bytearray([0x46, 0x49, 0x49, 0x49, 0x31]),  # S
+        bytearray([0x01, 0x01, 0x7F, 0x01, 0x01]),  # T
+        bytearray([0x3F, 0x40, 0x40, 0x40, 0x3F]),  # U
+        bytearray([0x1F, 0x20, 0x40, 0x20, 0x1F]),  # V
+        bytearray([0x7F, 0x20, 0x18, 0x20, 0x7F]),  # W
+        bytearray([0x63, 0x14, 0x08, 0x14, 0x63]),  # X
+        bytearray([0x03, 0x04, 0x78, 0x04, 0x03]),  # Y
+        bytearray([0x61, 0x51, 0x49, 0x45, 0x43]),  # Z
+        bytearray([0x00, 0x00, 0x7F, 0x41, 0x41]),  # [
+        bytearray([0x02, 0x04, 0x08, 0x10, 0x20]),  # \
+        bytearray([0x41, 0x41, 0x7F, 0x00, 0x00]),  # ]
+        bytearray([0x04, 0x02, 0x01, 0x02, 0x04]),  # ^
+        bytearray([0x40, 0x40, 0x40, 0x40, 0x40]),  # _
+        bytearray([0x00, 0x01, 0x02, 0x04, 0x00]),  # `
+        bytearray([0x20, 0x54, 0x54, 0x54, 0x78]),  # a
+        bytearray([0x7F, 0x48, 0x44, 0x44, 0x38]),  # b
+        bytearray([0x38, 0x44, 0x44, 0x44, 0x20]),  # c
+        bytearray([0x38, 0x44, 0x44, 0x48, 0x7F]),  # d
+        bytearray([0x38, 0x54, 0x54, 0x54, 0x18]),  # e
+        bytearray([0x08, 0x7E, 0x09, 0x01, 0x02]),  # f
+        bytearray([0x08, 0x14, 0x54, 0x54, 0x3C]),  # g
+        bytearray([0x7F, 0x08, 0x04, 0x04, 0x78]),  # h
+        bytearray([0x00, 0x44, 0x7D, 0x40, 0x00]),  # i
+        bytearray([0x20, 0x40, 0x44, 0x3D, 0x00]),  # j
+        bytearray([0x00, 0x7F, 0x10, 0x28, 0x44]),  # k
+        bytearray([0x00, 0x41, 0x7F, 0x40, 0x00]),  # l
+        bytearray([0x7C, 0x04, 0x18, 0x04, 0x78]),  # m
+        bytearray([0x7C, 0x08, 0x04, 0x04, 0x78]),  # n
+        bytearray([0x38, 0x44, 0x44, 0x44, 0x38]),  # o
+        bytearray([0x7C, 0x14, 0x14, 0x14, 0x08]),  # p
+        bytearray([0x08, 0x14, 0x14, 0x18, 0x7C]),  # q
+        bytearray([0x7C, 0x08, 0x04, 0x04, 0x08]),  # r
+        bytearray([0x48, 0x54, 0x54, 0x54, 0x20]),  # s
+        bytearray([0x04, 0x3F, 0x44, 0x40, 0x20]),  # t
+        bytearray([0x3C, 0x40, 0x40, 0x20, 0x7C]),  # u
+        bytearray([0x1C, 0x20, 0x40, 0x20, 0x1C]),  # v
+        bytearray([0x3C, 0x40, 0x30, 0x40, 0x3C]),  # w
+        bytearray([0x44, 0x28, 0x10, 0x28, 0x44]),  # x
+        bytearray([0x0C, 0x50, 0x50, 0x50, 0x3C]),  # y
+        bytearray([0x44, 0x64, 0x54, 0x4C, 0x44]),  # z
+        bytearray([0x00, 0x08, 0x36, 0x41, 0x00]),  # {
+        bytearray([0x00, 0x00, 0x7F, 0x00, 0x00]),  # |
+        bytearray([0x00, 0x41, 0x36, 0x08, 0x00]),  # }
+        bytearray([0x08, 0x08, 0x2A, 0x1C, 0x08]),  # ->
+        bytearray([0x08, 0x1C, 0x2A, 0x08, 0x08]),  # <-
     ]
     # unknown character value
-    char_other = [0x7F, 0x7F, 0x7F, 0x7F, 0x7F]
+    char_other = bytearray([0x7F, 0x7F, 0x7F, 0x7F, 0x7F])
 
     def __init__(self,
                  i2c_hw_addr=0x78,
@@ -189,7 +181,8 @@ class Lcd:
         self._min_row_addr = 0
         # note: ssd1306 addresses rows by 8 vertical pixels at a time, so the screen height had
         #       better be divisible by 8 (rounding up to the nearest 8 here to be sure)
-        self._max_row_addr = (screen_pixel_height + 7) // 8 - 1
+        num_rows = (screen_pixel_height + 7) // 8
+        self._max_row_addr = num_rows - 1
         # last selected view range
         self._gmin_col = self._min_col_addr
         self._gmax_col = self._max_col_addr
@@ -198,6 +191,8 @@ class Lcd:
         # current column and row
         self._current_col = self._min_col_addr
         self._current_row = self._min_row_addr
+        # A copy of what is currently displayed
+        self._screen = [bytearray(screen_pixel_width) for _ in range(num_rows)]
         # write failure flag
         self._write_failure = False
         # The current power state (True for on; False for off)
@@ -214,18 +209,56 @@ class Lcd:
             self._enabled = False
             self._force_power_off()
 
-    def _lcd_increment_current(self, x):
+    def _set_screen_bytes(self, b):
         """
-        Increments the current column/row values based on number of data values written
-        Inputs: x - Number of columns to increment (to the right then down)
+        Sets internal screen array and increments the current column/row values based on number
+        of data values written
+        Inputs: b - A list of bytes to write at current position
         """
+        # Compute current selection size
         columns = self._gmax_col - self._gmin_col + 1
         rows = self._gmax_row - self._gmin_row + 1
-        self._current_col += x
-        self._current_row = (
-            ((self._current_col // columns) + self._current_row) % rows
-        ) + self._gmin_row
-        self._current_col = (self._current_col % columns) + self._gmin_col
+        #
+        def lcd_add_to_current(x):
+            """
+            Increments the current column/row values based on number of data values written
+            Inputs: x - Number of columns to increment (to the right then down)
+            """
+            new_col = self._current_col + x
+            new_row = (
+                ((new_col // columns) + self._current_row) % rows
+            ) + self._gmin_row
+            new_col = (new_col % columns) + self._gmin_col
+            return (new_row, new_col)
+        # Handle case where length of b is more than current selection size
+        if len(b) > (columns * rows):
+            extra = (columns * rows) - len(b)
+            b = b[extra:]
+            (self._current_row, self._current_col) = lcd_add_to_current(extra)
+        # Write the screen
+        (new_row, new_col) = lcd_add_to_current(len(b))
+        if new_row == self._current_row and new_col > self._current_col:
+            # All changes confined to a single row (easy)
+            self._screen[self._current_row][self._current_col:new_col] = b
+        else:
+            # Changes to be written to more than one row
+            next_idx = 0
+            row = self._current_row
+            col = self._current_col
+            while next_idx < len(b):
+                cur_idx = next_idx
+                next_idx += columns
+                if next_idx > len(b):
+                    next_idx = len(b)
+                cnt = next_idx - cur_idx
+                self._screen[row][col:col + cnt] = b[cur_idx:next_idx]
+                row += 1
+                if row >= self._gmax_row:
+                    row = self._gmin_row
+                col = self._gmin_col
+        # Set new screen position
+        self._current_row = new_row
+        self._current_col = new_col
 
     def _write_control_byte(self, byte, force=False):
         """
@@ -263,7 +296,7 @@ class Lcd:
             if self._enabled:
                 try:
                     self._bus.write_byte_data(self._hw_write_addr, Lcd.DATA_BYTE, byte)
-                    self._lcd_increment_current(1)
+                    self._set_screen_bytes([byte])
                     status = True
                 except Exception as e:
                     if not self._write_failure:
@@ -292,18 +325,20 @@ class Lcd:
                     try:
                         # execute this chunk
                         self._bus.write_i2c_block_data(self._hw_write_addr, cmd, chunk)
-                        # If this was a data byte, then we need to update the display pointers by
-                        # the number of bytes given because they would have been incremented by the
-                        # SSD1306
-                        if cmd == Lcd.DATA_BYTE:
-                            self._lcd_increment_current(len(sequence))
-                        status = True
                     except Exception as e:
                         if not self._write_failure:
                             print(u"SSD1306 plugin: Failed to execute sequence. " +
                                 u"Is the hardware connected and the right address selected?" + \
                                 u":\n{}".format(e))
                             self._write_failure = True
+                    else:
+                        # If this was a data byte, then we need to update the display pointers by
+                        # the number of bytes given because they would have been incremented by the
+                        # SSD1306
+                        if cmd == Lcd.DATA_BYTE:
+                            self._set_screen_bytes(chunk)
+                        status = True
+
         finally:
             self._write_lock.release()
         return status
@@ -427,13 +462,7 @@ class Lcd:
             return False
         elif min_row < 0 or max_row > self._max_row_addr or max_row < min_row:
             return False
-        seq = []
-        seq.append(0x21)
-        seq.append(min_col)
-        seq.append(max_col)
-        seq.append(0x22)
-        seq.append(min_row)
-        seq.append(max_row)
+        seq = [0x21, min_col, max_col, 0x22, min_row, max_row]
         status = self._write_control_sequence(seq)
         self._gmin_col = min_col
         self._gmax_col = max_col
@@ -469,46 +498,47 @@ class Lcd:
             lst = [int(list_string[x:x+2], 16) for x in range(0, original_length * 2, 2)]
         return lst
 
-    def _generate_char_sequence(self, char, text_size_multiplier):
+    def _generate_char_sequence(self, char, size):
         """
         Resizes a single character into the rows needed to print
         Inputs: char - The ascii character to print
-                text_size_multiplier - integer size to size the character to [1,8]
+                n - integer size multiplier [1,N]
         Returns: A list of lists, defining what bits to write to each row
         """
         chv = ord(char)
         seq = []
         if chv >= Lcd.LCD_ASCII_BEGIN and chv <= Lcd.LCD_ASCII_MAX:
-            seq = list(Lcd.LCD_ASCII[chv - Lcd.LCD_ASCII_BEGIN])
+            seq = bytearray(Lcd.LCD_ASCII[chv - Lcd.LCD_ASCII_BEGIN])
         else:  # unknown
-            seq = list(Lcd.char_other)
-
-        seq.append(0x00) # 1 vertical line of space before next char
-
-        mask = 0x80
-        col_mask = [0] * text_size_multiplier
-        ret_seq = []
-        for _ in range(text_size_multiplier):
-            col_mask[0] = col_mask[0] >> 1
-            col_mask[0] = col_mask[0] | 0x80
-            ret_seq.append([0] * (len(seq) * text_size_multiplier))
-        for _ in range(8):
-            for j in range(len(seq)):
-                v = seq[j]
-                if v & mask:
-                    for k in range(text_size_multiplier):
-                        for l in range(text_size_multiplier):
-                            ret_seq[text_size_multiplier - k - 1][
-                                (j * text_size_multiplier + l)
-                            ] = (
-                                ret_seq[text_size_multiplier - k - 1][
-                                    (j * text_size_multiplier + l)
-                                ]
-                                | col_mask[k]
-                            )
-            col_mask = Lcd._bit_shift_right_byte_list(col_mask, text_size_multiplier)
-            mask = mask >> 1
-
+            seq = bytearray(Lcd.char_other)
+        # 1 vertical line of space before next char
+        seq.append(0x00)
+        # Make a 0-initialized 2-dimensional return array, n tall by n wide
+        ret_seq = [[0] * (len(seq) * size) for _ in range(size)]
+        # col_mask holds what vertical bits must be set in each row for the current bit
+        # (left to right) when the current bit is HIGH
+        col_mask = [0] * size
+        for i, mul in zip(range(size + 7 // 8), range(0, size, 8)):
+            mul = min(8, size - mul)
+            col_mask[i] = (2**mul - 1) << (8 - mul)
+        # For each bit in a byte (from left to right)...
+        for bit_mask in [0x80 >> i for i in range(8)]:
+            # For each byte in the sequence (from left to right)...
+            for j, v in zip(range(len(seq)), seq):
+                # If this bit is set in the current sequence byte...
+                if v & bit_mask:
+                    # This bit will need to be duplicated n**2 times
+                    for k in range(size): # For each row
+                        for l in range(size): # For each column
+                            # Each vertical line is printed from the bottom to top
+                            # This therefore indexes from n-1 to 0
+                            row_idx = size - 1 - k
+                            # From column (j*n) to (j*n + n-1)
+                            col_idx = j * size + l
+                            # Set the bit sequence
+                            ret_seq[row_idx][col_idx] |= col_mask[k]
+            # Shift the column mask to the right to prepare for next bit
+            col_mask = Lcd._bit_shift_right_byte_list(col_mask, size)
         return ret_seq
 
     def write_block(self, str, row_start, min_text_size, max_text_size, justification=0):
@@ -609,9 +639,7 @@ class Lcd:
         row_end = row_start + text_size_multiplier - 1
         if row_end > self._max_row_addr:
             row_end = self._max_row_addr
-        self._lcd_set_print_area(
-            self._min_col_addr, self._max_col_addr, row_start, row_end
-        )
+        self._lcd_set_print_area(self._min_col_addr, self._max_col_addr, row_start, row_end)
 
         maxNumRows = self._gmax_row - self._gmin_row + 1
         maxNumCols = self._gmax_col - self._gmin_col + 1
@@ -654,6 +682,14 @@ class Lcd:
                     del seq[i][-columnsToRemove:]
         for i in range(len(seq)):
             self._write_data_sequence(seq[i])
+        #screen_copy = list(self._screen)
+        #for i in range(len(self._screen)):
+        #    screen_copy[i] = bytearray(self._screen[i])
+        #sleep(0.25)
+        #self.clear()
+        #self._lcd_set_print_area_max()
+        #for row in screen_copy:
+        #    self._write_data_sequence(row)
         return 1
 
 
@@ -1078,29 +1114,47 @@ class LcdPlugin(Thread):
         Restart handler
         """
         print(u"SSD1306 plugin: received restart signal; turning off LCD...")
-        self.stop()
-        print(u"SSD1306 plugin: LCD has been shut off")
+        try:
+            self.stop()
+        except Exception as ex:
+            print(u"SSD1306 plugin: Exception caught while trying to stop")
+            traceback.print_exc()
+            print(ex)
+        else:
+            print(u"SSD1306 plugin: LCD has been shut off")
 
 
-# Start LCD
 lcd_plugin = LcdPlugin()
-if lcd_plugin.initialize(load_settings=True):
-    lcd_plugin.start()
-    # Note about this signal: It shouldn't be used by multiple external modules at once. Nothing
-    # handles such concurrent calls internally. See how _display_custom dissects the message.
-    display_signal = signal(u"ssd1306_display")
-    display_signal.connect(lcd_plugin.display_signal)
-    wake_signal = signal(u"ssd1306_wake")
-    wake_signal.connect(lcd_plugin.wake_signal)
-
-# Attach to restart signal
-restart = signal(u"restart")
-restart.connect(lcd_plugin.notify_restart)
-
+try:
+    # Start LCD
+    if lcd_plugin.initialize(load_settings=True):
+        lcd_plugin.start()
+        # Note about this signal: It shouldn't be used by multiple external modules at once. Nothing
+        # handles such concurrent calls internally. See how _display_custom dissects the message.
+        display_signal = signal(u"ssd1306_display")
+        display_signal.connect(lcd_plugin.display_signal)
+        wake_signal = signal(u"ssd1306_wake")
+        wake_signal.connect(lcd_plugin.wake_signal)
+        # Attach to restart signal
+        restart = signal(u"restart")
+        restart.connect(lcd_plugin.notify_restart)
+except Exception as ex:
+    print(u"SSD1306 plugin: Exception occurred during initialization")
+    traceback.print_exc()
+    raise ex # SIP will catch this exception and print it
 
 ################################################################################
 # Web pages:                                                                   #
 ################################################################################
+
+# Add new URLs to access classes in this plugin.
+urls.extend([
+   '/ssd1306-sp', 'plugins.ssd1306.settings',
+   '/ssd1306-save', 'plugins.ssd1306.save_settings'
+   ])
+
+# Add this plugin to the PLUGINS menu ['Menu Name', 'URL'], (Optional)
+gv.plugin_menu.append(['SSD1306 Plugin', '/ssd1306-sp'])
 
 class settings(ProtectedPage):
     """

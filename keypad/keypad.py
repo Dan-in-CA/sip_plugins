@@ -423,7 +423,7 @@ class KeypadPlugin:
 
         # Beeps
         self.acknowledge_command_beep = 0.100
-        self.cancel_beep = [0.050, 0.050, 0.050]
+        self.cancel_beep = [0.050, 0.050, 0.100]
         self.error_beep = [0.100, 0.100, 0.500]
         self.hold_function_executed_beep = [0.100, 0.050, 0.100]
         self.hold_function_toggle_on_beep = [0.050, 0.050, 0.200]

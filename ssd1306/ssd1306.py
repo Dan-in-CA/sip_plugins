@@ -10,6 +10,7 @@ from urls import urls  # Get access to sip's URLs
 from sip import template_render  #  Needed for working with web.py templates
 from webpages import ProtectedPage  # Needed for security
 import json  # for working with data file
+from collections import OrderedDict
 
 # For helper functions
 from helpers import *
@@ -960,6 +961,10 @@ class LcdPlugin(Thread):
         self._daemon = True
         self._state_screen = Screen()
         self._reset_lcd_state()
+        # Key is screen name, value is a Screen object
+        self._custom_screens = {}
+        # Key is screen name, value is number of seconds left for it to display
+        self._custom_screens_stack = OrderedDict()
         self._lcd = None
         self._running = True
         self._display_condition = Condition()
@@ -968,8 +973,6 @@ class LcdPlugin(Thread):
         self._idle_lock = RLock()
         self._custom_display_lock = RLock()
         self._custom_display_queue = []
-        self._displaying_custom = False
-        self._custom_display_canceled = False
         self._set_default_settings()
 
     def _reset_lcd_state(self):
@@ -1099,12 +1102,6 @@ class LcdPlugin(Thread):
         # this up. For now, please don't judge :)
         ########################################################################
 
-        # If previously displayed custom, refresh state
-        if self._displaying_custom:
-            self._reset_lcd_state()
-            self._displaying_custom = False
-            self._custom_display_canceled = False
-            self._wake_display()
         if gv.pon is None:
             prg = u"Idle"
         elif gv.pon == 98:  # something is running
@@ -1243,18 +1240,56 @@ class LcdPlugin(Thread):
             finally:
                 self._idle_lock.release()
 
-    def _display_custom(self):
+    def _refresh_custom_display_stack(self, last_wait_time):
+        if self._custom_screens_stack:
+            key_list = list(self._custom_screens_stack.keys())
+            top_key = key_list[-1]
+            # Decrement delays and remove items from stack
+            if last_wait_time > 0:
+                for key in key_list:
+                    if self._custom_screens_stack[key] is not None:
+                        self._custom_screens_stack[key] -= last_wait_time
+                        if self._custom_screens_stack[key] <= 0.25:
+                            # Close enough to 0 that this item should be removed
+                            del self._custom_screens_stack[key]
+            if (
+                top_key not in self._custom_screens_stack.keys()
+                and not self._custom_display_queue
+                and self._custom_screens_stack
+            ):
+                # Display the next screen in the stack
+                self._show_top_custom_display()
+
+    def _show_top_custom_display(self):
+        delay = 0 # by default, immediately go to normal display
+        if self._custom_screens_stack:
+            top_key = list(self._custom_screens_stack.keys())[-1]
+            delay = self._custom_screens_stack[top_key]
+            self._lcd.write_screen(self._custom_screens[top_key])
+            self._wake_display()
+        return delay
+
+    def _display_custom(self, last_wait_time):
         """
         Displays a custom message
         """
+        delay = 0 # by default, immediately go to next item in stack or normal display
+        # If there are items in the stack, first decrement pop whatever is necessary
+        self._refresh_custom_display_stack(last_wait_time)
         while self._custom_display_queue:
             self._custom_display_lock.acquire()
             try:
                 queue_item = self._custom_display_queue.pop()
             finally:
                 self._custom_display_lock.release()
-            # Activator name needed for future use
-            # activator_name = queue_item.get(u"activator", None)
+            # The activator name and screen ID addresses a unique custom screen
+            activator_name = queue_item.get(u"activator", "default")
+            screen_id = queue_item.get(u"screen_id", "default")
+            screen_name = "{}/{}".format(activator_name, screen_id)
+            if screen_name not in self._custom_screens:
+                self._custom_screens[screen_name] = Screen()
+            screen = self._custom_screens[screen_name]
+            # If cancel is set, all other data will be ignored and screen will be popped
             cancel = queue_item.get(u"cancel", False)
             if not cancel:
                 text = queue_item.get(u"txt", u"")
@@ -1267,24 +1302,20 @@ class LcdPlugin(Thread):
                                         u"CENTER": JUSTIFY_CENTER}
                 justification = justification_lookup.get(justification_string, JUSTIFY_LEFT)
                 append = queue_item.get(u"append", False)
-                # Force append to false if we are not already displaying custom
-                if not self._displaying_custom or self._custom_display_canceled:
-                    append = False
-                delay = queue_item.get(u"delay", 1)
-                # Do the thing
+                delay = queue_item.get(u"delay", 1) # None is allowed to display until cancelled
+                # If this data is not to be appended, first clear screen
                 if not append:
-                    self._lcd.clear()
-                self._lcd.write_block(text, row_start, min_text_size, max_text_size, justification)
-                self._displaying_custom = True
-                self._wake_display()
-                self._custom_display_canceled = False
+                    screen.clear()
+                # Set the text
+                screen.write_block(text, row_start, min_text_size, max_text_size, justification)
                 # print(u"SSD1306 plugin: displayed: {}".format(queue_item))
-            else: # canceled
-                # print(u"SSD1306 plugin: custom display canceled")
-                # To force a refresh if there is another thing in the queue after this
-                self._custom_display_canceled = True
-                # Delay of 0 will force the run thread right into the next cycle
-                delay = 0
+            # Make sure it is on the top of the stack or completely removed if delay is 0
+            if screen_name in self._custom_screens_stack.keys():
+                del self._custom_screens_stack[screen_name]
+            if delay is None or delay > 0:
+                self._custom_screens_stack[screen_name] = delay
+        # Display whatever is at the top of the stack and get its delay
+        delay = self._show_top_custom_display()
         return delay
 
     def _notify_display_condition(self):
@@ -1318,16 +1349,20 @@ class LcdPlugin(Thread):
         print(u"SSD1306 plugin: active")
         self._display_condition.acquire()
         try:
+            last_waited_time = 0
             while self._running:
-                wait_time = 1
-                if self._custom_display_queue:
-                    wait_time = self._display_custom()
-                else:
+                wait_time = 0
+                if self._custom_display_queue or self._custom_screens_stack:
+                    # This will return a wait time of 0 if we need to drop into normal display.
+                    wait_time = self._display_custom(last_waited_time)
+                if wait_time == 0:
                     self._display_normal()
                     wait_time = 1 # Refresh time
                 # Only wait if we are still running by this point
                 if self._running:
+                    start_time = time.time()
                     self._display_condition.wait(wait_time)
+                    last_waited_time = time.time() - start_time
         finally:
             self._display_condition.release()
 

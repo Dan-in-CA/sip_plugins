@@ -35,7 +35,16 @@ import time
 # for i2c bus driver
 import smbus
 
+# Justification values
+JUSTIFY_LEFT = 0
+JUSTIFY_RIGHT = 1
+JUSTIFY_CENTER = 2
+
 def inc_matrix_ptr(row, col, min_row, max_row, min_col, max_col, inc):
+    """
+    Increments a pointer a number of values in a 2D matrix.
+    returns (new_row, new_col)
+    """
     width = max_col - min_col + 1
     height = max_row - min_row + 1
     row -= min_row
@@ -52,10 +61,6 @@ class Screen:
     Virtual SSD1306 screen. This screen has internal data setup to conform to the way Lcd sets data
     on the SSD1306. This class only supports static textual data. Scrolling text is not supported.
     """
-    # Justification values
-    JUSTIFY_LEFT = 0
-    JUSTIFY_RIGHT = 1
-    JUSTIFY_CENTER = 2
     # Offset of 0x20, up to 0x7F
     LCD_ASCII_BEGIN = 0x20
     LCD_ASCII_MAX = 0x7F
@@ -200,6 +205,13 @@ class Screen:
     def col_end(self):
         return self._max_col_addr
 
+    @property
+    def bytes(self):
+        """
+        Returns a reference to the screen bytes as a 2D list of bytearrays.
+        """
+        return self._screen_bytes
+
     def __str__(self):
         out_string = '-' * (len(self._screen_bytes[0]) + 2) + '\n'
         for row in self._screen_bytes:
@@ -214,29 +226,135 @@ class Screen:
         out_string += '-' * (len(self._screen_bytes[0]) + 2) + '\n'
         return out_string
 
-    # TODO: There is no reason to set screen as stream of bytes anymore - accept 2D array instead
-    def set_screen_bytes(self,
-                         b,
-                         cur_row,
-                         cur_col,
-                         min_row=0,
-                         max_row=None,
-                         min_col=0,
-                         max_col=None):
+    def set_bytes(self,
+                  b,
+                  cur_row,
+                  cur_col):
         """
         Sets internal screen array and increments the current column/row values based on number
         of data values written
         Inputs: b - A 1D list of bytes to write at current position
         Returns: (new_row, new_col)
         """
-        # Handle defaults
-        if max_row is None:
-            max_row = len(self._screen_bytes) - 1
-        if max_col is None:
-            max_col = len(self._screen_bytes[0]) - 1
+        return self.get_screen_block(row_start=self.row_start,
+                                     row_end=self.row_end,
+                                     col_start=self.col_start,
+                                     col_end=self.col_end)\
+            .set_bytes(b, cur_row=cur_row, cur_col=cur_col)
+
+    def write_block(self, string, row_start, min_text_size, max_text_size, justification=0):
+        """
+        Writes text to the LCD, autoformatting within the space specified
+        Inputs: str - The string to write
+                row_start - The starting row to print this
+                min_text_size - The minimum size (scale) for this text (int)
+                max_text_size - The maximum size (scale) for this text (int)
+                justification - One of the JUSTIFY_* values (LEFT, RIGHT, or CENTER)
+        """
+        return self.get_screen_block(row_start=row_start,
+                                     row_end=self.row_end,
+                                     col_start=self.col_start,
+                                     col_end=self.col_end)\
+            .write_block(string=string,
+                         min_text_size=min_text_size,
+                         max_text_size=max_text_size,
+                         justification=justification)
+
+    def write_line(self, string, row_start, text_size_multiplier=1, justification=0):
+        """
+        Writes a horizontal line of text to the screen.
+        Inputs: str - The ASCII string to print
+                row_start - The vertical position to write to (0-based, from top)
+                text_size_multiplier - Scaling for text (how many rows to occupy)
+                justification - One of the JUSTIFY_* values (LEFT, RIGHT, or CENTER)
+        Returns 1 if successful, 0 if invalid arguments given
+        """
+        return self.get_screen_block(row_start=row_start,
+                                     row_end=self.row_end,
+                                     col_start=self.col_start,
+                                     col_end=self.col_end)\
+            .write_line(string=string,
+                        text_size_multiplier=text_size_multiplier,
+                        justification=justification)
+
+    def clear(self):
+        self._screen_bytes = \
+            [bytearray(len(self._screen_bytes[0])) for _ in range(len(self._screen_bytes))]
+
+    def serialize(self):
+        """
+        Returns: All bytes in my screen data as a serializes stream of bytes.
+        """
+        return bytearray([item for sublist in self._screen_bytes for item in sublist])
+
+    def get_screen_block(self, row_start, row_end, col_start=0, col_end=None):
+        """
+        Returns a ScreenBlock object.
+        """
+        if col_end is None:
+            col_end = self._max_col_addr
+        return ScreenBlock(self, row_start, row_end, col_start, col_end)
+
+    def serialize_block(self, row_start, row_end, col_start=0, col_end=None):
+        """
+        Returns bytes for a specific rectangular section of the screen.
+        """
+        return self.get_screen_block(row_start, row_end, col_start, col_end).serialize()
+
+    def bytes_block(self, row_start, row_end, col_start=0, col_end=None):
+        """
+        Returns bytes for a specific rectangular section of the screen.
+        """
+        return self.get_screen_block(row_start, row_end, col_start, col_end).bytes
+
+class ScreenBlock:
+    """
+    This class contains an instance of Screen with a rectangular boundary where data my be written
+    to and accessed from.
+    """
+    def __init__(self, screen, row_start, row_end, col_start, col_end):
+        self._screen = screen
+        # TODO: handle case when the following are out of range
+        self._row_start = row_start
+        self._row_end = row_end
+        self._col_start = col_start
+        self._col_end = col_end
+
+    @property
+    def row_start(self):
+        return self._row_start
+
+    @property
+    def row_end(self):
+        return self._row_end
+
+    @property
+    def col_start(self):
+        return self._col_start
+
+    @property
+    def col_end(self):
+        return self._col_end
+
+    @property
+    def bytes(self):
+        """
+        Returns a copy of the bytes in a 2D array as a list of bytearrays, confined to this screen
+        block.
+        """
+        return [self._screen.bytes[i][self.col_start:self.col_end + 1]
+                for i in range(self.row_start, self.row_end + 1)]
+
+    def set_bytes(self, b, cur_row, cur_col):
+        """
+        Sets internal screen array and increments the current column/row values based on number
+        of data values written
+        Inputs: b - A 1D list of bytes to write at current position
+        Returns: (new_row, new_col)
+        """
         # Compute current selection size
-        columns = max_col - min_col + 1
-        rows = max_row - min_row + 1
+        columns = self.col_end - self.col_start + 1
+        rows = self.row_end - self.row_start + 1
         #
         def lcd_add_to_current(x):
             """
@@ -245,10 +363,10 @@ class Screen:
             """
             return inc_matrix_ptr(row=cur_row,
                                   col=cur_col,
-                                  min_row=min_row,
-                                  max_row=max_row,
-                                  min_col=min_col,
-                                  max_col=max_col,
+                                  min_row=self.row_start,
+                                  max_row=self.row_end,
+                                  min_col=self.col_start,
+                                  max_col=self.col_end,
                                   inc=x)
         # Handle case where length of b is more than current selection size
         if len(b) > (columns * rows):
@@ -259,7 +377,8 @@ class Screen:
         (new_row, new_col) = lcd_add_to_current(len(b))
         if new_row == cur_row and new_col > cur_col:
             # All changes confined to a single row (easy)
-            self._screen_bytes[cur_row][cur_col:new_col] = b
+            # Note: The following is taking advantage of bytes returning a reference to the list
+            self._screen.bytes[cur_row][cur_col:new_col] = b
         else:
             # Changes to be written to more than one row
             next_idx = 0
@@ -271,13 +390,23 @@ class Screen:
                 if next_idx > len(b):
                     next_idx = len(b)
                 cnt = next_idx - cur_idx
-                self._screen_bytes[row][col:col + cnt] = b[cur_idx:next_idx]
+                # Note: The following is taking advantage of bytes returning a reference to the list
+                self._screen.bytes[row][col:col + cnt] = b[cur_idx:next_idx]
                 row += 1
-                if row > max_row:
-                    row = min_row
-                col = min_col
+                if row > self.row_end:
+                    row = self.row_start
+                col = self.col_start
         # Return new screen position
         return (new_row, new_col)
+
+    def serialize(self):
+        return bytearray(
+            [
+                item
+                for sublist in self._screen.bytes[self._row_start:self._row_end + 1]
+                    for item in sublist[self._col_start:self._col_end + 1]
+            ]
+        )
 
     @staticmethod
     def _bit_shift_right_byte_list(lst, num):
@@ -346,23 +475,23 @@ class Screen:
                             # Set the bit sequence
                             ret_seq[row_idx][col_idx] |= col_mask[k]
             # Shift the column mask to the right to prepare for next bit
-            col_mask = Screen._bit_shift_right_byte_list(col_mask, size)
+            col_mask = ScreenBlock._bit_shift_right_byte_list(col_mask, size)
         return ret_seq
 
-    def write_block(self, str, row_start, min_text_size, max_text_size, justification=0):
+    def write_block(self, string, min_text_size, max_text_size, justification=0):
         """
         Writes text to the LCD, autoformatting within the space specified
         Inputs: str - The string to write
-                row_start - The starting row to print this
                 min_text_size - The minimum size (scale) for this text (int)
                 max_text_size - The maximum size (scale) for this text (int)
-                justification - One of the Screen.JUSTIFY_* values (LEFT, RIGHT, or CENTER)
+                justification - One of the JUSTIFY_* values (LEFT, RIGHT, or CENTER)
         """
         # TODO: Something is not quite right about auto sizing between min and max
         if min_text_size > max_text_size or min_text_size <= 0 or max_text_size <= 0:
-            return 0
-        maxWidth = len(self._screen_bytes[0])
-        words = str.split(" ")
+            raise ValueError('Invalid min [{}] or max [{}] text size'\
+                .format(min_text_size, max_text_size))
+        maxWidth = self.col_end - self.col_start + 1
+        words = string.split(" ")
         wordSizes = [0] * len(words)
         # I am assuming that each character is 5 pixel width with 1 pixel space
         numberOfSpaces = len(words) - 1
@@ -376,10 +505,13 @@ class Screen:
         if (
             totalSize * max_text_size <= maxWidth
             or min_text_size == max_text_size
-            or len(str) <= 0
+            or len(string) <= 0
         ):
             # It can all fit in one line at max size min = max; we are done
-            return self.write_line(str, row_start, max_text_size, justification)
+            return self.write_line(string=string,
+                                   row_offset=0,
+                                   text_size_multiplier=max_text_size,
+                                   justification=justification)
         currentTextSize = max_text_size
         lines = []
         maxLines = 0
@@ -413,31 +545,34 @@ class Screen:
             lines.append("")
         if len(lines) > maxLines:
             lines = lines[:maxLines]
-        rowNum = row_start
+        rowNum = 0
         printedCount = 0
         for l in lines:
-            printedCount += self.write_line(l, rowNum, currentTextSize, justification)
+            printedCount += self.write_line(string=l,
+                                            row_offset=rowNum,
+                                            text_size_multiplier=currentTextSize,
+                                            justification=justification)
             rowNum += currentTextSize
         # Clear out the rest
-        for i in range(rowNum, row_start + max_text_size):
-            self.write_line("", i, 1, Screen.JUSTIFY_LEFT)
+        for i in range(rowNum, max_text_size):
+            self.write_line(string="",
+                            row_offset=i,
+                            text_size_multiplier=1,
+                            justification=JUSTIFY_LEFT)
         return printedCount
 
-    def write_line(self, str, row_start, text_size_multiplier=1, justification=0):
+    def write_line(self, string, row_offset=0, text_size_multiplier=1, justification=0):
         """
         Writes a horizontal line of text to the screen.
         Inputs: str - The ASCII string to print
-                row_start - The vertical position to write to (0-based, from top)
                 text_size_multiplier - Scaling for text (how many rows to occupy)
-                justification - One of the Screen.JUSTIFY_* values (LEFT, RIGHT, or CENTER)
+                justification - One of the JUSTIFY_* values (LEFT, RIGHT, or CENTER)
         Returns 1 if successful, 0 if invalid arguments given
         """
-        if row_start < 0 or row_start >= len(self._screen_bytes):
-            return 0
-        if len(str) <= 0:
-            str = " "
+        if len(string) <= 0:
+            string = " "
         seq = []
-        for c in str:
+        for c in string:
             seqChar = self._generate_char_sequence(c, text_size_multiplier)
             if len(seq) <= 0:
                 seq = seqChar
@@ -445,13 +580,8 @@ class Screen:
                 for i in range(len(seq)):
                     seq[i].extend(seqChar[i])
 
-        row_end = row_start + text_size_multiplier - 1
-        if row_end >= len(self._screen_bytes):
-            row_end = len(self._screen_bytes) - 1
-        col_start = 0
-        col_end = len(self._screen_bytes[0]) - 1
-        maxNumRows = row_end - row_start + 1
-        maxNumCols = col_end - col_start + 1
+        maxNumRows = self.row_end - (self.row_start + row_offset) + 1
+        maxNumCols = self.col_end - self.col_start + 1
         # Add rows until we get the number of rows in range
         for i in range(len(seq), maxNumRows):
             seq.append([0] * len(seq[0]))
@@ -461,11 +591,11 @@ class Screen:
         columnsToAdd = maxNumCols - len(seq[0])
         if columnsToAdd > 0:
             for i in range(len(seq)):
-                if justification == Screen.JUSTIFY_RIGHT:
+                if justification == JUSTIFY_RIGHT:
                     newSeq = [0] * columnsToAdd
                     newSeq.extend(seq[i])
                     seq[i] = newSeq
-                elif justification == Screen.JUSTIFY_CENTER:
+                elif justification == JUSTIFY_CENTER:
                     columnsToAddLeft = columnsToAdd // 2
                     columnsToAddRight = columnsToAdd - columnsToAddLeft
                     newSeq = [0] * columnsToAddLeft
@@ -479,9 +609,9 @@ class Screen:
         columnsToRemove = len(seq[0]) - maxNumCols
         if columnsToRemove > 0:
             for i in range(len(seq)):
-                if justification == Screen.JUSTIFY_RIGHT:
+                if justification == JUSTIFY_RIGHT:
                     del seq[i][0:columnsToRemove]
-                elif justification == Screen.JUSTIFY_CENTER:
+                elif justification == JUSTIFY_CENTER:
                     columnsToRemoveLeft = columnsToRemove // 2
                     columnsToRemoveRight = columnsToRemove - columnsToRemoveLeft
                     del seq[i][0:columnsToRemoveLeft]
@@ -489,82 +619,10 @@ class Screen:
                 else:
                     # Left justification by default
                     del seq[i][-columnsToRemove:]
-        self.set_screen_bytes([item for sublist in seq for item in sublist],
-                               cur_row=row_start,
-                               cur_col=col_start,
-                               min_row=row_start,
-                               max_row=row_end,
-                               min_col=col_start,
-                               max_col=col_end)
+        self.set_bytes([item for sublist in seq for item in sublist],
+                       cur_row=(self.row_start + row_offset),
+                       cur_col=self.col_start)
         return 1
-
-    def clear(self):
-        self._screen_bytes = \
-            [bytearray(len(self._screen_bytes[0])) for _ in range(len(self._screen_bytes))]
-
-    def serialize(self):
-        """
-        Returns: All bytes in my screen data as a serializes stream of bytes.
-        """
-        return bytearray([item for sublist in self._screen_bytes for item in sublist])
-
-    def get_screen_block(self, row_start, row_end, col_start=0, col_end=None):
-        if col_end is None:
-            col_end = self._max_col_addr
-        return ScreenBlock(self, row_start, row_end, col_start, col_end)
-
-    def serialize_block(self, row_start, row_end, col_start=0, col_end=None):
-        return self.get_screen_block(row_start, row_end, col_start, col_end).serialize()
-
-class ScreenBlock:
-    """
-    This class contains an instance of Screen with a rectangular boundary where data my be written
-    to and accessed from.
-    """
-    def __init__(self, screen, row_start, row_end, col_start, col_end):
-        self._screen = screen
-        self._row_start = row_start
-        self._row_end = row_end
-        self._col_start = col_start
-        self._col_end = col_end
-
-    @property
-    def row_start(self):
-        return self._row_start
-
-    @property
-    def row_end(self):
-        return self._row_end
-
-    @property
-    def col_start(self):
-        return self._col_start
-
-    @property
-    def col_end(self):
-        return self._col_end
-
-    def serialize(self):
-        # Yes, I'm accessing the protected member _screen_bytes of _screen, but that's just because
-        # I don't want to "expose" that data for any other purpose
-        return bytearray(
-            [
-                item
-                for sublist in self._screen._screen_bytes[self._row_start:self._row_end + 1]
-                    for item in sublist[self._col_start:self._col_end + 1]
-            ]
-        )
-
-    def write_line(self, str, text_size_multiplier=1, justification=0):
-        """
-        Writes a horizontal line of text to the screen.
-        Inputs: str - The ASCII string to print
-                text_size_multiplier - Scaling for text (how many rows to occupy)
-                justification - One of the Screen.JUSTIFY_* values (LEFT, RIGHT, or CENTER)
-        Returns 1 if successful, 0 if invalid arguments given
-        """
-        # TODO
-        pass
 
 class Lcd:
     """
@@ -607,11 +665,6 @@ class Lcd:
         #       better be divisible by 8 (rounding up to the nearest 8 here to be sure)
         num_rows = (screen_pixel_height + 7) // 8
         self._max_row_addr = num_rows - 1
-        # last selected view range
-        self._gmin_col = self._min_col_addr
-        self._gmax_col = self._max_col_addr
-        self._gmin_row = self._min_row_addr
-        self._gmax_row = self._max_row_addr
         # current column and row
         self._current_col = self._min_col_addr
         self._current_row = self._min_row_addr
@@ -635,13 +688,9 @@ class Lcd:
 
     def _set_screen_bytes(self, b):
         (self._current_row, self._current_col) = \
-            self._screen.set_screen_bytes(b,
-                                          cur_row=self._current_row,
-                                          cur_col=self._current_col,
-                                          min_row=self._gmin_row,
-                                          max_row=self._gmax_row,
-                                          min_col=self._gmin_col,
-                                          max_col=self._gmax_col)
+            self._screen.set_bytes(b,
+                                   cur_row=self._current_row,
+                                   cur_col=self._current_col)
 
     def _write_control_byte(self, byte, force=False):
         """
@@ -698,6 +747,9 @@ class Lcd:
                 sequence - List of bytes to write
         Returns: True if successfully written; False if an exception occurred
         """
+        # write_i2c_block_data() only accepts list of integers, so convert bytearray to list
+        if isinstance(sequence, bytearray):
+            sequence = list(sequence)
         status = False
         self._write_lock.acquire()
         try:
@@ -774,8 +826,8 @@ class Lcd:
             0x40,
             0x8D,  # set Charge Pump enable/disable
             0x14,  # set(0x10) disable
-            0x20,  # horizontal addressing mode
-            0x00,
+            0x20,  # page addressing mode
+            0x02,  #    this means row pointer will never increase unless manually set
             0xC8,  # Remapped mode. Scan from ComN-1 to Com0
         ]
         self._write_control_sequence(init_sequence)
@@ -816,21 +868,24 @@ class Lcd:
         Writes the given screen based on what is currently displayed and given screen.
         Inputs: screen - Either a Screen or ScreenBlock object
         """
-        new_bytes = screen.serialize()
-        current_bytes = self._screen.serialize_block(row_start=screen.row_start,
-                                                     row_end=screen.row_end,
-                                                     col_start=screen.col_start,
-                                                     col_end=screen.col_end)
-        status = False
-        # TODO: write row by row based on what is different
+        current_bytes = self._screen.bytes_block(row_start=screen.row_start,
+                                                 row_end=screen.row_end,
+                                                 col_start=screen.col_start,
+                                                 col_end=screen.col_end)
+        new_bytes = screen.bytes
+        status = True
         if force or current_bytes != new_bytes:
-            if self._lcd_set_print_area(min_row=screen.row_start,
-                                        max_row=screen.row_end,
-                                        min_col=screen.col_start,
-                                        max_col=screen.col_end):
-                status = self._write_data_sequence(list(new_bytes))
-        else:
-            status = True
+            # Write row by row to cut down on write time
+            for (cur_row, new_row, idx) in zip(current_bytes, new_bytes, range(len(new_bytes))):
+                if force or cur_row != new_row:
+                    if self._lcd_set_pointer(row=screen.row_start + idx,
+                                             col=screen.col_start):
+                        if not self._write_data_sequence(new_row):
+                            status = False
+                            break
+                    else:
+                        status = False
+                        break
         return status
 
     def clear(self, force=False):
@@ -842,55 +897,30 @@ class Lcd:
         screen_copy.clear()
         return self.write_screen(screen_copy, force)
 
-    def _lcd_set_pointer(self, row, col):
-        seq = [row & 0x0F | 0xB0, (col >> 4) & 0x0F | 0x10, col & 0x0F]
-        print("Set row {:02x} and col {:02x}".format(row, col))
-        print("seq ", [format(item, "02x") for item in seq])
-        return self._write_control_sequence(seq)
-
-    def _lcd_set_print_area_max(self):
-        """
-        Sets the printable area to max screen
-        Returns: True if successfully set; False if an exception occurred
-        """
-        return self._lcd_set_print_area(
-            self._min_col_addr, self._max_col_addr, self._min_row_addr, self._max_row_addr
-        )
-
-    def _lcd_set_print_area(self, min_col, max_col, min_row, max_row):
-        """
-        Sets the print area of the screen with max of: (0x00, 0x7F, 0x00, 0x07)
-        Inputs: min_col - minimum column (pixel)
-                max_col - maximum column (pixel)
-                min_row - minimum row (set of 8 pixels)
-                max_row - maximum row (set of 8 pixels)
-        Returns: True if successfully set; False if an exception occurred
-        """
-        if min_col < 0 or max_col > self._max_col_addr or max_col < min_col:
-            return False
-        elif min_row < 0 or max_row > self._max_row_addr or max_row < min_row:
-            return False
-        seq = [0x21, min_col, max_col, 0x22, min_row, max_row]
-        status = self._write_control_sequence(seq)
-        self._gmin_col = min_col
-        self._gmax_col = max_col
-        self._gmin_row = min_row
-        self._gmax_row = max_row
-        self._current_col = min_col
-        self._current_row = min_row
+    def _lcd_set_pointer(self, row=None, col=None):
+        seq = []
+        if row is not None:
+            seq.append(row & 0x0F | 0xB0)
+            self._current_row = row
+        if col is not None:
+            seq.extend([(col >> 4) & 0x0F | 0x10, col & 0x0F])
+            self._current_col = col
+        status = False
+        if seq:
+            status = self._write_control_sequence(seq)
         return status
 
-    def write_block(self, str, row_start, min_text_size, max_text_size, justification=0):
+    def write_block(self, string, row_start, min_text_size, max_text_size, justification=0):
         """
         Writes text to the LCD, autoformatting within the space specified
         Inputs: str - The string to write
                 row_start - The starting row to print this
                 min_text_size - The minimum size (scale) for this text (int)
                 max_text_size - The maximum size (scale) for this text (int)
-                justification - One of the Screen.JUSTIFY_* values (LEFT, RIGHT, or CENTER)
+                justification - One of the JUSTIFY_* values (LEFT, RIGHT, or CENTER)
         """
         screen_copy = self._screen.copy()
-        screen_copy.write_block(str=str,
+        screen_copy.write_block(string=string,
                                 row_start=row_start,
                                 min_text_size=min_text_size,
                                 max_text_size=max_text_size,
@@ -899,17 +929,17 @@ class Lcd:
             screen_copy.get_screen_block(row_start=row_start,
                                          row_end=row_start + max_text_size - 1))
 
-    def write_line(self, str, row_start, text_size_multiplier=1, justification=0):
+    def write_line(self, string, row_start, text_size_multiplier=1, justification=0):
         """
         Writes a horizontal line of text to the LCD.
-        Inputs: str - The ASCII string to print
+        Inputs: string - The ASCII string to print
                 row_start - The vertical position to write to (0-based, from top)
                 text_size_multiplier - Scaling for text (how many rows to occupy)
-                justification - One of the Screen.JUSTIFY_* values (LEFT, RIGHT, or CENTER)
+                justification - One of the JUSTIFY_* values (LEFT, RIGHT, or CENTER)
         Returns 1 if successful, 0 if invalid arguments given
         """
         screen_copy = self._screen.copy()
-        screen_copy.write_line(str=str,
+        screen_copy.write_line(string=string,
                                row_start=row_start,
                                text_size_multiplier=text_size_multiplier,
                                justification=justification)
@@ -1097,37 +1127,37 @@ class LcdPlugin(Thread):
                     if gv.pon == 98:
                         aboutToWrite = u"RunningRun-onceProgram"
                         if self._last_write != aboutToWrite:
-                            self._lcd.write_line(u"Running", 0, 2, Screen.JUSTIFY_CENTER)
-                            self._lcd.write_line("", 2, 1, Screen.JUSTIFY_LEFT)
-                            self._lcd.write_line(u"Run-once", 3, 2, Screen.JUSTIFY_CENTER)
-                            self._lcd.write_line("", 5, 1, Screen.JUSTIFY_LEFT)
-                            self._lcd.write_line(u"Program", 6, 2, Screen.JUSTIFY_CENTER)
+                            self._lcd.write_line(u"Running", 0, 2, JUSTIFY_CENTER)
+                            self._lcd.write_line("", 2, 1, JUSTIFY_LEFT)
+                            self._lcd.write_line(u"Run-once", 3, 2, JUSTIFY_CENTER)
+                            self._lcd.write_line("", 5, 1, JUSTIFY_LEFT)
+                            self._lcd.write_line(u"Program", 6, 2, JUSTIFY_CENTER)
                             self._last_write = aboutToWrite
                     elif gv.pon == 99:
                         aboutToWrite = u"ManualMode"
                         if self._last_write != aboutToWrite:
-                            self._lcd.write_line(u"", 0, 1, Screen.JUSTIFY_LEFT)
-                            self._lcd.write_line(u"Manual", 1, 2, Screen.JUSTIFY_CENTER)
-                            self._lcd.write_line(u"", 3, 1, Screen.JUSTIFY_LEFT)
-                            self._lcd.write_line(u"Mode", 4, 2, Screen.JUSTIFY_CENTER)
-                            self._lcd.write_line(u"", 6, 2, Screen.JUSTIFY_LEFT)
+                            self._lcd.write_line(u"", 0, 1, JUSTIFY_LEFT)
+                            self._lcd.write_line(u"Manual", 1, 2, JUSTIFY_CENTER)
+                            self._lcd.write_line(u"", 3, 1, JUSTIFY_LEFT)
+                            self._lcd.write_line(u"Mode", 4, 2, JUSTIFY_CENTER)
+                            self._lcd.write_line(u"", 6, 2, JUSTIFY_LEFT)
                             self._last_write = aboutToWrite
                     else:
                         aboutToWrite = u"RunningProgram{}".format(prg)
                         if self._last_write != aboutToWrite:
-                            self._lcd.write_line(u"Running", 0, 2, Screen.JUSTIFY_CENTER)
-                            self._lcd.write_line("", 2, 1, Screen.JUSTIFY_LEFT)
-                            self._lcd.write_line(u"Program", 3, 2, Screen.JUSTIFY_CENTER)
-                            self._lcd.write_line(u"", 5, 1, Screen.JUSTIFY_LEFT)
-                            self._lcd.write_line(prg, 6, 2, Screen.JUSTIFY_CENTER)
+                            self._lcd.write_line(u"Running", 0, 2, JUSTIFY_CENTER)
+                            self._lcd.write_line("", 2, 1, JUSTIFY_LEFT)
+                            self._lcd.write_line(u"Program", 3, 2, JUSTIFY_CENTER)
+                            self._lcd.write_line(u"", 5, 1, JUSTIFY_LEFT)
+                            self._lcd.write_line(prg, 6, 2, JUSTIFY_CENTER)
                             self._last_write = aboutToWrite
                 else:
                     # It was a lie!
                     prg = u"Idle"
             else:
                 if self._last_write != s:
-                    self._lcd.write_block(s, 0, 1, 5, Screen.JUSTIFY_CENTER)
-                    self._lcd.write_line(" ", 5, 1, Screen.JUSTIFY_CENTER)
+                    self._lcd.write_block(s, 0, 1, 5, JUSTIFY_CENTER)
+                    self._lcd.write_line(" ", 5, 1, JUSTIFY_CENTER)
                     self._last_write = s
                     self._last_sub_val = ""
                 if gv.pon == 99 and stationDuration <= 0:
@@ -1153,45 +1183,45 @@ class LcdPlugin(Thread):
                             + aboutToWrite
                         )
                 if self._last_sub_val != aboutToWrite:
-                    self._lcd.write_line(aboutToWrite, 6, 2, Screen.JUSTIFY_CENTER)
+                    self._lcd.write_line(aboutToWrite, 6, 2, JUSTIFY_CENTER)
                     self._last_sub_val = aboutToWrite
         # Check again because prg may have changed to Idle in the above if statement
         if prg == u"Idle":
             if not gv.sd[u"en"]:
                 if self._last_write != u"OFF":
                     self._wake_display()
-                    self._lcd.write_line(u"OFF", 0, 3, Screen.JUSTIFY_CENTER)
-                    self._lcd.write_line(u"", 3, 5, Screen.JUSTIFY_LEFT)
+                    self._lcd.write_line(u"OFF", 0, 3, JUSTIFY_CENTER)
+                    self._lcd.write_line(u"", 3, 5, JUSTIFY_LEFT)
                     self._last_write = u"OFF"
             elif gv.sd[u"mm"]:
                 aboutToWrite = u"IdleManualMode"
                 if self._last_write != aboutToWrite:
                     self._wake_display()
-                    self._lcd.write_line(u"Idle", 0, 3, Screen.JUSTIFY_CENTER)
-                    self._lcd.write_line(u"", 3, 1, Screen.JUSTIFY_LEFT)
-                    self._lcd.write_line(u"Manual", 4, 2, Screen.JUSTIFY_CENTER)
-                    self._lcd.write_line(u"Mode", 6, 2, Screen.JUSTIFY_CENTER)
+                    self._lcd.write_line(u"Idle", 0, 3, JUSTIFY_CENTER)
+                    self._lcd.write_line(u"", 3, 1, JUSTIFY_LEFT)
+                    self._lcd.write_line(u"Manual", 4, 2, JUSTIFY_CENTER)
+                    self._lcd.write_line(u"Mode", 6, 2, JUSTIFY_CENTER)
                     self._last_write = aboutToWrite
             elif gv.sd[u"rd"]:
                 aboutToWrite = u"RainDelay"
                 if self._last_write != aboutToWrite:
                     self._wake_display()
-                    self._lcd.write_line(u"Rain", 0, 2, Screen.JUSTIFY_CENTER)
-                    self._lcd.write_line(u"", 2, 1, Screen.JUSTIFY_LEFT)
-                    self._lcd.write_line(u"Delay", 3, 2, Screen.JUSTIFY_CENTER)
-                    self._lcd.write_line(u"", 5, 1, Screen.JUSTIFY_LEFT)
+                    self._lcd.write_line(u"Rain", 0, 2, JUSTIFY_CENTER)
+                    self._lcd.write_line(u"", 2, 1, JUSTIFY_LEFT)
+                    self._lcd.write_line(u"Delay", 3, 2, JUSTIFY_CENTER)
+                    self._lcd.write_line(u"", 5, 1, JUSTIFY_LEFT)
                     self._last_write = aboutToWrite
                     self._last_sub_val = u""
                 remainingHrs = (gv.sd[u"rdst"] - gv.now) // 60 // 60
                 aboutToWrite = str(remainingHrs)
                 if self._last_sub_val != aboutToWrite:
                     if remainingHrs < 1:
-                        self._lcd.write_line(u"<1 hr", 6, 2, Screen.JUSTIFY_CENTER)
+                        self._lcd.write_line(u"<1 hr", 6, 2, JUSTIFY_CENTER)
                     elif remainingHrs == 1:
-                        self._lcd.write_line(u"1 hr", 6, 2, Screen.JUSTIFY_CENTER)
+                        self._lcd.write_line(u"1 hr", 6, 2, JUSTIFY_CENTER)
                     else:
                         self._lcd.write_line(
-                            str(remainingHrs) + u" hrs", 6, 2, Screen.JUSTIFY_CENTER
+                            str(remainingHrs) + u" hrs", 6, 2, JUSTIFY_CENTER
                         )
                     self._last_sub_val = aboutToWrite
             elif gv.sd[u"wl"] < 100:
@@ -1199,25 +1229,25 @@ class LcdPlugin(Thread):
                 aboutToWrite = u"IdleWaterLevel" + waterLevel
                 if self._last_write != aboutToWrite:
                     self._wake_display()
-                    self._lcd.write_line(u"Idle", 0, 3, Screen.JUSTIFY_CENTER)
-                    self._lcd.write_line(waterLevel + u"%", 3, 2, Screen.JUSTIFY_CENTER)
-                    self._lcd.write_line(u"", 5, 1, Screen.JUSTIFY_LEFT)
+                    self._lcd.write_line(u"Idle", 0, 3, JUSTIFY_CENTER)
+                    self._lcd.write_line(waterLevel + u"%", 3, 2, JUSTIFY_CENTER)
+                    self._lcd.write_line(u"", 5, 1, JUSTIFY_LEFT)
                     self._last_write = aboutToWrite
                     self._last_sub_val = u""
                 aboutToWrite = LcdPlugin._get_time_string()
                 if self._last_sub_val != aboutToWrite:
-                    self._lcd.write_line(aboutToWrite, 6, 2, Screen.JUSTIFY_CENTER)
+                    self._lcd.write_line(aboutToWrite, 6, 2, JUSTIFY_CENTER)
                     self._last_sub_val = aboutToWrite
             else:
                 if self._last_write != prg:
                     self._wake_display()
-                    self._lcd.write_line(prg, 0, 3, Screen.JUSTIFY_CENTER)
-                    self._lcd.write_line(u"", 3, 3, Screen.JUSTIFY_LEFT)
+                    self._lcd.write_line(prg, 0, 3, JUSTIFY_CENTER)
+                    self._lcd.write_line(u"", 3, 3, JUSTIFY_LEFT)
                     self._last_write = prg
                     self._last_sub_val = u""
                 aboutToWrite = LcdPlugin._get_time_string()
                 if self._last_sub_val != aboutToWrite:
-                    self._lcd.write_line(aboutToWrite, 6, 2, Screen.JUSTIFY_CENTER)
+                    self._lcd.write_line(aboutToWrite, 6, 2, JUSTIFY_CENTER)
                     self._last_sub_val = aboutToWrite
 
             self._idle_lock.acquire()
@@ -1254,10 +1284,10 @@ class LcdPlugin(Thread):
                 min_text_size = queue_item.get(u"min_text_size", 1)
                 max_text_size = queue_item.get(u"max_text_size", 1)
                 justification_string = queue_item.get(u"justification", u"LEFT").upper()
-                justification_lookup = {u"LEFT": Screen.JUSTIFY_LEFT,
-                                        u"RIGHT": Screen.JUSTIFY_RIGHT,
-                                        u"CENTER": Screen.JUSTIFY_CENTER}
-                justification = justification_lookup.get(justification_string, Screen.JUSTIFY_LEFT)
+                justification_lookup = {u"LEFT": JUSTIFY_LEFT,
+                                        u"RIGHT": JUSTIFY_RIGHT,
+                                        u"CENTER": JUSTIFY_CENTER}
+                justification = justification_lookup.get(justification_string, JUSTIFY_LEFT)
                 append = queue_item.get(u"append", False)
                 # Force append to false if we are not already displaying custom
                 if not self._displaying_custom or self._custom_display_canceled:

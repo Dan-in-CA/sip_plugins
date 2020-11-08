@@ -35,16 +35,23 @@ import time
 # for i2c bus driver
 import smbus
 
-class Lcd:
+def inc_matrix_ptr(row, col, min_row, max_row, min_col, max_col, inc):
+    width = max_col - min_col + 1
+    height = max_row - min_row + 1
+    row -= min_row
+    col -= min_col
+    col += inc
+    row = (
+        ((col // width) + row) % height
+    ) + min_row
+    col = (col % width) + min_col
+    return (row, col)
+
+class Screen:
     """
-    LCD control class for SSD1306 I2C LCD
+    Virtual SSD1306 screen. This screen has internal data setup to conform to the way Lcd sets data
+    on the SSD1306. This class only supports static textual data. Scrolling text is not supported.
     """
-    # LCD control and data byte values
-    CONTROL_BYTE = 0x00
-    DATA_BYTE = 0x40
-    # Select LCD control bytes
-    LCD_CONTROL_PWR_OFF = 0xAE
-    LCD_CONTROL_PWR_ON = 0xAF
     # Justification values
     JUSTIFY_LEFT = 0
     JUSTIFY_RIGHT = 1
@@ -154,6 +161,423 @@ class Lcd:
     char_other = bytearray([0x7F, 0x7F, 0x7F, 0x7F, 0x7F])
 
     def __init__(self,
+                 screen_pixel_width=128,
+                 screen_pixel_height=64):
+        # defined minimum and maximum LCD addresses
+        self._min_col_addr = 0
+        self._max_col_addr = screen_pixel_width - 1
+        self._min_row_addr = 0
+        # note: ssd1306 addresses rows by 8 vertical pixels at a time, so the screen height had
+        #       better be divisible by 8 (rounding up to the nearest 8 here to be sure)
+        num_rows = (screen_pixel_height + 7) // 8
+        self._max_row_addr = num_rows - 1
+        # The screen data
+        self._screen_bytes = [bytearray(screen_pixel_width) for _ in range(num_rows)]
+
+    def copy(self):
+        pixel_width = self._max_col_addr + 1
+        pixel_height = (self._max_row_addr + 1) * 8
+        screen_copy = Screen(screen_pixel_width=pixel_width,
+                             screen_pixel_height=pixel_height)
+        for (from_row, to_row) in zip(self._screen_bytes, screen_copy._screen_bytes):
+            # This forces a copy of bytes into the target row object
+            to_row[0:pixel_width] = from_row
+        return screen_copy
+
+    @property
+    def row_start(self):
+        return self._min_row_addr
+
+    @property
+    def row_end(self):
+        return self._max_row_addr
+
+    @property
+    def col_start(self):
+        return self._min_col_addr
+
+    @property
+    def col_end(self):
+        return self._max_col_addr
+
+    def __str__(self):
+        out_string = '-' * (len(self._screen_bytes[0]) + 2) + '\n'
+        for row in self._screen_bytes:
+            for mask in [0x01 << i for i in range(8)]:
+                out_string += '|'
+                for col in row:
+                    if mask & int(col) != 0:
+                        out_string += 'X'
+                    else:
+                        out_string += ' '
+                out_string += '|\n'
+        out_string += '-' * (len(self._screen_bytes[0]) + 2) + '\n'
+        return out_string
+
+    # TODO: There is no reason to set screen as stream of bytes anymore - accept 2D array instead
+    def set_screen_bytes(self,
+                         b,
+                         cur_row,
+                         cur_col,
+                         min_row=0,
+                         max_row=None,
+                         min_col=0,
+                         max_col=None):
+        """
+        Sets internal screen array and increments the current column/row values based on number
+        of data values written
+        Inputs: b - A 1D list of bytes to write at current position
+        Returns: (new_row, new_col)
+        """
+        # Handle defaults
+        if max_row is None:
+            max_row = len(self._screen_bytes) - 1
+        if max_col is None:
+            max_col = len(self._screen_bytes[0]) - 1
+        # Compute current selection size
+        columns = max_col - min_col + 1
+        rows = max_row - min_row + 1
+        #
+        def lcd_add_to_current(x):
+            """
+            Increments the current column/row values based on number of data values written
+            Inputs: x - Number of columns to increment (to the right then down)
+            """
+            return inc_matrix_ptr(row=cur_row,
+                                  col=cur_col,
+                                  min_row=min_row,
+                                  max_row=max_row,
+                                  min_col=min_col,
+                                  max_col=max_col,
+                                  inc=x)
+        # Handle case where length of b is more than current selection size
+        if len(b) > (columns * rows):
+            extra = (columns * rows) - len(b)
+            b = b[extra:]
+            (cur_row, cur_col) = lcd_add_to_current(extra)
+        # Write the screen
+        (new_row, new_col) = lcd_add_to_current(len(b))
+        if new_row == cur_row and new_col > cur_col:
+            # All changes confined to a single row (easy)
+            self._screen_bytes[cur_row][cur_col:new_col] = b
+        else:
+            # Changes to be written to more than one row
+            next_idx = 0
+            row = cur_row
+            col = cur_col
+            while next_idx < len(b):
+                cur_idx = next_idx
+                next_idx += columns
+                if next_idx > len(b):
+                    next_idx = len(b)
+                cnt = next_idx - cur_idx
+                self._screen_bytes[row][col:col + cnt] = b[cur_idx:next_idx]
+                row += 1
+                if row > max_row:
+                    row = min_row
+                col = min_col
+        # Return new screen position
+        return (new_row, new_col)
+
+    @staticmethod
+    def _bit_shift_right_byte_list(lst, num):
+        """
+        Bit shifts right all bytes in the given list
+        Inputs: lst - List of bytes
+                num - Number of bits to shift right
+        Returns: The transformed list
+        """
+        original_length = len(lst)
+        if sys.version_info.major >= 3: # Python3 version of this
+            # Convert the list to integer in big-endian order
+            list_value = int.from_bytes(bytes(lst), byteorder='big')
+            # Do the bit shifting
+            list_value >>= num
+            # Convert the integer back to a list
+            lst = list(int(list_value).to_bytes(length=original_length, byteorder='big'))
+        else: # Python2 version of this; this will take about 5 times longer to process
+            # Convert the list to integer in big-endian order
+            list_value = int(''.join(format(val, '02x') for val in lst), 16)
+            # Do the bit shifting
+            list_value >>= num
+            # Convert the integer back to a list
+            list_string = format(list_value, '0' + str(original_length * 2) + 'x')
+            lst = [int(list_string[x:x+2], 16) for x in range(0, original_length * 2, 2)]
+        return lst
+
+    @staticmethod
+    def _generate_char_sequence(char, size):
+        """
+        Resizes a single character into the rows needed to print
+        Inputs: char - The ascii character to print
+                n - integer size multiplier [1,N]
+        Returns: A list of lists, defining what bits to write to each row
+        """
+        chv = ord(char)
+        seq = []
+        if chv >= Screen.LCD_ASCII_BEGIN and chv <= Screen.LCD_ASCII_MAX:
+            seq = bytearray(Screen.LCD_ASCII[chv - Screen.LCD_ASCII_BEGIN])
+        else:  # unknown
+            seq = bytearray(Screen.char_other)
+        # 1 vertical line of space before next char
+        seq.append(0x00)
+        # Make a 0-initialized 2-dimensional return array, n tall by n wide
+        ret_seq = [[0] * (len(seq) * size) for _ in range(size)]
+        # col_mask holds what vertical bits must be set in each row for the current bit
+        # (left to right) when the current bit is HIGH
+        col_mask = [0] * size
+        for i, mul in zip(range(size + 7 // 8), range(0, size, 8)):
+            mul = min(8, size - mul)
+            col_mask[i] = (2**mul - 1) << (8 - mul)
+        # For each bit in a byte (from left to right)...
+        for bit_mask in [0x80 >> i for i in range(8)]:
+            # For each byte in the sequence (from left to right)...
+            for j, v in zip(range(len(seq)), seq):
+                # If this bit is set in the current sequence byte...
+                if v & bit_mask:
+                    # This bit will need to be duplicated n**2 times
+                    for k in range(size): # For each row
+                        for l in range(size): # For each column
+                            # Each vertical line is printed from the bottom to top
+                            # This therefore indexes from n-1 to 0
+                            row_idx = size - 1 - k
+                            # From column (j*n) to (j*n + n-1)
+                            col_idx = j * size + l
+                            # Set the bit sequence
+                            ret_seq[row_idx][col_idx] |= col_mask[k]
+            # Shift the column mask to the right to prepare for next bit
+            col_mask = Screen._bit_shift_right_byte_list(col_mask, size)
+        return ret_seq
+
+    def write_block(self, str, row_start, min_text_size, max_text_size, justification=0):
+        """
+        Writes text to the LCD, autoformatting within the space specified
+        Inputs: str - The string to write
+                row_start - The starting row to print this
+                min_text_size - The minimum size (scale) for this text (int)
+                max_text_size - The maximum size (scale) for this text (int)
+                justification - One of the Screen.JUSTIFY_* values (LEFT, RIGHT, or CENTER)
+        """
+        # TODO: Something is not quite right about auto sizing between min and max
+        if min_text_size > max_text_size or min_text_size <= 0 or max_text_size <= 0:
+            return 0
+        maxWidth = len(self._screen_bytes[0])
+        words = str.split(" ")
+        wordSizes = [0] * len(words)
+        # I am assuming that each character is 5 pixel width with 1 pixel space
+        numberOfSpaces = len(words) - 1
+        totalSize = numberOfSpaces * 6
+        for i in range(len(words)):
+            currentSize = 0
+            for _ in range(len(words[i])):
+                currentSize += 6
+            wordSizes[i] = currentSize
+            totalSize += currentSize
+        if (
+            totalSize * max_text_size <= maxWidth
+            or min_text_size == max_text_size
+            or len(str) <= 0
+        ):
+            # It can all fit in one line at max size min = max; we are done
+            return self.write_line(str, row_start, max_text_size, justification)
+        currentTextSize = max_text_size
+        lines = []
+        maxLines = 0
+        while currentTextSize > min_text_size:
+            currentTextSize -= 1
+            maxLines = max_text_size // currentTextSize
+            currentLine = 0
+            lines = [words[0]]
+            currentSize = wordSizes[0]
+            lineTooLong = False
+            for i in range(1, len(words)):
+                nextSize = currentSize + wordSizes[i] + 6
+                if nextSize * currentTextSize > maxWidth:
+                    # Next line
+                    lines.append(words[i])
+                    currentLine += 1
+                    currentSize = wordSizes[i]
+                    # Flag if this word by itself is too long to fit
+                    if currentSize * currentTextSize > maxWidth:
+                        lineTooLong = True
+                else:
+                    lines[currentLine] += " " + words[i]
+                    currentSize += wordSizes[i] + 6
+            if len(lines) <= maxLines and not lineTooLong:
+                # we are done
+                break
+        while len(lines) + 2 <= maxLines:
+            temp = [u""]
+            temp.extend(lines)
+            lines = temp
+            lines.append("")
+        if len(lines) > maxLines:
+            lines = lines[:maxLines]
+        rowNum = row_start
+        printedCount = 0
+        for l in lines:
+            printedCount += self.write_line(l, rowNum, currentTextSize, justification)
+            rowNum += currentTextSize
+        # Clear out the rest
+        for i in range(rowNum, row_start + max_text_size):
+            self.write_line("", i, 1, Screen.JUSTIFY_LEFT)
+        return printedCount
+
+    def write_line(self, str, row_start, text_size_multiplier=1, justification=0):
+        """
+        Writes a horizontal line of text to the screen.
+        Inputs: str - The ASCII string to print
+                row_start - The vertical position to write to (0-based, from top)
+                text_size_multiplier - Scaling for text (how many rows to occupy)
+                justification - One of the Screen.JUSTIFY_* values (LEFT, RIGHT, or CENTER)
+        Returns 1 if successful, 0 if invalid arguments given
+        """
+        if row_start < 0 or row_start >= len(self._screen_bytes):
+            return 0
+        if len(str) <= 0:
+            str = " "
+        seq = []
+        for c in str:
+            seqChar = self._generate_char_sequence(c, text_size_multiplier)
+            if len(seq) <= 0:
+                seq = seqChar
+            else:
+                for i in range(len(seq)):
+                    seq[i].extend(seqChar[i])
+
+        row_end = row_start + text_size_multiplier - 1
+        if row_end >= len(self._screen_bytes):
+            row_end = len(self._screen_bytes) - 1
+        col_start = 0
+        col_end = len(self._screen_bytes[0]) - 1
+        maxNumRows = row_end - row_start + 1
+        maxNumCols = col_end - col_start + 1
+        # Add rows until we get the number of rows in range
+        for i in range(len(seq), maxNumRows):
+            seq.append([0] * len(seq[0]))
+        # Remove rows until we get the number of rows in range
+        del seq[maxNumRows:]
+        # Add columns until we get the number of columns in range
+        columnsToAdd = maxNumCols - len(seq[0])
+        if columnsToAdd > 0:
+            for i in range(len(seq)):
+                if justification == Screen.JUSTIFY_RIGHT:
+                    newSeq = [0] * columnsToAdd
+                    newSeq.extend(seq[i])
+                    seq[i] = newSeq
+                elif justification == Screen.JUSTIFY_CENTER:
+                    columnsToAddLeft = columnsToAdd // 2
+                    columnsToAddRight = columnsToAdd - columnsToAddLeft
+                    newSeq = [0] * columnsToAddLeft
+                    newSeq.extend(seq[i])
+                    newSeq.extend([0] * columnsToAddRight)
+                    seq[i] = newSeq
+                else:
+                    # Left justification by default
+                    seq[i].extend([0] * columnsToAdd)
+        # Remove columns until we get the number of columns in range
+        columnsToRemove = len(seq[0]) - maxNumCols
+        if columnsToRemove > 0:
+            for i in range(len(seq)):
+                if justification == Screen.JUSTIFY_RIGHT:
+                    del seq[i][0:columnsToRemove]
+                elif justification == Screen.JUSTIFY_CENTER:
+                    columnsToRemoveLeft = columnsToRemove // 2
+                    columnsToRemoveRight = columnsToRemove - columnsToRemoveLeft
+                    del seq[i][0:columnsToRemoveLeft]
+                    del seq[i][-columnsToRemoveRight:]
+                else:
+                    # Left justification by default
+                    del seq[i][-columnsToRemove:]
+        self.set_screen_bytes([item for sublist in seq for item in sublist],
+                               cur_row=row_start,
+                               cur_col=col_start,
+                               min_row=row_start,
+                               max_row=row_end,
+                               min_col=col_start,
+                               max_col=col_end)
+        return 1
+
+    def clear(self):
+        self._screen_bytes = \
+            [bytearray(len(self._screen_bytes[0])) for _ in range(len(self._screen_bytes))]
+
+    def serialize(self):
+        """
+        Returns: All bytes in my screen data as a serializes stream of bytes.
+        """
+        return bytearray([item for sublist in self._screen_bytes for item in sublist])
+
+    def get_screen_block(self, row_start, row_end, col_start=0, col_end=None):
+        if col_end is None:
+            col_end = self._max_col_addr
+        return ScreenBlock(self, row_start, row_end, col_start, col_end)
+
+    def serialize_block(self, row_start, row_end, col_start=0, col_end=None):
+        return self.get_screen_block(row_start, row_end, col_start, col_end).serialize()
+
+class ScreenBlock:
+    """
+    This class contains an instance of Screen with a rectangular boundary where data my be written
+    to and accessed from.
+    """
+    def __init__(self, screen, row_start, row_end, col_start, col_end):
+        self._screen = screen
+        self._row_start = row_start
+        self._row_end = row_end
+        self._col_start = col_start
+        self._col_end = col_end
+
+    @property
+    def row_start(self):
+        return self._row_start
+
+    @property
+    def row_end(self):
+        return self._row_end
+
+    @property
+    def col_start(self):
+        return self._col_start
+
+    @property
+    def col_end(self):
+        return self._col_end
+
+    def serialize(self):
+        # Yes, I'm accessing the protected member _screen_bytes of _screen, but that's just because
+        # I don't want to "expose" that data for any other purpose
+        return bytearray(
+            [
+                item
+                for sublist in self._screen._screen_bytes[self._row_start:self._row_end + 1]
+                    for item in sublist[self._col_start:self._col_end + 1]
+            ]
+        )
+
+    def write_line(self, str, text_size_multiplier=1, justification=0):
+        """
+        Writes a horizontal line of text to the screen.
+        Inputs: str - The ASCII string to print
+                text_size_multiplier - Scaling for text (how many rows to occupy)
+                justification - One of the Screen.JUSTIFY_* values (LEFT, RIGHT, or CENTER)
+        Returns 1 if successful, 0 if invalid arguments given
+        """
+        # TODO
+        pass
+
+class Lcd:
+    """
+    LCD control class for SSD1306 I2C LCD
+    """
+    # LCD control and data byte values
+    CONTROL_BYTE = 0x00
+    DATA_BYTE = 0x40
+    # Select LCD control bytes
+    LCD_CONTROL_PWR_OFF = 0xAE
+    LCD_CONTROL_PWR_ON = 0xAF
+
+    def __init__(self,
                  i2c_hw_addr=0x78,
                  i2c_bus_number=1,
                  screen_pixel_width=128,
@@ -192,14 +616,14 @@ class Lcd:
         self._current_col = self._min_col_addr
         self._current_row = self._min_row_addr
         # A copy of what is currently displayed
-        self._screen = [bytearray(screen_pixel_width) for _ in range(num_rows)]
+        self._screen = Screen(screen_pixel_width=screen_pixel_width,
+                              screen_pixel_height=screen_pixel_height)
         # write failure flag
         self._write_failure = False
         # The current power state (True for on; False for off)
         self._power_state = False
         # Allow external interface to disable me
         self._enabled = True
-        return
 
     def disable(self):
         """
@@ -210,55 +634,14 @@ class Lcd:
             self._force_power_off()
 
     def _set_screen_bytes(self, b):
-        """
-        Sets internal screen array and increments the current column/row values based on number
-        of data values written
-        Inputs: b - A list of bytes to write at current position
-        """
-        # Compute current selection size
-        columns = self._gmax_col - self._gmin_col + 1
-        rows = self._gmax_row - self._gmin_row + 1
-        #
-        def lcd_add_to_current(x):
-            """
-            Increments the current column/row values based on number of data values written
-            Inputs: x - Number of columns to increment (to the right then down)
-            """
-            new_col = self._current_col + x
-            new_row = (
-                ((new_col // columns) + self._current_row) % rows
-            ) + self._gmin_row
-            new_col = (new_col % columns) + self._gmin_col
-            return (new_row, new_col)
-        # Handle case where length of b is more than current selection size
-        if len(b) > (columns * rows):
-            extra = (columns * rows) - len(b)
-            b = b[extra:]
-            (self._current_row, self._current_col) = lcd_add_to_current(extra)
-        # Write the screen
-        (new_row, new_col) = lcd_add_to_current(len(b))
-        if new_row == self._current_row and new_col > self._current_col:
-            # All changes confined to a single row (easy)
-            self._screen[self._current_row][self._current_col:new_col] = b
-        else:
-            # Changes to be written to more than one row
-            next_idx = 0
-            row = self._current_row
-            col = self._current_col
-            while next_idx < len(b):
-                cur_idx = next_idx
-                next_idx += columns
-                if next_idx > len(b):
-                    next_idx = len(b)
-                cnt = next_idx - cur_idx
-                self._screen[row][col:col + cnt] = b[cur_idx:next_idx]
-                row += 1
-                if row >= self._gmax_row:
-                    row = self._gmin_row
-                col = self._gmin_col
-        # Set new screen position
-        self._current_row = new_row
-        self._current_col = new_col
+        (self._current_row, self._current_col) = \
+            self._screen.set_screen_bytes(b,
+                                          cur_row=self._current_row,
+                                          cur_col=self._current_col,
+                                          min_row=self._gmin_row,
+                                          max_row=self._gmax_row,
+                                          min_col=self._gmin_col,
+                                          max_col=self._gmax_col)
 
     def _write_control_byte(self, byte, force=False):
         """
@@ -331,6 +714,8 @@ class Lcd:
                                 u"Is the hardware connected and the right address selected?" + \
                                 u":\n{}".format(e))
                             self._write_failure = True
+                            status = False
+                            break
                     else:
                         # If this was a data byte, then we need to update the display pointers by
                         # the number of bytes given because they would have been incremented by the
@@ -395,7 +780,7 @@ class Lcd:
         ]
         self._write_control_sequence(init_sequence)
         # Clear out the buffer and synchronize with hardware
-        self.clear()
+        self.clear(force=True)
         # Turn on OLED panel
         self.set_power(on=True)
         print(u"SSD1306 plugin: Done (LCD initialize)")
@@ -426,19 +811,42 @@ class Lcd:
             self._power_state = False
         return status
 
-    def clear(self):
+    def write_screen(self, screen, force=False):
+        """
+        Writes the given screen based on what is currently displayed and given screen.
+        Inputs: screen - Either a Screen or ScreenBlock object
+        """
+        new_bytes = screen.serialize()
+        current_bytes = self._screen.serialize_block(row_start=screen.row_start,
+                                                     row_end=screen.row_end,
+                                                     col_start=screen.col_start,
+                                                     col_end=screen.col_end)
+        status = False
+        # TODO: write row by row based on what is different
+        if force or current_bytes != new_bytes:
+            if self._lcd_set_print_area(min_row=screen.row_start,
+                                        max_row=screen.row_end,
+                                        min_col=screen.col_start,
+                                        max_col=screen.col_end):
+                status = self._write_data_sequence(list(new_bytes))
+        else:
+            status = True
+        return status
+
+    def clear(self, force=False):
         """
         Clear all contents of the display
         Returns: True if successfully written; False if an exception occurred
         """
-        status = True
-        # set print area to max in order to clear the entire screen
-        self._lcd_set_print_area_max()
-        # set all pixels to 0
-        for _ in range(0, 32):
-            if not self._write_data_sequence([0] * 32):
-                status = False
-        return status
+        screen_copy = self._screen.copy()
+        screen_copy.clear()
+        return self.write_screen(screen_copy, force)
+
+    def _lcd_set_pointer(self, row, col):
+        seq = [row & 0x0F | 0xB0, (col >> 4) & 0x0F | 0x10, col & 0x0F]
+        print("Set row {:02x} and col {:02x}".format(row, col))
+        print("seq ", [format(item, "02x") for item in seq])
+        return self._write_control_sequence(seq)
 
     def _lcd_set_print_area_max(self):
         """
@@ -472,75 +880,6 @@ class Lcd:
         self._current_row = min_row
         return status
 
-    @staticmethod
-    def _bit_shift_right_byte_list(lst, num):
-        """
-        Bit shifts right all bytes in the given list
-        Inputs: lst - List of bytes
-                num - Number of bits to shift right
-        Returns: The transformed list
-        """
-        original_length = len(lst)
-        if sys.version_info.major >= 3: # Python3 version of this
-            # Convert the list to integer in big-endian order
-            list_value = int.from_bytes(bytes(lst), byteorder='big')
-            # Do the bit shifting
-            list_value >>= num
-            # Convert the integer back to a list
-            lst = list(int(list_value).to_bytes(length=original_length, byteorder='big'))
-        else: # Python2 version of this; this will take about 5 times longer to process
-            # Convert the list to integer in big-endian order
-            list_value = int(''.join(format(val, '02x') for val in lst), 16)
-            # Do the bit shifting
-            list_value >>= num
-            # Convert the integer back to a list
-            list_string = format(list_value, '0' + str(original_length * 2) + 'x')
-            lst = [int(list_string[x:x+2], 16) for x in range(0, original_length * 2, 2)]
-        return lst
-
-    def _generate_char_sequence(self, char, size):
-        """
-        Resizes a single character into the rows needed to print
-        Inputs: char - The ascii character to print
-                n - integer size multiplier [1,N]
-        Returns: A list of lists, defining what bits to write to each row
-        """
-        chv = ord(char)
-        seq = []
-        if chv >= Lcd.LCD_ASCII_BEGIN and chv <= Lcd.LCD_ASCII_MAX:
-            seq = bytearray(Lcd.LCD_ASCII[chv - Lcd.LCD_ASCII_BEGIN])
-        else:  # unknown
-            seq = bytearray(Lcd.char_other)
-        # 1 vertical line of space before next char
-        seq.append(0x00)
-        # Make a 0-initialized 2-dimensional return array, n tall by n wide
-        ret_seq = [[0] * (len(seq) * size) for _ in range(size)]
-        # col_mask holds what vertical bits must be set in each row for the current bit
-        # (left to right) when the current bit is HIGH
-        col_mask = [0] * size
-        for i, mul in zip(range(size + 7 // 8), range(0, size, 8)):
-            mul = min(8, size - mul)
-            col_mask[i] = (2**mul - 1) << (8 - mul)
-        # For each bit in a byte (from left to right)...
-        for bit_mask in [0x80 >> i for i in range(8)]:
-            # For each byte in the sequence (from left to right)...
-            for j, v in zip(range(len(seq)), seq):
-                # If this bit is set in the current sequence byte...
-                if v & bit_mask:
-                    # This bit will need to be duplicated n**2 times
-                    for k in range(size): # For each row
-                        for l in range(size): # For each column
-                            # Each vertical line is printed from the bottom to top
-                            # This therefore indexes from n-1 to 0
-                            row_idx = size - 1 - k
-                            # From column (j*n) to (j*n + n-1)
-                            col_idx = j * size + l
-                            # Set the bit sequence
-                            ret_seq[row_idx][col_idx] |= col_mask[k]
-            # Shift the column mask to the right to prepare for next bit
-            col_mask = Lcd._bit_shift_right_byte_list(col_mask, size)
-        return ret_seq
-
     def write_block(self, str, row_start, min_text_size, max_text_size, justification=0):
         """
         Writes text to the LCD, autoformatting within the space specified
@@ -548,71 +887,17 @@ class Lcd:
                 row_start - The starting row to print this
                 min_text_size - The minimum size (scale) for this text (int)
                 max_text_size - The maximum size (scale) for this text (int)
-                justification - One of the Lcd.JUSTIFY_* values (LEFT, RIGHT, or CENTER)
+                justification - One of the Screen.JUSTIFY_* values (LEFT, RIGHT, or CENTER)
         """
-        if min_text_size > max_text_size or min_text_size <= 0 or max_text_size <= 0:
-            return 0
-        maxWidth = self._max_col_addr - self._min_col_addr + 1
-        words = str.split(" ")
-        wordSizes = [0] * len(words)
-        # I am assuming that each character is 5 pixel width with 1 pixel space
-        numberOfSpaces = len(words) - 1
-        totalSize = numberOfSpaces * 6
-        for i in range(len(words)):
-            currentSize = 0
-            for _ in range(len(words[i])):
-                currentSize += 6
-            wordSizes[i] = currentSize
-            totalSize += currentSize
-        if (
-            totalSize * max_text_size <= maxWidth
-            or min_text_size == max_text_size
-            or len(str) <= 0
-        ):
-            # It can all fit in one line at max size min = max; we are done
-            return self.write_line(str, row_start, max_text_size, justification)
-        currentTextSize = max_text_size
-        lines = []
-        maxLines = 0
-        while currentTextSize > min_text_size:
-            currentTextSize -= 1
-            maxLines = max_text_size // currentTextSize
-            currentLine = 0
-            lines = [words[0]]
-            currentSize = wordSizes[0]
-            lineTooLong = False
-            for i in range(1, len(words)):
-                nextSize = currentSize + wordSizes[i] + 6
-                if nextSize * currentTextSize > maxWidth:
-                    # Next line
-                    lines.append(words[i])
-                    currentLine += 1
-                    currentSize = wordSizes[i]
-                    # Flag if this word by itself is too long to fit
-                    if currentSize * currentTextSize > maxWidth:
-                        lineTooLong = True
-                else:
-                    lines[currentLine] += " " + words[i]
-                    currentSize += wordSizes[i] + 6
-            if len(lines) <= maxLines and not lineTooLong:
-                # we are done
-                break
-        while len(lines) + 2 <= maxLines:
-            temp = [u""]
-            temp.extend(lines)
-            lines = temp
-            lines.append("")
-        if len(lines) > maxLines:
-            lines = lines[:maxLines]
-        rowNum = row_start
-        printedCount = 0
-        for l in lines:
-            printedCount += self.write_line(l, rowNum, currentTextSize, justification)
-            rowNum += currentTextSize
-        # Clear out the rest
-        for i in range(rowNum, row_start + max_text_size):
-            self.write_line("", i, 1, Lcd.JUSTIFY_LEFT)
-        return printedCount
+        screen_copy = self._screen.copy()
+        screen_copy.write_block(str=str,
+                                row_start=row_start,
+                                min_text_size=min_text_size,
+                                max_text_size=max_text_size,
+                                justification=justification)
+        return self.write_screen(
+            screen_copy.get_screen_block(row_start=row_start,
+                                         row_end=row_start + max_text_size - 1))
 
     def write_line(self, str, row_start, text_size_multiplier=1, justification=0):
         """
@@ -620,70 +905,17 @@ class Lcd:
         Inputs: str - The ASCII string to print
                 row_start - The vertical position to write to (0-based, from top)
                 text_size_multiplier - Scaling for text (how many rows to occupy)
-                justification - One of the Lcd.JUSTIFY_* values (LEFT, RIGHT, or CENTER)
+                justification - One of the Screen.JUSTIFY_* values (LEFT, RIGHT, or CENTER)
         Returns 1 if successful, 0 if invalid arguments given
         """
-        if row_start < self._min_row_addr or row_start > self._max_row_addr:
-            return 0
-        if len(str) <= 0:
-            str = " "
-        seq = []
-        for c in str:
-            seqChar = self._generate_char_sequence(c, text_size_multiplier)
-            if len(seq) <= 0:
-                seq = seqChar
-            else:
-                for i in range(len(seq)):
-                    seq[i].extend(seqChar[i])
-
-        row_end = row_start + text_size_multiplier - 1
-        if row_end > self._max_row_addr:
-            row_end = self._max_row_addr
-        self._lcd_set_print_area(self._min_col_addr, self._max_col_addr, row_start, row_end)
-
-        maxNumRows = self._gmax_row - self._gmin_row + 1
-        maxNumCols = self._gmax_col - self._gmin_col + 1
-        # Add rows until we get the number of rows in range
-        for i in range(len(seq), maxNumRows):
-            seq.append([0] * len(seq[0]))
-        # Remove rows until we get the number of rows in range
-        del seq[maxNumRows:]
-        # Add columns until we get the number of columns in range
-        columnsToAdd = maxNumCols - len(seq[0])
-        if columnsToAdd > 0:
-            for i in range(len(seq)):
-                if justification == Lcd.JUSTIFY_RIGHT:
-                    newSeq = [0] * columnsToAdd
-                    newSeq.extend(seq[i])
-                    seq[i] = newSeq
-                elif justification == Lcd.JUSTIFY_CENTER:
-                    columnsToAddLeft = columnsToAdd // 2
-                    columnsToAddRight = columnsToAdd - columnsToAddLeft
-                    newSeq = [0] * columnsToAddLeft
-                    newSeq.extend(seq[i])
-                    newSeq.extend([0] * columnsToAddRight)
-                    seq[i] = newSeq
-                else:
-                    # Left justification by default
-                    seq[i].extend([0] * columnsToAdd)
-        # Remove columns until we get the number of columns in range
-        columnsToRemove = len(seq[0]) - maxNumCols
-        if columnsToRemove > 0:
-            for i in range(len(seq)):
-                if justification == Lcd.JUSTIFY_RIGHT:
-                    del seq[i][0:columnsToRemove]
-                elif justification == Lcd.JUSTIFY_CENTER:
-                    columnsToRemoveLeft = columnsToRemove // 2
-                    columnsToRemoveRight = columnsToRemove - columnsToRemoveLeft
-                    del seq[i][0:columnsToRemoveLeft]
-                    del seq[i][-columnsToRemoveRight:]
-                else:
-                    # Left justification by default
-                    del seq[i][-columnsToRemove:]
-        for row in seq:
-            self._write_data_sequence(row)
-        return 1
-
+        screen_copy = self._screen.copy()
+        screen_copy.write_line(str=str,
+                               row_start=row_start,
+                               text_size_multiplier=text_size_multiplier,
+                               justification=justification)
+        return self.write_screen(
+            screen_copy.get_screen_block(row_start=row_start,
+                                         row_end=row_start + text_size_multiplier - 1))
 
 class LcdPlugin(Thread):
     """
@@ -865,37 +1097,37 @@ class LcdPlugin(Thread):
                     if gv.pon == 98:
                         aboutToWrite = u"RunningRun-onceProgram"
                         if self._last_write != aboutToWrite:
-                            self._lcd.write_line(u"Running", 0, 2, Lcd.JUSTIFY_CENTER)
-                            self._lcd.write_line("", 2, 1, Lcd.JUSTIFY_LEFT)
-                            self._lcd.write_line(u"Run-once", 3, 2, Lcd.JUSTIFY_CENTER)
-                            self._lcd.write_line("", 5, 1, Lcd.JUSTIFY_LEFT)
-                            self._lcd.write_line(u"Program", 6, 2, Lcd.JUSTIFY_CENTER)
+                            self._lcd.write_line(u"Running", 0, 2, Screen.JUSTIFY_CENTER)
+                            self._lcd.write_line("", 2, 1, Screen.JUSTIFY_LEFT)
+                            self._lcd.write_line(u"Run-once", 3, 2, Screen.JUSTIFY_CENTER)
+                            self._lcd.write_line("", 5, 1, Screen.JUSTIFY_LEFT)
+                            self._lcd.write_line(u"Program", 6, 2, Screen.JUSTIFY_CENTER)
                             self._last_write = aboutToWrite
                     elif gv.pon == 99:
                         aboutToWrite = u"ManualMode"
                         if self._last_write != aboutToWrite:
-                            self._lcd.write_line(u"", 0, 1, Lcd.JUSTIFY_LEFT)
-                            self._lcd.write_line(u"Manual", 1, 2, Lcd.JUSTIFY_CENTER)
-                            self._lcd.write_line(u"", 3, 1, Lcd.JUSTIFY_LEFT)
-                            self._lcd.write_line(u"Mode", 4, 2, Lcd.JUSTIFY_CENTER)
-                            self._lcd.write_line(u"", 6, 2, Lcd.JUSTIFY_LEFT)
+                            self._lcd.write_line(u"", 0, 1, Screen.JUSTIFY_LEFT)
+                            self._lcd.write_line(u"Manual", 1, 2, Screen.JUSTIFY_CENTER)
+                            self._lcd.write_line(u"", 3, 1, Screen.JUSTIFY_LEFT)
+                            self._lcd.write_line(u"Mode", 4, 2, Screen.JUSTIFY_CENTER)
+                            self._lcd.write_line(u"", 6, 2, Screen.JUSTIFY_LEFT)
                             self._last_write = aboutToWrite
                     else:
                         aboutToWrite = u"RunningProgram{}".format(prg)
                         if self._last_write != aboutToWrite:
-                            self._lcd.write_line(u"Running", 0, 2, Lcd.JUSTIFY_CENTER)
-                            self._lcd.write_line("", 2, 1, Lcd.JUSTIFY_LEFT)
-                            self._lcd.write_line(u"Program", 3, 2, Lcd.JUSTIFY_CENTER)
-                            self._lcd.write_line(u"", 5, 1, Lcd.JUSTIFY_LEFT)
-                            self._lcd.write_line(prg, 6, 2, Lcd.JUSTIFY_CENTER)
+                            self._lcd.write_line(u"Running", 0, 2, Screen.JUSTIFY_CENTER)
+                            self._lcd.write_line("", 2, 1, Screen.JUSTIFY_LEFT)
+                            self._lcd.write_line(u"Program", 3, 2, Screen.JUSTIFY_CENTER)
+                            self._lcd.write_line(u"", 5, 1, Screen.JUSTIFY_LEFT)
+                            self._lcd.write_line(prg, 6, 2, Screen.JUSTIFY_CENTER)
                             self._last_write = aboutToWrite
                 else:
                     # It was a lie!
                     prg = u"Idle"
             else:
                 if self._last_write != s:
-                    self._lcd.write_block(s, 0, 1, 5, Lcd.JUSTIFY_CENTER)
-                    self._lcd.write_line(" ", 5, 1, Lcd.JUSTIFY_CENTER)
+                    self._lcd.write_block(s, 0, 1, 5, Screen.JUSTIFY_CENTER)
+                    self._lcd.write_line(" ", 5, 1, Screen.JUSTIFY_CENTER)
                     self._last_write = s
                     self._last_sub_val = ""
                 if gv.pon == 99 and stationDuration <= 0:
@@ -921,45 +1153,45 @@ class LcdPlugin(Thread):
                             + aboutToWrite
                         )
                 if self._last_sub_val != aboutToWrite:
-                    self._lcd.write_line(aboutToWrite, 6, 2, Lcd.JUSTIFY_CENTER)
+                    self._lcd.write_line(aboutToWrite, 6, 2, Screen.JUSTIFY_CENTER)
                     self._last_sub_val = aboutToWrite
         # Check again because prg may have changed to Idle in the above if statement
         if prg == u"Idle":
             if not gv.sd[u"en"]:
                 if self._last_write != u"OFF":
                     self._wake_display()
-                    self._lcd.write_line(u"OFF", 0, 3, Lcd.JUSTIFY_CENTER)
-                    self._lcd.write_line(u"", 3, 5, Lcd.JUSTIFY_LEFT)
+                    self._lcd.write_line(u"OFF", 0, 3, Screen.JUSTIFY_CENTER)
+                    self._lcd.write_line(u"", 3, 5, Screen.JUSTIFY_LEFT)
                     self._last_write = u"OFF"
             elif gv.sd[u"mm"]:
                 aboutToWrite = u"IdleManualMode"
                 if self._last_write != aboutToWrite:
                     self._wake_display()
-                    self._lcd.write_line(u"Idle", 0, 3, Lcd.JUSTIFY_CENTER)
-                    self._lcd.write_line(u"", 3, 1, Lcd.JUSTIFY_LEFT)
-                    self._lcd.write_line(u"Manual", 4, 2, Lcd.JUSTIFY_CENTER)
-                    self._lcd.write_line(u"Mode", 6, 2, Lcd.JUSTIFY_CENTER)
+                    self._lcd.write_line(u"Idle", 0, 3, Screen.JUSTIFY_CENTER)
+                    self._lcd.write_line(u"", 3, 1, Screen.JUSTIFY_LEFT)
+                    self._lcd.write_line(u"Manual", 4, 2, Screen.JUSTIFY_CENTER)
+                    self._lcd.write_line(u"Mode", 6, 2, Screen.JUSTIFY_CENTER)
                     self._last_write = aboutToWrite
             elif gv.sd[u"rd"]:
                 aboutToWrite = u"RainDelay"
                 if self._last_write != aboutToWrite:
                     self._wake_display()
-                    self._lcd.write_line(u"Rain", 0, 2, Lcd.JUSTIFY_CENTER)
-                    self._lcd.write_line(u"", 2, 1, Lcd.JUSTIFY_LEFT)
-                    self._lcd.write_line(u"Delay", 3, 2, Lcd.JUSTIFY_CENTER)
-                    self._lcd.write_line(u"", 5, 1, Lcd.JUSTIFY_LEFT)
+                    self._lcd.write_line(u"Rain", 0, 2, Screen.JUSTIFY_CENTER)
+                    self._lcd.write_line(u"", 2, 1, Screen.JUSTIFY_LEFT)
+                    self._lcd.write_line(u"Delay", 3, 2, Screen.JUSTIFY_CENTER)
+                    self._lcd.write_line(u"", 5, 1, Screen.JUSTIFY_LEFT)
                     self._last_write = aboutToWrite
                     self._last_sub_val = u""
                 remainingHrs = (gv.sd[u"rdst"] - gv.now) // 60 // 60
                 aboutToWrite = str(remainingHrs)
                 if self._last_sub_val != aboutToWrite:
                     if remainingHrs < 1:
-                        self._lcd.write_line(u"<1 hr", 6, 2, Lcd.JUSTIFY_CENTER)
+                        self._lcd.write_line(u"<1 hr", 6, 2, Screen.JUSTIFY_CENTER)
                     elif remainingHrs == 1:
-                        self._lcd.write_line(u"1 hr", 6, 2, Lcd.JUSTIFY_CENTER)
+                        self._lcd.write_line(u"1 hr", 6, 2, Screen.JUSTIFY_CENTER)
                     else:
                         self._lcd.write_line(
-                            str(remainingHrs) + u" hrs", 6, 2, Lcd.JUSTIFY_CENTER
+                            str(remainingHrs) + u" hrs", 6, 2, Screen.JUSTIFY_CENTER
                         )
                     self._last_sub_val = aboutToWrite
             elif gv.sd[u"wl"] < 100:
@@ -967,25 +1199,25 @@ class LcdPlugin(Thread):
                 aboutToWrite = u"IdleWaterLevel" + waterLevel
                 if self._last_write != aboutToWrite:
                     self._wake_display()
-                    self._lcd.write_line(u"Idle", 0, 3, Lcd.JUSTIFY_CENTER)
-                    self._lcd.write_line(waterLevel + u"%", 3, 2, Lcd.JUSTIFY_CENTER)
-                    self._lcd.write_line(u"", 5, 1, Lcd.JUSTIFY_LEFT)
+                    self._lcd.write_line(u"Idle", 0, 3, Screen.JUSTIFY_CENTER)
+                    self._lcd.write_line(waterLevel + u"%", 3, 2, Screen.JUSTIFY_CENTER)
+                    self._lcd.write_line(u"", 5, 1, Screen.JUSTIFY_LEFT)
                     self._last_write = aboutToWrite
                     self._last_sub_val = u""
                 aboutToWrite = LcdPlugin._get_time_string()
                 if self._last_sub_val != aboutToWrite:
-                    self._lcd.write_line(aboutToWrite, 6, 2, Lcd.JUSTIFY_CENTER)
+                    self._lcd.write_line(aboutToWrite, 6, 2, Screen.JUSTIFY_CENTER)
                     self._last_sub_val = aboutToWrite
             else:
                 if self._last_write != prg:
                     self._wake_display()
-                    self._lcd.write_line(prg, 0, 3, Lcd.JUSTIFY_CENTER)
-                    self._lcd.write_line(u"", 3, 3, Lcd.JUSTIFY_LEFT)
+                    self._lcd.write_line(prg, 0, 3, Screen.JUSTIFY_CENTER)
+                    self._lcd.write_line(u"", 3, 3, Screen.JUSTIFY_LEFT)
                     self._last_write = prg
                     self._last_sub_val = u""
                 aboutToWrite = LcdPlugin._get_time_string()
                 if self._last_sub_val != aboutToWrite:
-                    self._lcd.write_line(aboutToWrite, 6, 2, Lcd.JUSTIFY_CENTER)
+                    self._lcd.write_line(aboutToWrite, 6, 2, Screen.JUSTIFY_CENTER)
                     self._last_sub_val = aboutToWrite
 
             self._idle_lock.acquire()
@@ -1022,10 +1254,10 @@ class LcdPlugin(Thread):
                 min_text_size = queue_item.get(u"min_text_size", 1)
                 max_text_size = queue_item.get(u"max_text_size", 1)
                 justification_string = queue_item.get(u"justification", u"LEFT").upper()
-                justification_lookup = {u"LEFT": Lcd.JUSTIFY_LEFT,
-                                        u"RIGHT": Lcd.JUSTIFY_RIGHT,
-                                        u"CENTER": Lcd.JUSTIFY_CENTER}
-                justification = justification_lookup.get(justification_string, Lcd.JUSTIFY_LEFT)
+                justification_lookup = {u"LEFT": Screen.JUSTIFY_LEFT,
+                                        u"RIGHT": Screen.JUSTIFY_RIGHT,
+                                        u"CENTER": Screen.JUSTIFY_CENTER}
+                justification = justification_lookup.get(justification_string, Screen.JUSTIFY_LEFT)
                 append = queue_item.get(u"append", False)
                 # Force append to false if we are not already displaying custom
                 if not self._displaying_custom or self._custom_display_canceled:

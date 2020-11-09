@@ -32,11 +32,15 @@ $var page: ssd1306_plugin
         jQuery("button#cCancel").click(function(){
             window.location="/";
         });
+		jQuery("button#docButton").click(function(){
+            window.open("/static/docs/plugins/ssd1306-docs.html", "_blank");
+        });
     });
 </script>
 
 <div id="plugin">
     <div class="title">SSD1306 Plugin Settings
+	<button class="execute" id="docButton" type="button" >$_('Help')</button>
     </div>
 
     <form id="pluginForm" action="/ssd1306-save" method="get">

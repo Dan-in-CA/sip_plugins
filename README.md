@@ -12,18 +12,18 @@ These programs are distributed in the hope that they will be useful, but WITHOUT
 ******************
 buzzer
 ---------
-This plugin has been created to provide simple audio feedback. This plugin is intended to be controlled through other
+This plugin has been created to provide simple audio feedback.  This plugin is intended to be controlled through other
 plugins through the "buzzer_beep" signal. Buzzer should be connected to GPIO pin 32.
 
 california_monthly
 ---------
-Provides automatic monthly adjustment of irrigation times based on historical weather data.
+Provides automatic monthly adjustment of irrigation times based on historical weather data.  
 Requires SIP version 4.1.7 or later.
 
 cli_control
-----------
-Replaces rf_control.
-Sends command line commands to control remote stations e.g. RF devices.
+---------- 
+Sends command line commands to control remote stations e.g. RF devices.  
+Replaces rf_control. 
 
 combine_stations
 ----------
@@ -35,7 +35,7 @@ Sends status email to google email account
 
 keypad
 ----------
-A plugin for using an 4X4 scanning keypad to execute simple functions without the use of an external peripheral.
+A plugin for using an 4X4 scanning keypad to execute simple functions without the use of an external peripheral.  
 This plugin interfaces with buzzer and ssd1306 plugins through signals.
 
 lcd_adj
@@ -44,35 +44,35 @@ Uses I2C for LCD 16x2 char data display
 
 monthly_adj
 ----------
-Adjust irrigation time each month.
+Adjust irrigation time each month.  
 Requires SIP version 4.1.7 or later.
 
 mqtt
 ----------
-This is the base mqtt plugin,
-it provides a shared MQTT client object for other plugins.
+This is the base mqtt plugin.   
+It provides a shared MQTT client object for other plugins.  
 Requires paho mqtt.
 
 mqtt_get_values
 ----------
-Requires base mqtt plugin.
-Can be used to read SIP's gv.* settings.
+Requires base mqtt plugin.  
+Can be used to read SIP's gv.* settings.  
 See gv_reference.txt in the SIP folder for a list of settings.
 
 mqtt_set_values
 ----------
-Requires base mqtt plugin.
-Can be used to change SIP's gv.* settings.
+Requires base mqtt plugin.  
+Can be used to change SIP's gv.* settings.  
 See gv_reference.txt in the SIP folder for a list of settings.
 
 mqtt_schedule
 --------------
-Relies on MQTT, subscribes to a control topic and schedules
+Relies on MQTT, subscribes to a control topic and schedules  
 run once programs as command by MQTT.
 
 mqtt_slave
 --------------
-Relies on MQTT, subscribes to a control topic and allows
+Relies on MQTT, subscribes to a control topic and allows  
 one SIP system to control other SIPs using MQTT.
 
 mqtt_zones
@@ -89,22 +89,22 @@ Checks water pressure when master station is switched on
 
 proto
 ---------
-A bare bones plugin for use as a starting point for plugin authoring.
+A bare bones plugin for use as a starting point for plugin authoring.  
 (Installed by default)
 
 pulse_cct
 ----------
-Pulses a selected circuit with a 2.5 Hz signal for 30 sec
+Pulses a selected circuit with a 2.5 Hz signal for 30 sec  
 to discover the location of a valve
 
 pump_control
 ------------
-Controls a pump relay via an Arduino over i2C.
+Controls a pump relay via an Arduino over i2C.  
 Checks pressure in pipe ensuring proper operation.
 
 relay_16
 ----------
-A relaly_board update for use on 40 pin GPIO headers.
+A relaly_board update for use on 40 pin GPIO headers.  
 Supports up to 16 relays. Requires SIP 3.2.43 or later.
 
 relay_board
@@ -125,13 +125,12 @@ Plugin for SSD1306 128x64 pixel display connected to I2C interface.
 
 system_update
 ----------
-Allows updating SIP software from integrated UI  S
+Allows updating SIP software from integrated UI  
 (Installed by default)
 
 telegram_bot
 -------------
-A simple telegram.org bot to interface with a SIP installation.
-
+A simple telegram.org bot to interface with a SIP installation.  
 Run "pip install python-telegram-bot --upgrade" before installing this plugin.
 
 weather_level_adj

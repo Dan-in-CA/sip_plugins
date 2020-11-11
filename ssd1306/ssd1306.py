@@ -258,7 +258,7 @@ class Screen:
         if row_end is None:
             # Compute the end row based on the text size and number of lines in string
             num_lines = len(string.split(u"\n"))
-            row_end = min(self.row_end, num_lines * max_text_size - 1)
+            row_end = min(self.row_end, row_start + (num_lines * max_text_size - 1))
         if col_end is None:
             col_end = self.col_end
         return self.get_screen_block(row_start=row_start,

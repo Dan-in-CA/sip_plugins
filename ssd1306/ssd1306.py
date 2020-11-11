@@ -235,19 +235,36 @@ class Screen:
                                      col_end=self.col_end)\
             .set_bytes(b, cur_row=cur_row, cur_col=cur_col)
 
-    def write_block(self, string, row_start, min_text_size, max_text_size, justification=0):
+    def write_block(self,
+                    string,
+                    row_start=0,
+                    row_end=None,
+                    col_start=0,
+                    col_end=None,
+                    min_text_size=1,
+                    max_text_size=1,
+                    justification=0):
         """
-        Writes text to the LCD, autoformatting within the space specified
+        Writes text to the LCD, autoformatting within the space specified.
         Inputs: str - The string to write
                 row_start - The starting row to print this
+                row_end - The ending row to print this (inclusive)
+                col_start - The starting column to print this
+                col_end - The ending column to print this (inclusive)
                 min_text_size - The minimum size (scale) for this text (int)
                 max_text_size - The maximum size (scale) for this text (int)
                 justification - One of the JUSTIFY_* values (LEFT, RIGHT, or CENTER)
         """
+        if row_end is None:
+            # Compute the end row based on the text size and number of lines in string
+            num_lines = len(string.split(u"\n"))
+            row_end = min(self.row_end, num_lines * max_text_size - 1)
+        if col_end is None:
+            col_end = self.col_end
         return self.get_screen_block(row_start=row_start,
-                                     row_end=self.row_end,
-                                     col_start=self.col_start,
-                                     col_end=self.col_end)\
+                                     row_end=row_end,
+                                     col_start=col_start,
+                                     col_end=col_end)\
             .write_block(string=string,
                          min_text_size=min_text_size,
                          max_text_size=max_text_size,
@@ -307,7 +324,18 @@ class ScreenBlock:
     """
     def __init__(self, screen, row_start, row_end, col_start, col_end):
         self._screen = screen
-        # TODO: handle case when the following are out of range
+        if row_start < screen.row_start:
+            ValueError('row_start [{}] < screen.row_start [{}]'.format(row_start, screen.row_start))
+        if row_end > screen.row_end:
+            ValueError('row_end [{}] < screen.row_end [{}]'.format(row_end, screen.row_end))
+        if row_end < row_start:
+            ValueError('row_end [{}] < row_start [{}]'.format(row_end, row_start))
+        if col_start < screen.col_start:
+            ValueError('col_start [{}] < screen.col_start [{}]'.format(col_start, screen.col_start))
+        if col_end > screen.col_end:
+            ValueError('col_end [{}] < screen.col_end [{}]'.format(col_end, screen.col_end))
+        if col_end < col_start:
+            ValueError('col_end [{}] < col_start [{}]'.format(col_end, col_start))
         self._row_start = row_start
         self._row_end = row_end
         self._col_start = col_start
@@ -413,6 +441,10 @@ class ScreenBlock:
             ]
         )
 
+    def clear(self):
+        for row in self._screen.bytes[self.row_start:self.row_end + 1]:
+            row[self.col_start:self.col_end + 1] = bytearray(self.col_end - self.col_start + 1)
+
     @staticmethod
     def _bit_shift_right_byte_list(lst, num):
         """
@@ -491,80 +523,32 @@ class ScreenBlock:
                 max_text_size - The maximum size (scale) for this text (int)
                 justification - One of the JUSTIFY_* values (LEFT, RIGHT, or CENTER)
         """
-        # TODO: Something is not quite right about auto sizing between min and max
         if min_text_size > max_text_size or min_text_size <= 0 or max_text_size <= 0:
             raise ValueError('Invalid min [{}] or max [{}] text size'\
                 .format(min_text_size, max_text_size))
-        maxWidth = self.col_end - self.col_start + 1
-        words = string.split(" ")
-        wordSizes = [0] * len(words)
-        # I am assuming that each character is 5 pixel width with 1 pixel space
-        numberOfSpaces = len(words) - 1
-        totalSize = numberOfSpaces * 6
-        for i in range(len(words)):
-            currentSize = 0
-            for _ in range(len(words[i])):
-                currentSize += 6
-            wordSizes[i] = currentSize
-            totalSize += currentSize
-        if (
-            totalSize * max_text_size <= maxWidth
-            or min_text_size == max_text_size
-            or len(string) <= 0
-        ):
-            # It can all fit in one line at max size min = max; we are done
-            return self.write_line(string=string,
-                                   row_offset=0,
-                                   text_size_multiplier=max_text_size,
+        # Compute sizes relative to number of characters
+        char_len = len(Screen.char_other) + 1
+        lines = string.split(u"\n")
+        num_lines = len(lines)
+        widest_line = max([len(line) for line in lines])
+        max_width = (self.col_end - self.col_start + 1) // char_len
+        max_height = self.row_end - self.row_start + 1
+        # Compute the largest text size the string may have for the space provided
+        largest_width_size = max_width // widest_line
+        largest_height_size = max_height // num_lines
+        largest_size = min(largest_width_size, largest_height_size)
+        # Get size within range
+        selected_size = max(min(max_text_size, largest_size), min_text_size)
+        # Clear this screen block so that only new text is shown
+        self.clear()
+        # Write the lines!
+        cnt = 0
+        for (line, i) in zip(lines, range(len(lines))):
+            cnt += self.write_line(string=line,
+                                   row_offset=0 + (i * selected_size),
+                                   text_size_multiplier=selected_size,
                                    justification=justification)
-        currentTextSize = max_text_size
-        lines = []
-        maxLines = 0
-        while currentTextSize > min_text_size:
-            currentTextSize -= 1
-            maxLines = max_text_size // currentTextSize
-            currentLine = 0
-            lines = [words[0]]
-            currentSize = wordSizes[0]
-            lineTooLong = False
-            for i in range(1, len(words)):
-                nextSize = currentSize + wordSizes[i] + 6
-                if nextSize * currentTextSize > maxWidth:
-                    # Next line
-                    lines.append(words[i])
-                    currentLine += 1
-                    currentSize = wordSizes[i]
-                    # Flag if this word by itself is too long to fit
-                    if currentSize * currentTextSize > maxWidth:
-                        lineTooLong = True
-                else:
-                    lines[currentLine] += " " + words[i]
-                    currentSize += wordSizes[i] + 6
-            if len(lines) <= maxLines and not lineTooLong:
-                # we are done
-                break
-        while len(lines) + 2 <= maxLines:
-            temp = [u""]
-            temp.extend(lines)
-            lines = temp
-            lines.append("")
-        if len(lines) > maxLines:
-            lines = lines[:maxLines]
-        rowNum = 0
-        printedCount = 0
-        for l in lines:
-            printedCount += self.write_line(string=l,
-                                            row_offset=rowNum,
-                                            text_size_multiplier=currentTextSize,
-                                            justification=justification)
-            rowNum += currentTextSize
-        # Clear out the rest
-        for i in range(rowNum, max_text_size):
-            self.write_line(string="",
-                            row_offset=i,
-                            text_size_multiplier=1,
-                            justification=JUSTIFY_LEFT)
-        return printedCount
+        return cnt
 
     def write_line(self, string, row_offset=0, text_size_multiplier=1, justification=0):
         """
@@ -585,7 +569,7 @@ class ScreenBlock:
                 for i in range(len(seq)):
                     seq[i].extend(seqChar[i])
 
-        maxNumRows = self.row_end - (self.row_start + row_offset) + 1
+        maxNumRows = text_size_multiplier
         maxNumCols = self.col_end - self.col_start + 1
         # Add rows until we get the number of rows in range
         for i in range(len(seq), maxNumRows):
@@ -1157,7 +1141,11 @@ class LcdPlugin(Thread):
                     # It was a lie!
                     prg = u"Idle"
             else:
-                self._state_screen.write_block(s, 0, 1, 5, JUSTIFY_CENTER)
+                self._state_screen.write_block(string=s,
+                                               row_start=0,
+                                               min_text_size=1,
+                                               max_text_size=5,
+                                               justification=JUSTIFY_CENTER)
                 self._state_screen.write_line(" ", 5, 1, JUSTIFY_CENTER)
                 if gv.pon == 99 and stationDuration <= 0:
                     # Manual station on forever
@@ -1247,9 +1235,9 @@ class LcdPlugin(Thread):
             # Decrement delays and remove items from stack
             if last_wait_time > 0:
                 for key in key_list:
-                    if self._custom_screens_stack[key] is not None:
-                        self._custom_screens_stack[key] -= last_wait_time
-                        if self._custom_screens_stack[key] <= 0.25:
+                    if self._custom_screens_stack[key][u"delay"] is not None:
+                        self._custom_screens_stack[key][u"delay"] -= last_wait_time
+                        if self._custom_screens_stack[key][u"delay"] <= 0.25:
                             # Close enough to 0 that this item should be removed
                             del self._custom_screens_stack[key]
             if (
@@ -1264,9 +1252,12 @@ class LcdPlugin(Thread):
         delay = 0 # by default, immediately go to normal display
         if self._custom_screens_stack:
             top_key = list(self._custom_screens_stack.keys())[-1]
-            delay = self._custom_screens_stack[top_key]
+            top_value = self._custom_screens_stack[top_key]
+            delay = top_value[u"delay"]
+            wake = top_value[u"wake"]
             self._lcd.write_screen(self._custom_screens[top_key])
-            self._wake_display()
+            if wake:
+                self._wake_display()
         return delay
 
     def _display_custom(self, last_wait_time):
@@ -1274,6 +1265,7 @@ class LcdPlugin(Thread):
         Displays a custom message
         """
         delay = 0 # by default, immediately go to next item in stack or normal display
+        wake = False
         # If there are items in the stack, first decrement pop whatever is necessary
         self._refresh_custom_display_stack(last_wait_time)
         while self._custom_display_queue:
@@ -1294,8 +1286,15 @@ class LcdPlugin(Thread):
             if not cancel:
                 text = queue_item.get(u"txt", u"")
                 row_start = queue_item.get(u"row_start", 0)
+                row_end = queue_item.get(u"row_end", None)
+                col_start = queue_item.get(u"col_start", 0)
+                col_end = queue_item.get(u"col_end", None)
                 min_text_size = queue_item.get(u"min_text_size", 1)
                 max_text_size = queue_item.get(u"max_text_size", 1)
+                text_size = queue_item.get(u"text_size", None)
+                if text_size is not None:
+                    min_text_size = text_size
+                    max_text_size = text_size
                 justification_string = queue_item.get(u"justification", u"LEFT").upper()
                 justification_lookup = {u"LEFT": JUSTIFY_LEFT,
                                         u"RIGHT": JUSTIFY_RIGHT,
@@ -1303,17 +1302,29 @@ class LcdPlugin(Thread):
                 justification = justification_lookup.get(justification_string, JUSTIFY_LEFT)
                 append = queue_item.get(u"append", False)
                 delay = queue_item.get(u"delay", 1) # None is allowed to display until cancelled
+                wake = queue_item.get(u"wake", True)
                 # If this data is not to be appended, first clear screen
                 if not append:
                     screen.clear()
                 # Set the text
-                screen.write_block(text, row_start, min_text_size, max_text_size, justification)
-                # print(u"SSD1306 plugin: displayed: {}".format(queue_item))
+                try:
+                    screen.write_block(string=text,
+                                    row_start=row_start,
+                                    row_end=row_end,
+                                    col_start=col_start,
+                                    col_end=col_end,
+                                    min_text_size=min_text_size,
+                                    max_text_size=max_text_size,
+                                    justification=justification)
+                except Exception as ex:
+                    print(u"SSD1306 plugin: Exception occurred while trying to display " +
+                          u"custom screen: {}".format(ex))
+                    print(u"SSD1306 plugin: Custom display data: {}".format(queue_item))
             # Make sure it is on the top of the stack or completely removed if delay is 0
             if screen_name in self._custom_screens_stack.keys():
                 del self._custom_screens_stack[screen_name]
             if delay is None or delay > 0:
-                self._custom_screens_stack[screen_name] = delay
+                self._custom_screens_stack[screen_name] = {u"delay": delay, u"wake": wake}
         # Display whatever is at the top of the stack and get its delay
         delay = self._show_top_custom_display()
         return delay
@@ -1340,6 +1351,12 @@ class LcdPlugin(Thread):
         Wakes the display
         """
         self._wake_display()
+
+    def sleep_signal(self, *args, **kw):
+        """
+        Forced the display to be idled
+        """
+        self._display_idled()
 
     def run(self):
         """
@@ -1402,6 +1419,8 @@ try:
         display_signal.connect(lcd_plugin.display_signal)
         wake_signal = signal(u"ssd1306_wake")
         wake_signal.connect(lcd_plugin.wake_signal)
+        sleep_signal = signal(u"ssd1306_sleep")
+        sleep_signal.connect(lcd_plugin.sleep_signal)
         # Attach to restart signal
         restart = signal(u"restart")
         restart.connect(lcd_plugin.notify_restart)

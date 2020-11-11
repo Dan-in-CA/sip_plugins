@@ -17,7 +17,7 @@ plugins through the "buzzer_beep" signal. Buzzer should be connected to GPIO pin
 
 california_monthly
 ---------
-Provides automatic monthly adjustment of irrigation times based on historical weather data.  
+Provides automatic monthly adjustment of irrigation times based on historical weather data.<br>
 Requires SIP version 4.1.7 or later.
 
 cli_control

@@ -54,6 +54,9 @@ def inc_matrix_ptr(row, col, min_row, max_row, min_col, max_col, inc):
     col = (col % width) + min_col
     return (row, col)
 
+def is_python_3_or_better():
+    return sys.version_info.major >= 3
+
 class SipGlobals:
     """
     Provides a "namespace" where global values are accessed.
@@ -376,17 +379,17 @@ class ScreenBlock:
     def __init__(self, screen, row_start, row_end, col_start, col_end):
         self._screen = screen
         if row_start < screen.row_start:
-            ValueError('row_start [{}] < screen.row_start [{}]'.format(row_start, screen.row_start))
+            raise ValueError(u"row_start [{}] < screen.row_start [{}]".format(row_start, screen.row_start))
         if row_end > screen.row_end:
-            ValueError('row_end [{}] < screen.row_end [{}]'.format(row_end, screen.row_end))
+            raise ValueError(u"row_end [{}] > screen.row_end [{}]".format(row_end, screen.row_end))
         if row_end < row_start:
-            ValueError('row_end [{}] < row_start [{}]'.format(row_end, row_start))
+            raise ValueError(u"row_end [{}] < row_start [{}]".format(row_end, row_start))
         if col_start < screen.col_start:
-            ValueError('col_start [{}] < screen.col_start [{}]'.format(col_start, screen.col_start))
+            raise ValueError(u"col_start [{}] < screen.col_start [{}]".format(col_start, screen.col_start))
         if col_end > screen.col_end:
-            ValueError('col_end [{}] < screen.col_end [{}]'.format(col_end, screen.col_end))
+            raise ValueError(u"col_end [{}] > screen.col_end [{}]".format(col_end, screen.col_end))
         if col_end < col_start:
-            ValueError('col_end [{}] < col_start [{}]'.format(col_end, col_start))
+            raise ValueError(u"col_end [{}] < col_start [{}]".format(col_end, col_start))
         self._row_start = row_start
         self._row_end = row_end
         self._col_start = col_start
@@ -505,7 +508,7 @@ class ScreenBlock:
         Returns: The transformed list
         """
         original_length = len(lst)
-        if sys.version_info.major >= 3: # Python3 version of this
+        if is_python_3_or_better(): # Python3 version of this
             # Convert the list to integer in big-endian order
             list_value = int.from_bytes(bytes(lst), byteorder='big')
             # Do the bit shifting
@@ -574,8 +577,12 @@ class ScreenBlock:
                 max_text_size - The maximum size (scale) for this text (int)
                 justification - One of the JUSTIFY_* values (LEFT, RIGHT, or CENTER)
         """
-        if min_text_size > max_text_size or min_text_size <= 0 or max_text_size <= 0:
-            raise ValueError('Invalid min [{}] or max [{}] text size'\
+        if (
+            min_text_size > max_text_size or
+            min_text_size <= 0 or
+            max_text_size > (self.row_end - self.row_start + 1) * 2
+        ):
+            raise ValueError(u"Invalid min [{}] or max [{}] text size"\
                 .format(min_text_size, max_text_size))
         # Compute sizes relative to number of characters
         char_len = len(Screen.char_other) + 1
@@ -594,7 +601,7 @@ class ScreenBlock:
         self.clear()
         # Write the lines!
         cnt = 0
-        for (line, i) in zip(lines, range(len(lines))):
+        for (line, i) in zip(lines, range(min(self.row_end - self.row_start + 1, len(lines)))):
             cnt += self.write_line(string=line,
                                    row_offset=0 + (i * selected_size),
                                    text_size_multiplier=selected_size,
@@ -622,9 +629,6 @@ class ScreenBlock:
 
         maxNumRows = text_size_multiplier
         maxNumCols = self.col_end - self.col_start + 1
-        # Add rows until we get the number of rows in range
-        for i in range(len(seq), maxNumRows):
-            seq.append([0] * len(seq[0]))
         # Remove rows until we get the number of rows in range
         del seq[maxNumRows:]
         # Add columns until we get the number of columns in range

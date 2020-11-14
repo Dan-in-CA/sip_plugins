@@ -12,9 +12,6 @@ from webpages import ProtectedPage  # Needed for security
 import json  # for working with data file
 from collections import OrderedDict
 
-# For helper functions
-from helpers import *
-
 # to write to the console
 import sys
 
@@ -56,6 +53,62 @@ def inc_matrix_ptr(row, col, min_row, max_row, min_col, max_col, inc):
     ) + min_row
     col = (col % width) + min_col
     return (row, col)
+
+class SipGlobals:
+    """
+    Provides a "namespace" where global values are accessed.
+    """
+    @staticmethod
+    def get_now_time():
+        return gv.nowt
+    @staticmethod
+    def get_now():
+        return gv.now
+    @staticmethod
+    def is_24hr_time_format():
+        return bool(gv.sd[u"tf"])
+    @staticmethod
+    def is_idle():
+        return (gv.pon is None)
+    @staticmethod
+    def get_running_program():
+        return gv.pon
+    @staticmethod
+    def is_enabled():
+        return bool(gv.sd[u"en"])
+    @staticmethod
+    def is_manual_mode_enabled():
+        return bool(gv.sd[u"mm"])
+    @staticmethod
+    def is_rain_delay_set():
+        return bool(gv.sd[u"rd"])
+    @staticmethod
+    def get_rain_delay_end_time():
+        return gv.sd[u"rdst"]
+    @staticmethod
+    def get_water_level():
+        return gv.sd[u"wl"]
+    @staticmethod
+    def get_running_stations():
+        running_stations = []
+        station_duration = 0
+        program_running = False
+        for i in range(len(gv.ps)):
+            p, d = gv.ps[i]
+            if p != 0:
+                program_running = True
+            if i + 1 != gv.sd[u"mas"] and gv.srvals[i]:
+                # not master and currently on
+                running_stations.append(i + 1)
+                if d > station_duration:
+                    station_duration = d
+        return (program_running, station_duration, running_stations)
+    @staticmethod
+    def is_runonce_program_running():
+        return (gv.pon == 98)
+    @staticmethod
+    def is_manual_mode_program_running():
+        return (gv.pon == 99)
 
 class Screen:
     """
@@ -169,10 +222,8 @@ class Screen:
     def __init__(self,
                  screen_pixel_width=128,
                  screen_pixel_height=64):
-        # defined minimum and maximum LCD addresses
-        self._min_col_addr = 0
+        # defined maximum LCD addresses
         self._max_col_addr = screen_pixel_width - 1
-        self._min_row_addr = 0
         # note: ssd1306 addresses rows by 8 vertical pixels at a time, so the screen height had
         #       better be divisible by 8 (rounding up to the nearest 8 here to be sure)
         num_rows = (screen_pixel_height + 7) // 8
@@ -192,7 +243,7 @@ class Screen:
 
     @property
     def row_start(self):
-        return self._min_row_addr
+        return 0
 
     @property
     def row_end(self):
@@ -200,7 +251,7 @@ class Screen:
 
     @property
     def col_start(self):
-        return self._min_col_addr
+        return 0
 
     @property
     def col_end(self):
@@ -403,7 +454,7 @@ class ScreenBlock:
                                   inc=x)
         # Handle case where length of b is more than current selection size
         if len(b) > (columns * rows):
-            extra = (columns * rows) - len(b)
+            extra = len(b) - (columns * rows)
             b = b[extra:]
             (cur_row, cur_col) = lcd_add_to_current(extra)
         # Write the screen
@@ -419,7 +470,7 @@ class ScreenBlock:
             col = cur_col
             while next_idx < len(b):
                 cur_idx = next_idx
-                next_idx += columns
+                next_idx += (self.col_end - col + 1)
                 if next_idx > len(b):
                     next_idx = len(b)
                 cnt = next_idx - cur_idx
@@ -899,43 +950,6 @@ class Lcd:
             status = self._write_control_sequence(seq)
         return status
 
-    def write_block(self, string, row_start, min_text_size, max_text_size, justification=0):
-        """
-        Writes text to the LCD, autoformatting within the space specified
-        Inputs: str - The string to write
-                row_start - The starting row to print this
-                min_text_size - The minimum size (scale) for this text (int)
-                max_text_size - The maximum size (scale) for this text (int)
-                justification - One of the JUSTIFY_* values (LEFT, RIGHT, or CENTER)
-        """
-        screen_copy = self._screen.copy()
-        screen_copy.write_block(string=string,
-                                row_start=row_start,
-                                min_text_size=min_text_size,
-                                max_text_size=max_text_size,
-                                justification=justification)
-        return self.write_screen(
-            screen_copy.get_screen_block(row_start=row_start,
-                                         row_end=row_start + max_text_size - 1))
-
-    def write_line(self, string, row_start, text_size_multiplier=1, justification=0):
-        """
-        Writes a horizontal line of text to the LCD.
-        Inputs: string - The ASCII string to print
-                row_start - The vertical position to write to (0-based, from top)
-                text_size_multiplier - Scaling for text (how many rows to occupy)
-                justification - One of the JUSTIFY_* values (LEFT, RIGHT, or CENTER)
-        Returns 1 if successful, 0 if invalid arguments given
-        """
-        screen_copy = self._screen.copy()
-        screen_copy.write_line(string=string,
-                               row_start=row_start,
-                               text_size_multiplier=text_size_multiplier,
-                               justification=justification)
-        return self.write_screen(
-            screen_copy.get_screen_block(row_start=row_start,
-                                         row_end=row_start + text_size_multiplier - 1))
-
 class LcdPlugin(Thread):
     """
     LCD Plugin which integrates into SIP
@@ -1029,13 +1043,13 @@ class LcdPlugin(Thread):
         Returns the current time as a string
         """
         timeStr = u""
-        nowt = gv.nowt
+        nowt = SipGlobals.get_now_time()
         timeHours = nowt.tm_hour
         timeMinutes = nowt.tm_min
         ampmString = u""
-        if not gv.sd[u"tf"]:
+        if not SipGlobals.is_24hr_time_format():
             isPm = False
-            timeHours = gv.nowt.tm_hour
+            timeHours = nowt.tm_hour
             if timeHours == 0:
                 timeHours = 12
             elif timeHours == 12:
@@ -1076,54 +1090,104 @@ class LcdPlugin(Thread):
         finally:
             self._idle_lock.release()
 
+    def _display_idle(self):
+        if not SipGlobals.is_enabled():
+            idle_state = u"OFF"
+            self._state_screen.write_line(u"OFF", 0, 3, JUSTIFY_CENTER)
+            self._state_screen.write_line(u"", 3, 5, JUSTIFY_LEFT)
+        elif SipGlobals.is_manual_mode_enabled():
+            idle_state = u"Idle_mm"
+            self._state_screen.write_line(u"Idle", 0, 3, JUSTIFY_CENTER)
+            self._state_screen.write_line(u"", 3, 1, JUSTIFY_LEFT)
+            self._state_screen.write_line(u"Manual", 4, 2, JUSTIFY_CENTER)
+            self._state_screen.write_line(u"Mode", 6, 2, JUSTIFY_CENTER)
+        elif SipGlobals.is_rain_delay_set():
+            idle_state = u"Rain"
+            self._state_screen.write_line(u"Rain", 0, 2, JUSTIFY_CENTER)
+            self._state_screen.write_line(u"", 2, 1, JUSTIFY_LEFT)
+            self._state_screen.write_line(u"Delay", 3, 2, JUSTIFY_CENTER)
+            self._state_screen.write_line(u"", 5, 1, JUSTIFY_LEFT)
+            remainingHrs = (SipGlobals.get_rain_delay_end_time() - SipGlobals.get_now()) // 60 // 60
+            if remainingHrs < 1:
+                self._state_screen.write_line(u"<1 hr", 6, 2, JUSTIFY_CENTER)
+            elif remainingHrs == 1:
+                self._state_screen.write_line(u"1 hr", 6, 2, JUSTIFY_CENTER)
+            else:
+                self._state_screen.write_line(
+                    str(remainingHrs) + u" hrs", 6, 2, JUSTIFY_CENTER
+                )
+        elif SipGlobals.get_water_level() < 100:
+            idle_state = u"Idle_wl"
+            waterLevel = str(SipGlobals.get_water_level())
+            self._state_screen.write_line(u"Idle", 0, 3, JUSTIFY_CENTER)
+            self._state_screen.write_line(waterLevel + u"%", 3, 2, JUSTIFY_CENTER)
+            self._state_screen.write_line(u"", 5, 1, JUSTIFY_LEFT)
+            self._state_screen.write_line(LcdPlugin._get_time_string(), 6, 2, JUSTIFY_CENTER)
+        else:
+            idle_state = u"Idle"
+            self._state_screen.write_line(u"Idle", 0, 3, JUSTIFY_CENTER)
+            self._state_screen.write_line(u"", 3, 3, JUSTIFY_LEFT)
+            self._state_screen.write_line(LcdPlugin._get_time_string(), 6, 2, JUSTIFY_CENTER)
+        self._lcd.write_screen(self._state_screen)
+        self._set_idle_state(idle_state)
+
+        self._idle_lock.acquire()
+        try:
+            # Save the idle timeout value just in case it gets written to as we are checking
+            # (self._idle_timeout_seconds is not protected by the lock)
+            idle_timeout_seconds = self._idle_timeout_seconds
+            if (
+                not self._idled
+                and self._idle_entry_time is not None
+                and idle_timeout_seconds > 0
+                and (time.time() - self._idle_entry_time) > idle_timeout_seconds
+            ):
+                self._display_idled()
+        finally:
+            self._idle_lock.release()
+
+    @staticmethod
+    def _time_to_string(t):
+        seconds = int(t) % 60
+        minutes = int(t) // 60
+        hours = minutes // 60
+        minutes = minutes % 60
+        string = (
+            str(minutes // 10)
+            + str(minutes % 10)
+            + ":"
+            + str(seconds // 10)
+            + str(seconds % 10)
+        )
+        if hours > 0:
+            string = (
+                str(hours // 10)
+                + str(hours % 10)
+                + ":"
+                + string
+            )
+        return string
+
     def _display_normal(self):
         """
         Refreshes the display for "normal" operation which displays some of the current state
         """
+        is_idle = SipGlobals.is_idle()
 
-        ########################################################################
-        # All of this logic is a gigantic mess! I plan on eventually cleaning
-        # this up. For now, please don't judge :)
-        ########################################################################
-
-        if gv.pon is None:
-            prg = u"Idle"
-        elif gv.pon == 98:  # something is running
-            prg = u"Run-once"
-        elif gv.pon == 99:
-            prg = u"Manual Mode"
-        else:
-            prg = u"{}".format(gv.pon)
-
-        s = ""
-        if prg != u"Idle":
-            # If previously idle, reset flag and make sure display is on
-            self._wake_display()
+        if not is_idle:
             # Get Running Stations from gv.ps
-            programRunning = False
-            stationDuration = 0
-            for i in range(len(gv.ps)):
-                p, d = gv.ps[i]
-                if p != 0:
-                    programRunning = True
-                if i + 1 != gv.sd[u"mas"] and gv.srvals[i]:
-                    # not master and currently on
-                    if len(s) == 0:
-                        s = str(i + 1)
-                    else:
-                        s += " " + str(i + 1)
-                    if d > stationDuration:
-                        stationDuration = d
-            if len(s) == 0:
-                if programRunning:
-                    if gv.pon == 98:
+            (program_running, station_duration, running_stations) = \
+                SipGlobals.get_running_stations()
+            if not running_stations:
+                if program_running:
+                    if SipGlobals.is_runonce_program_running():
                         self._state_screen.write_line(u"Running", 0, 2, JUSTIFY_CENTER)
                         self._state_screen.write_line("", 2, 1, JUSTIFY_LEFT)
                         self._state_screen.write_line(u"Run-once", 3, 2, JUSTIFY_CENTER)
                         self._state_screen.write_line("", 5, 1, JUSTIFY_LEFT)
                         self._state_screen.write_line(u"Program", 6, 2, JUSTIFY_CENTER)
                         self._lcd.write_screen(self._state_screen)
-                    elif gv.pon == 99:
+                    elif SipGlobals.is_manual_mode_program_running():
                         self._state_screen.write_line(u"", 0, 1, JUSTIFY_LEFT)
                         self._state_screen.write_line(u"Manual", 1, 2, JUSTIFY_CENTER)
                         self._state_screen.write_line(u"", 3, 1, JUSTIFY_LEFT)
@@ -1135,98 +1199,33 @@ class LcdPlugin(Thread):
                         self._state_screen.write_line("", 2, 1, JUSTIFY_LEFT)
                         self._state_screen.write_line(u"Program", 3, 2, JUSTIFY_CENTER)
                         self._state_screen.write_line(u"", 5, 1, JUSTIFY_LEFT)
+                        prg = str(SipGlobals.get_running_program())
                         self._state_screen.write_line(prg, 6, 2, JUSTIFY_CENTER)
                         self._lcd.write_screen(self._state_screen)
                 else:
                     # It was a lie!
-                    prg = u"Idle"
+                    is_idle = True
             else:
+                s = u" ".join([str(item) for item in running_stations])
                 self._state_screen.write_block(string=s,
                                                row_start=0,
                                                min_text_size=1,
                                                max_text_size=5,
                                                justification=JUSTIFY_CENTER)
                 self._state_screen.write_line(" ", 5, 1, JUSTIFY_CENTER)
-                if gv.pon == 99 and stationDuration <= 0:
+                if SipGlobals.is_manual_mode_program_running() and station_duration <= 0:
                     # Manual station on forever
-                    aboutToWrite = u"ON"
+                    time_string = u"ON"
                 else:
-                    stationSec = int(stationDuration) % 60
-                    stationMin = int(stationDuration) // 60
-                    stationHrs = stationMin // 60
-                    stationMin = stationMin % 60
-                    aboutToWrite = (
-                        str(stationMin // 10)
-                        + str(stationMin % 10)
-                        + ":"
-                        + str(stationSec // 10)
-                        + str(stationSec % 10)
-                    )
-                    if stationHrs > 0:
-                        aboutToWrite = (
-                            str(stationHrs // 10)
-                            + str(stationHrs % 10)
-                            + ":"
-                            + aboutToWrite
-                        )
-                self._state_screen.write_line(aboutToWrite, 6, 2, JUSTIFY_CENTER)
+                    time_string = self._time_to_string(station_duration)
+                self._state_screen.write_line(time_string, 6, 2, JUSTIFY_CENTER)
                 self._lcd.write_screen(self._state_screen)
-        # Check again because prg may have changed to Idle in the above if statement
-        if prg == u"Idle":
-            if not gv.sd[u"en"]:
-                idle_state = u"OFF"
-                self._state_screen.write_line(u"OFF", 0, 3, JUSTIFY_CENTER)
-                self._state_screen.write_line(u"", 3, 5, JUSTIFY_LEFT)
-            elif gv.sd[u"mm"]:
-                idle_state = u"Idle_mm"
-                self._state_screen.write_line(u"Idle", 0, 3, JUSTIFY_CENTER)
-                self._state_screen.write_line(u"", 3, 1, JUSTIFY_LEFT)
-                self._state_screen.write_line(u"Manual", 4, 2, JUSTIFY_CENTER)
-                self._state_screen.write_line(u"Mode", 6, 2, JUSTIFY_CENTER)
-            elif gv.sd[u"rd"]:
-                idle_state = u"Rain"
-                self._state_screen.write_line(u"Rain", 0, 2, JUSTIFY_CENTER)
-                self._state_screen.write_line(u"", 2, 1, JUSTIFY_LEFT)
-                self._state_screen.write_line(u"Delay", 3, 2, JUSTIFY_CENTER)
-                self._state_screen.write_line(u"", 5, 1, JUSTIFY_LEFT)
-                remainingHrs = (gv.sd[u"rdst"] - gv.now) // 60 // 60
-                if remainingHrs < 1:
-                    self._state_screen.write_line(u"<1 hr", 6, 2, JUSTIFY_CENTER)
-                elif remainingHrs == 1:
-                    self._state_screen.write_line(u"1 hr", 6, 2, JUSTIFY_CENTER)
-                else:
-                    self._state_screen.write_line(
-                        str(remainingHrs) + u" hrs", 6, 2, JUSTIFY_CENTER
-                    )
-            elif gv.sd[u"wl"] < 100:
-                idle_state = u"Idle_wl"
-                waterLevel = str(gv.sd[u"wl"])
-                self._state_screen.write_line(u"Idle", 0, 3, JUSTIFY_CENTER)
-                self._state_screen.write_line(waterLevel + u"%", 3, 2, JUSTIFY_CENTER)
-                self._state_screen.write_line(u"", 5, 1, JUSTIFY_LEFT)
-                self._state_screen.write_line(LcdPlugin._get_time_string(), 6, 2, JUSTIFY_CENTER)
-            else:
-                idle_state = u"Idle"
-                self._state_screen.write_line(u"Idle", 0, 3, JUSTIFY_CENTER)
-                self._state_screen.write_line(u"", 3, 3, JUSTIFY_LEFT)
-                self._state_screen.write_line(LcdPlugin._get_time_string(), 6, 2, JUSTIFY_CENTER)
-            self._lcd.write_screen(self._state_screen)
-            self._set_idle_state(idle_state)
-
-            self._idle_lock.acquire()
-            try:
-                # Save the idle timeout value just in case it gets written to as we are checking
-                # (self._idle_timeout_seconds is not protected by the lock)
-                idle_timeout_seconds = self._idle_timeout_seconds
-                if (
-                    not self._idled
-                    and self._idle_entry_time is not None
-                    and idle_timeout_seconds > 0
-                    and (time.time() - self._idle_entry_time) > idle_timeout_seconds
-                ):
-                    self._display_idled()
-            finally:
-                self._idle_lock.release()
+        # Check again because is_idle may have changed in the above "if" statement
+        if is_idle:
+            self._display_idle()
+        else:
+            # If previously idle, reset flag and make sure display is on
+            self._wake_display()
 
     def _refresh_custom_display_stack(self, last_wait_time):
         if self._custom_screens_stack:
@@ -1413,15 +1412,12 @@ try:
     # Start LCD
     if lcd_plugin.initialize(load_settings=True):
         lcd_plugin.start()
-        # Note about this signal: It shouldn't be used by multiple external modules at once. Nothing
-        # handles such concurrent calls internally. See how _display_custom dissects the message.
         display_signal = signal(u"ssd1306_display")
         display_signal.connect(lcd_plugin.display_signal)
         wake_signal = signal(u"ssd1306_wake")
         wake_signal.connect(lcd_plugin.wake_signal)
         sleep_signal = signal(u"ssd1306_sleep")
         sleep_signal.connect(lcd_plugin.sleep_signal)
-        # Attach to restart signal
         restart = signal(u"restart")
         restart.connect(lcd_plugin.notify_restart)
 except Exception as ex:

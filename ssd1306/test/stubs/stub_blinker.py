@@ -1,5 +1,5 @@
 class signal:
-    def __init__(*args, **kwargs):
+    def __init__(self, *args, **kwargs):
         pass
-    def connect(*args, **kwargs):
+    def connect(self, *args, **kwargs):
         pass

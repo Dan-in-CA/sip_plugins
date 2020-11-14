@@ -14,6 +14,8 @@ xmlns="http://www.w3.org/TR/REC-html40">
 <link rel=colorSchemeMapping href="ssd1306-docs_files/colorschememapping.xml">
 <!--[if gte mso 9]><xml>
  <w:WordDocument>
+  <w:SpellingState>Clean</w:SpellingState>
+  <w:GrammarState>Clean</w:GrammarState>
   <w:TrackMoves>false</w:TrackMoves>
   <w:TrackFormatting/>
   <w:ValidateAgainstSchemas/>
@@ -638,7 +640,7 @@ xmlns="http://www.w3.org/TR/REC-html40">
 	mso-font-charset:0;
 	mso-generic-font-family:roman;
 	mso-font-pitch:variable;
-	mso-font-signature:-536869121 1107305727 33554432 0 415 0;}
+	mso-font-signature:3 0 0 0 1 0;}
 @font-face
 	{font-family:Calibri;
 	panose-1:2 15 5 2 2 2 4 3 2 4;
@@ -866,6 +868,12 @@ p.msochpdefault, li.msochpdefault, div.msochpdefault
 	font-family:"Calibri",sans-serif;
 	mso-fareast-font-family:"Times New Roman";
 	mso-fareast-theme-font:minor-fareast;}
+span.SpellE
+	{mso-style-name:"";
+	mso-spl-e:yes;}
+span.GramE
+	{mso-style-name:"";
+	mso-gram-e:yes;}
 .MsoChpDefault
 	{mso-style-type:export-only;
 	mso-default-props:yes;
@@ -1140,15 +1148,17 @@ style='mso-fareast-font-family:Calibri'><span style='mso-list:Ignore'>2.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span></span></span><![endif]>Unplug
 your raspberry pi, and then wire your SSD1306 to pins for I2C.1. For most
 raspberry pi hardware, this is at pins 3 and 5 of the header. Refer to the
-schematics for your particular raspberry pi version before selecting the pins
-to wire to.</p>
+schematics for your <span class=GramE>particular raspberry</span> pi version
+before selecting the pins to wire to.</p>
 
 <p class=MsoListParagraphCxSpMiddle style='text-indent:-.25in;mso-list:l0 level1 lfo2'><![if !supportLists]><span
 style='mso-fareast-font-family:Calibri'><span style='mso-list:Ignore'>3.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span></span></span><![endif]>Plug
 in your raspberry pi and install the I2C tools by entering the command <span
+class=SpellE><span style='color:black;mso-color-alt:windowtext;background:#D9D9D9;
+mso-shading-themecolor:background1;mso-shading-themeshade:217'>sudo</span></span><span
 style='color:black;mso-color-alt:windowtext;background:#D9D9D9;mso-shading-themecolor:
-background1;mso-shading-themeshade:217'>sudo apt-get install i2c-tools</span><span
+background1;mso-shading-themeshade:217'> apt-get install i2c-tools</span><span
 style='color:black;mso-color-alt:windowtext;background:white;mso-shading-themecolor:
 background1'><span style='mso-spacerun:yes'>  </span></span></p>
 
@@ -1166,35 +1176,28 @@ your hardware is setup for address 78, you should see 3C in the table. If your
 hardware is setup for address 7A, you should see 3D in the table. This confirms
 that your display is wired properly.</p>
 
-<p class=MsoListParagraphCxSpMiddle style='text-indent:-.25in;mso-list:l0 level1 lfo2'><![if !supportLists]><span
+<p class=MsoListParagraphCxSpLast style='text-indent:-.25in;mso-list:l0 level1 lfo2'><![if !supportLists]><span
 style='mso-fareast-font-family:Calibri'><span style='mso-list:Ignore'>5.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span></span></span><![endif]>Make
-sure the python smbus package is installed by running <span style='color:black;
-mso-color-alt:windowtext;background:#D9D9D9;mso-shading-themecolor:background1;
-mso-shading-themeshade:217'>sudo apt-get install python-smbus</span></p>
-
-<p class=MsoListParagraphCxSpMiddle style='text-indent:-.25in;mso-list:l0 level1 lfo2'><![if !supportLists]><span
-style='mso-fareast-font-family:Calibri'><span style='mso-list:Ignore'>6.<span
-style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span></span></span><![endif]>To
-increase the write rate to the display, edit the file at /boot/config.txt. Find
-the line where <span style='color:black;mso-color-alt:windowtext;background:
-#D9D9D9;mso-shading-themecolor:background1;mso-shading-themeshade:217'>dtparam=i2c_arm=on</span>
-is defined and replace that with <span style='color:black;mso-color-alt:windowtext;
+sure the python <span class=SpellE>smbus</span> package is installed by running
+<span class=SpellE><span style='color:black;mso-color-alt:windowtext;
 background:#D9D9D9;mso-shading-themecolor:background1;mso-shading-themeshade:
-217'>dtparam=i2c_arm=on,i2c_arm_baudrate=400000</span></p>
-
-<p class=MsoListParagraphCxSpLast style='margin-left:1.0in;mso-add-space:auto;
-text-indent:-.25in;mso-list:l0 level2 lfo2'><![if !supportLists]><span
-style='mso-fareast-font-family:Calibri'><span style='mso-list:Ignore'>a.<span
-style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span></span></span><![endif]>This
-step is optional, but it helps to make the display look less sluggish as it
-updates.</p>
+217'>sudo</span></span><span style='color:black;mso-color-alt:windowtext;
+background:#D9D9D9;mso-shading-themecolor:background1;mso-shading-themeshade:
+217'> apt-get install python-<span class=SpellE>smbus</span></span></p>
 
 <p class=MsoNormal>You should now be ready to install the SSD1306 plugin.</p>
 
+<p class=MsoNormal>Note: it is <u>not</u> recommended to increase the I2C BAUD
+rate since the I2C bus is shared by the hardware controlling sprinkler hardware.
+Parts of your hardware may only be rated to 100kHz which is the default speed selected
+for the Raspberry Pi I2C <span class=SpellE>busaspberry</span> Pi. For example,
+the max rated BAUD rate for the PCF8591T A/D and D/A controller is 100kHz.</p>
+
 <h2>SSD1306 Settings</h2>
 
-<p class=MsoNormal>The settings page for the SSD1306 has the following fields.</p>
+<p class=MsoNormal>The settings page for the SSD1306 <span class=GramE>has</span>
+the following fields.</p>
 
 <p class=MsoListParagraphCxSpFirst style='text-indent:-.25in;mso-list:l1 level1 lfo4'><![if !supportLists]><span
 style='font-family:Symbol;mso-fareast-font-family:Symbol;mso-bidi-font-family:
@@ -1243,8 +1246,9 @@ auto;text-indent:-.25in;mso-list:l1 level2 lfo4'><![if !supportLists]><span
 style='font-family:"Courier New";mso-fareast-font-family:"Courier New"'><span
 style='mso-list:Ignore'>o<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;
 </span></span></span><![endif]>This is the I2C bus the display is connected to.
-I decided to make this non-modifiable in order to limit confusion. I see no
-current use-case where this should be anything other than 1.</p>
+I decided to make this non-modifiable <span class=GramE>in order to</span>
+limit confusion. I see no current use-case where this should be anything other
+than 1.</p>
 
 <p class=MsoListParagraphCxSpMiddle style='text-indent:-.25in;mso-list:l1 level1 lfo4'><![if !supportLists]><span
 style='font-family:Symbol;mso-fareast-font-family:Symbol;mso-bidi-font-family:
@@ -1257,29 +1261,30 @@ style='font-family:"Courier New";mso-fareast-font-family:"Courier New"'><span
 style='mso-list:Ignore'>o<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;
 </span></span></span><![endif]>This is the display’s width and height in number
 of pixels. These values are also non-modifiable since a lot of the internals
-assume the size of the screen. I don’t have any other configuration of this
-hardware, so I didn’t feel comfortable making this more dynamic since I have no
-way to properly test it. If you want to use a different screen size, feel free
-to fork the github project and make code changes as needed.</p>
+assume the size of the screen. I <span class=GramE>don’t</span> have any other
+configuration of this hardware, so I didn’t feel comfortable making this more
+dynamic since I have no way to properly test it. If you want to use a different
+screen size, feel free to fork the <span class=SpellE>github</span> project and
+make code changes as needed.</p>
 
 <h2>SSD1306 Signaling</h2>
 
 <p class=MsoNormal>The SSD1306 plugin may be controlled by external plugins
 using the “ssd1306_wake” and “ssd1306_display” signals. You can enable signals
 in your plugin by importing signal from SIP’s blinker module. Refer to the
-signaling_examples.py file in the plugins directory of SIP for examples of how
-this works.</p>
+signaling_examples.py file in the <span class=GramE>plugins</span> directory of
+SIP for examples of how this works.</p>
 
 <h3><b><span style='color:windowtext'>ssd1306_wake Signal<o:p></o:p></span></b></h3>
 
 <p class=MsoNormal>This signal takes no arguments and simply tells the SSD1306
-plugin to wakeup and reset its idle display timer.</p>
+plugin to <span class=SpellE>wakeup</span> and reset its idle display timer.</p>
 
 <p class=MsoNormal>Code example:</p>
 
 <p class=MsoNormal><span style='font-family:"Courier New"'>ssd1306_wake_signal
 = signal(u&quot;ssd1306_wake&quot;)<br>
-ssd1306_wake_signal.send()<o:p></o:p></span></p>
+ssd1306_wake_<span class=GramE>signal.send</span>()<o:p></o:p></span></p>
 
 <h3><b><span style='color:windowtext'>ssd1306_sleep Signal<o:p></o:p></span></b></h3>
 
@@ -1290,14 +1295,14 @@ plugin to go to sleep.</p>
 
 <p class=MsoNormal><span style='font-family:"Courier New"'>ssd1306_sleep_signal
 = signal(u&quot;ssd1306_sleep&quot;)<br>
-ssd1306_sleep_signal.send()<o:p></o:p></span></p>
+ssd1306_sleep_<span class=GramE>signal.send</span>()<o:p></o:p></span></p>
 
 <h3><b><span style='color:windowtext'>ssd1306_display Signal<o:p></o:p></span></b></h3>
 
 <p class=MsoNormal>This signal enables you to take over the display from
-another plugin and show whatever text you would like into some specified drawing
-area. All other pixels in the selected area will be cleared. It takes only the
-following keyed arguments. All other keyed arguments will be ignored.</p>
+another plugin and show whatever text you would like into some specified
+drawing area. All other pixels in the selected area will be cleared. It takes
+only the following keyed arguments. All other keyed arguments will be ignored.</p>
 
 <p class=MsoListParagraphCxSpFirst style='text-indent:-.25in;mso-list:l2 level1 lfo6'><![if !supportLists]><span
 style='font-family:Symbol;mso-fareast-font-family:Symbol;mso-bidi-font-family:
@@ -1313,7 +1318,8 @@ style='mso-list:Ignore'>o<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;
 <p class=MsoListParagraphCxSpMiddle style='text-indent:-.25in;mso-list:l2 level1 lfo6'><![if !supportLists]><span
 style='font-family:Symbol;mso-fareast-font-family:Symbol;mso-bidi-font-family:
 Symbol'><span style='mso-list:Ignore'>·<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-</span></span></span><![endif]>screen_id (optional, default=”default”)</p>
+</span></span></span><![endif]><span class=SpellE>screen_id</span> (optional,
+default=”default”)</p>
 
 <p class=MsoListParagraphCxSpMiddle style='margin-left:1.0in;mso-add-space:
 auto;text-indent:-.25in;mso-list:l2 level2 lfo6'><![if !supportLists]><span
@@ -1333,9 +1339,10 @@ auto;text-indent:-.25in;mso-list:l2 level2 lfo6'><![if !supportLists]><span
 style='font-family:"Courier New";mso-fareast-font-family:"Courier New"'><span
 style='mso-list:Ignore'>o<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;
 </span></span></span><![endif]>Set to True to cancel the previously displayed
-screen for the given activator and screen_id. All other arguments are ignored
-if this is True. This pops the display from the display stack if it is found on
-the stack. Nothing happens if the screen is not found on the stack.</p>
+screen for the given activator and <span class=SpellE>screen_id</span>. All
+other arguments are ignored if this is True. This pops the display from the
+display stack if it is found on the stack. Nothing happens if the screen is not
+found on the stack.</p>
 
 <p class=MsoListParagraphCxSpMiddle style='text-indent:-.25in;mso-list:l2 level1 lfo6'><![if !supportLists]><span
 style='font-family:Symbol;mso-fareast-font-family:Symbol;mso-bidi-font-family:
@@ -1346,8 +1353,8 @@ Symbol'><span style='mso-list:Ignore'>·<span style='font:7.0pt "Times New Roman"
 auto;text-indent:-.25in;mso-list:l2 level2 lfo6'><![if !supportLists]><span
 style='font-family:"Courier New";mso-fareast-font-family:"Courier New"'><span
 style='mso-list:Ignore'>o<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;
-</span></span></span><![endif]>Set to True in order to automatically wake the
-display whenever this screen is shown.</p>
+</span></span></span><![endif]>Set to True <span class=GramE>in order to</span>
+automatically wake the display whenever this screen is shown.</p>
 
 <p class=MsoListParagraphCxSpMiddle style='text-indent:-.25in;mso-list:l2 level1 lfo6'><![if !supportLists]><span
 style='font-family:Symbol;mso-fareast-font-family:Symbol;mso-bidi-font-family:
@@ -1363,20 +1370,22 @@ style='mso-list:Ignore'>o<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;
 <p class=MsoListParagraphCxSpMiddle style='text-indent:-.25in;mso-list:l2 level1 lfo6'><![if !supportLists]><span
 style='font-family:Symbol;mso-fareast-font-family:Symbol;mso-bidi-font-family:
 Symbol'><span style='mso-list:Ignore'>·<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-</span></span></span><![endif]>row_start (optional, default=0)</p>
+</span></span></span><![endif]><span class=SpellE>row_start</span> (optional,
+default=0)</p>
 
 <p class=MsoListParagraphCxSpMiddle style='margin-left:1.0in;mso-add-space:
 auto;text-indent:-.25in;mso-list:l2 level2 lfo6'><![if !supportLists]><span
 style='font-family:"Courier New";mso-fareast-font-family:"Courier New"'><span
 style='mso-list:Ignore'>o<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;
-</span></span></span><![endif]>The 0-based 8-bit row where the text will start to
-display. Text will write downward from here. Value must be an integer in the
+</span></span></span><![endif]>The 0-based 8-bit row where the text will start
+to display. Text will write downward from here. Value must be an integer in the
 range [0,7].</p>
 
 <p class=MsoListParagraphCxSpMiddle style='text-indent:-.25in;mso-list:l2 level1 lfo6'><![if !supportLists]><span
 style='font-family:Symbol;mso-fareast-font-family:Symbol;mso-bidi-font-family:
 Symbol'><span style='mso-list:Ignore'>·<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-</span></span></span><![endif]>row_end (optional, default=None)</p>
+</span></span></span><![endif]><span class=SpellE>row_end</span> (optional,
+default=None)</p>
 
 <p class=MsoListParagraphCxSpMiddle style='margin-left:1.0in;mso-add-space:
 auto;text-indent:-.25in;mso-list:l2 level2 lfo6'><![if !supportLists]><span
@@ -1385,12 +1394,13 @@ style='mso-list:Ignore'>o<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;
 </span></span></span><![endif]>The 0-based 8-bit row where the text is limited
 to on the display (inclusive). Value must be an integer in the range [0,7] or
 None. If this is set to None, the internals will compute a value based on the
-number of “\n” found in txt and max_text_size.</p>
+number of “\n” found in txt and <span class=SpellE>max_text_size</span>.</p>
 
 <p class=MsoListParagraphCxSpMiddle style='text-indent:-.25in;mso-list:l2 level1 lfo6'><![if !supportLists]><span
 style='font-family:Symbol;mso-fareast-font-family:Symbol;mso-bidi-font-family:
 Symbol'><span style='mso-list:Ignore'>·<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-</span></span></span><![endif]>col_start (optional, default=0)</p>
+</span></span></span><![endif]><span class=SpellE>col_start</span> (optional,
+default=0)</p>
 
 <p class=MsoListParagraphCxSpMiddle style='margin-left:1.0in;mso-add-space:
 auto;text-indent:-.25in;mso-list:l2 level2 lfo6'><![if !supportLists]><span
@@ -1402,7 +1412,8 @@ display. Value must be an integer in the range [0,127].</p>
 <p class=MsoListParagraphCxSpMiddle style='text-indent:-.25in;mso-list:l2 level1 lfo6'><![if !supportLists]><span
 style='font-family:Symbol;mso-fareast-font-family:Symbol;mso-bidi-font-family:
 Symbol'><span style='mso-list:Ignore'>·<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-</span></span></span><![endif]>col_end (optional, default=127)</p>
+</span></span></span><![endif]><span class=SpellE>col_end</span> (optional,
+default=127)</p>
 
 <p class=MsoListParagraphCxSpMiddle style='margin-left:1.0in;mso-add-space:
 auto;text-indent:-.25in;mso-list:l2 level2 lfo6'><![if !supportLists]><span
@@ -1414,7 +1425,8 @@ on the display (inclusive). Value must be an integer in the range [0,127].</p>
 <p class=MsoListParagraphCxSpMiddle style='text-indent:-.25in;mso-list:l2 level1 lfo6'><![if !supportLists]><span
 style='font-family:Symbol;mso-fareast-font-family:Symbol;mso-bidi-font-family:
 Symbol'><span style='mso-list:Ignore'>·<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-</span></span></span><![endif]>min_text_size (optional, default=1)</p>
+</span></span></span><![endif]><span class=SpellE>min_text_size</span>
+(optional, default=1)</p>
 
 <p class=MsoListParagraphCxSpMiddle style='margin-left:1.0in;mso-add-space:
 auto;text-indent:-.25in;mso-list:l2 level2 lfo6'><![if !supportLists]><span
@@ -1426,7 +1438,8 @@ integer in the range [1,8].</p>
 <p class=MsoListParagraphCxSpMiddle style='text-indent:-.25in;mso-list:l2 level1 lfo6'><![if !supportLists]><span
 style='font-family:Symbol;mso-fareast-font-family:Symbol;mso-bidi-font-family:
 Symbol'><span style='mso-list:Ignore'>·<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-</span></span></span><![endif]>max_text_size (optional, default=1)</p>
+</span></span></span><![endif]><span class=SpellE>max_text_size</span>
+(optional, default=1)</p>
 
 <p class=MsoListParagraphCxSpMiddle style='margin-left:1.0in;mso-add-space:
 auto;text-indent:-.25in;mso-list:l2 level2 lfo6'><![if !supportLists]><span
@@ -1438,7 +1451,8 @@ integer in the range [1,8].</p>
 <p class=MsoListParagraphCxSpMiddle style='text-indent:-.25in;mso-list:l2 level1 lfo6'><![if !supportLists]><span
 style='font-family:Symbol;mso-fareast-font-family:Symbol;mso-bidi-font-family:
 Symbol'><span style='mso-list:Ignore'>·<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-</span></span></span><![endif]>text_size (optional, default=None)</p>
+</span></span></span><![endif]><span class=SpellE>text_size</span> (optional,
+default=None)</p>
 
 <p class=MsoListParagraphCxSpMiddle style='margin-left:1.0in;mso-add-space:
 auto;text-indent:-.25in;mso-list:l2 level2 lfo6'><![if !supportLists]><span
@@ -1450,7 +1464,8 @@ this value. This may be an integer in the range [1,8].</p>
 <p class=MsoListParagraphCxSpMiddle style='text-indent:-.25in;mso-list:l2 level1 lfo6'><![if !supportLists]><span
 style='font-family:Symbol;mso-fareast-font-family:Symbol;mso-bidi-font-family:
 Symbol'><span style='mso-list:Ignore'>·<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-</span></span></span><![endif]>justification (optional, default=”LEFT”)</p>
+</span></span></span><![endif]>justification (optional, default<span
+class=GramE>=”LEFT</span>”)</p>
 
 <p class=MsoListParagraphCxSpMiddle style='margin-left:1.0in;mso-add-space:
 auto;text-indent:-.25in;mso-list:l2 level2 lfo6'><![if !supportLists]><span
@@ -1469,8 +1484,8 @@ auto;text-indent:-.25in;mso-list:l2 level2 lfo6'><![if !supportLists]><span
 style='font-family:"Courier New";mso-fareast-font-family:"Courier New"'><span
 style='mso-list:Ignore'>o<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;
 </span></span></span><![endif]>Set to True to append this text to the
-previously defined activator and screen_id. If this is False, the previously
-defined screen will be cleared before writing to it.</p>
+previously defined activator and <span class=SpellE>screen_id</span>. If this
+is False, the previously defined screen will be cleared before writing to it.</p>
 
 <p class=MsoListParagraphCxSpMiddle style='text-indent:-.25in;mso-list:l2 level1 lfo6'><![if !supportLists]><span
 style='font-family:Symbol;mso-fareast-font-family:Symbol;mso-bidi-font-family:
@@ -1482,10 +1497,10 @@ text-indent:-.25in;mso-list:l2 level2 lfo6'><![if !supportLists]><span
 style='font-family:"Courier New";mso-fareast-font-family:"Courier New"'><span
 style='mso-list:Ignore'>o<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;
 </span></span></span><![endif]>The number of seconds to display this screen
-until automatically popping it from the stack. This may be set to None in order
-to never pop this screen until subsequently cancelled using the cancel key. The
-delay for the screen will always be set to the last set value when this signal
-is used multiple times.</p>
+until automatically popping it from the stack. This may be set to None <span
+class=GramE>in order to</span> never pop this screen until subsequently
+cancelled using the cancel key. The delay for the screen will always be set to
+the last set value when this signal is used multiple times.</p>
 
 <p class=MsoNormal>Code example:</p>
 
@@ -1493,28 +1508,33 @@ is used multiple times.</p>
 = signal(u&quot;ssd1306_display&quot;)<br>
 # Clear screen and show “Hello, world!”<br>
 ssd1306_wake_signal.send(<br>
-<span style='mso-spacerun:yes'>    </span>activator=u”my_plugin”,<br>
-<span style='mso-spacerun:yes'>    </span>screen_id=u”screen_1”,<br>
-<span style='mso-spacerun:yes'>    </span>txt=u”Hello, world!”,<br>
-<span style='mso-spacerun:yes'>    </span>row_start=0,<br>
-<span style='mso-spacerun:yes'>    </span>text_size=2, <br>
-<span style='mso-spacerun:yes'>    </span>justification=u”CENTER”,<br>
+<span style='mso-spacerun:yes'>    </span>activator=<span class=SpellE>u”my_plugin</span>”,<br>
+<span style='mso-spacerun:yes'>    </span><span class=SpellE>screen_id</span>=u”screen_1”,<br>
+<span style='mso-spacerun:yes'>    </span>txt=<span class=SpellE>u”Hello</span>,
+world!”,<br>
+<span style='mso-spacerun:yes'>    </span><span class=SpellE>row_start</span>=0,<br>
+<span style='mso-spacerun:yes'>    </span><span class=SpellE>text_size</span>=2,
+<br>
+<span style='mso-spacerun:yes'>    </span>justification=<span class=SpellE>u”CENTER</span>”,<br>
 <span style='mso-spacerun:yes'>    </span>append=False,<br>
 <span style='mso-spacerun:yes'>    </span>delay=None) <br>
-# Append “fee fi foo fum” to this screen<br>
+# Append “fee fi foo <span class=SpellE>fum</span>” to this screen<br>
 ssd1306_wake_signal.send(<br>
-<span style='mso-spacerun:yes'>    </span>activator=u”my_plugin”,<br>
-<span style='mso-spacerun:yes'>    </span>screen_id=u”screen_1”,<br>
-<span style='mso-spacerun:yes'>    </span>txt=u”fee fi foo fum”,<br>
-<span style='mso-spacerun:yes'>    </span>row_start=5,<br>
-<span style='mso-spacerun:yes'>    </span>text_size=2, <br>
-<span style='mso-spacerun:yes'>    </span>justification=u”LEFT”,<br>
+<span style='mso-spacerun:yes'>    </span>activator=<span class=SpellE>u”my_plugin</span>”,<br>
+<span style='mso-spacerun:yes'>    </span><span class=SpellE>screen_id</span>=u”screen_1”,<br>
+<span style='mso-spacerun:yes'>    </span>txt=<span class=SpellE>u”fee</span>
+fi foo <span class=SpellE>fum</span>”,<br>
+<span style='mso-spacerun:yes'>    </span><span class=SpellE>row_start</span>=5,<br>
+<span style='mso-spacerun:yes'>    </span><span class=SpellE>text_size</span>=2,
+<br>
+<span style='mso-spacerun:yes'>    </span>justification=<span class=SpellE>u”LEFT</span>”,<br>
 <span style='mso-spacerun:yes'>    </span>append=False,<br>
 <span style='mso-spacerun:yes'>    </span>delay=None) <br>
 # Pop the screen from the display stack<br>
 ssd1306_wake_signal.send(<br>
-<span style='mso-spacerun:yes'>    </span>activator=u”my_plugin”,<br>
-<span style='mso-spacerun:yes'>    </span>screen_id=u”screen_1”,<br>
+<span style='mso-spacerun:yes'> </span><span style='mso-spacerun:yes'>  
+</span>activator=<span class=SpellE>u”my_plugin</span>”,<br>
+<span style='mso-spacerun:yes'>    </span><span class=SpellE>screen_id</span>=u”screen_1”,<br>
 <span style='mso-spacerun:yes'>    </span>cancel=True)<o:p></o:p></span></p>
 
 <p class=MsoNormal><o:p>&nbsp;</o:p></p>

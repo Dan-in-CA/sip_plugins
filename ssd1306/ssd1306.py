@@ -580,7 +580,7 @@ class ScreenBlock:
         if (
             min_text_size > max_text_size or
             min_text_size <= 0 or
-            max_text_size > (self.row_end - self.row_start + 1) * 2
+            max_text_size > (self.row_end - self.row_start + 1)
         ):
             raise ValueError(u"Invalid min [{}] or max [{}] text size"\
                 .format(min_text_size, max_text_size))
@@ -592,7 +592,10 @@ class ScreenBlock:
         max_width = (self.col_end - self.col_start + 1) // char_len
         max_height = self.row_end - self.row_start + 1
         # Compute the largest text size the string may have for the space provided
-        largest_width_size = max_width // widest_line
+        if widest_line <= 0:
+            largest_width_size = max_text_size
+        else:
+            largest_width_size = max_width // widest_line
         largest_height_size = max_height // num_lines
         largest_size = min(largest_width_size, largest_height_size)
         # Get size within range

@@ -33,6 +33,10 @@ import time
 # for i2c bus driver
 import smbus
 
+# Global delays
+STARTUP_DELAY = 5
+NORMAL_REFRESH_PERIOD = 1
+
 # Justification values
 JUSTIFY_LEFT = 0
 JUSTIFY_RIGHT = 1
@@ -963,24 +967,24 @@ class LcdPlugin(Thread):
     """
     def __init__(self):
         Thread.__init__(self)
-        self._daemon = True
         self._state_screen = Screen()
         self._reset_lcd_state()
-        # Key is screen name, value is a Screen object
-        self._custom_screens = {}
-        # Key is screen name, value is number of seconds left for it to display
-        self._custom_screens_stack = OrderedDict()
         self._lcd = None
         self._running = True
+        # Some of the idle state values must be set and read at once
+        self._idle_lock = RLock()
+        # Set defaults just so entries are made in my dict to be overwritten on load
+        self._set_default_settings()
+        # Custom display data
         self._display_condition = Condition()
         self._notify_display_sem = BoundedSemaphore(1)
         self._notify_display_sem.acquire()
         self._notify_display_thread = Thread(target=self._notify_display_task)
-        # All of the idle values need to be read and set as one
-        self._idle_lock = RLock()
         self._custom_display_lock = RLock()
         self._custom_display_queue = [] # Not using real queue to limit number of libraries needed
-        self._set_default_settings()
+        self._custom_screens = {} # Key is screen name, value is a Screen object
+        # Keyed by screen name + an ordered stack (value is dict with keys "delay" and "wake")
+        self._custom_screens_stack = OrderedDict()
 
     def _reset_lcd_state(self):
         self._state_screen.clear()
@@ -1013,13 +1017,10 @@ class LcdPlugin(Thread):
             return
         if u"idle_timeout" in settings:
             self._idle_timeout_seconds = int(settings[u"idle_timeout"])
-        reinit_required = False
+        original_addr = self._lcd_hw_address
         if u"i2c_hw_address" in settings:
-            old_addr = self._lcd_hw_address
             self._lcd_hw_address = int(settings[u"i2c_hw_address"], 16)
-            if old_addr != self._lcd_hw_address:
-                reinit_required = True
-        if reinit_required and allow_reinit:
+        if original_addr != self._lcd_hw_address and allow_reinit:
             self._lcd.set_power(on=False) # Power off current LCD
             self.initialize(load_settings=False) # Initialize new LCD
             self._reset_lcd_state() # Make sure state is refreshed on next loop
@@ -1069,7 +1070,7 @@ class LcdPlugin(Thread):
             ampmString = u" PM" if isPm else u" AM"
         hrString = str(timeHours)
         minString = str(timeMinutes // 10 >> 0) + str(timeMinutes % 10 >> 0)
-        timeStr = hrString + ":" + minString + ampmString
+        timeStr = hrString + u":" + minString + ampmString
         return timeStr
 
     def _wake_display(self):
@@ -1161,21 +1162,16 @@ class LcdPlugin(Thread):
         minutes = int(t) // 60
         hours = minutes // 60
         minutes = minutes % 60
-        string = (
-            str(minutes // 10)
-            + str(minutes % 10)
-            + ":"
-            + str(seconds // 10)
-            + str(seconds % 10)
-        )
+        time_dict = {
+            "sec": seconds,
+            "min": minutes,
+            "hr": hours
+        }
         if hours > 0:
-            string = (
-                str(hours // 10)
-                + str(hours % 10)
-                + ":"
-                + string
-            )
-        return string
+            time_format = "{hr:02d}:{min:02d}:{sec:02d}"
+        else:
+            time_format = "{min:02d}:{sec:02d}"
+        return time_format.format(**time_dict)
 
     def _display_normal(self):
         """
@@ -1352,12 +1348,15 @@ class LcdPlugin(Thread):
             # This is fine; something else already released it
             pass
 
-    def display_signal(self, name, **kw):
+    def display_signal(self, name=None, **kw):
         """
         Display signal handler
         """
         self._custom_display_lock.acquire()
         try:
+            # Set name as activator if it isn't already in the keyword arguments
+            if name is not None and u"activator" not in kw:
+                kw[u"activator"] = name
             self._custom_display_queue.insert(0, kw)
         finally:
             self._custom_display_lock.release()
@@ -1381,7 +1380,7 @@ class LcdPlugin(Thread):
         Main execution method which is executed when the super class (Thread) is started
         """
         self._notify_display_thread.start()
-        sleep(5)
+        sleep(STARTUP_DELAY)
         print(u"SSD1306 plugin: active")
         self._display_condition.acquire()
         try:
@@ -1391,7 +1390,7 @@ class LcdPlugin(Thread):
                 wait_time = self._display_custom(last_waited_time)
                 if wait_time == 0:
                     self._display_normal()
-                    wait_time = 1 # Refresh time
+                    wait_time = NORMAL_REFRESH_PERIOD
                 # Only wait if we are still running by this point
                 if self._running:
                     start_time = time.time()

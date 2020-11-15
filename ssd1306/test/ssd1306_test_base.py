@@ -16,3 +16,18 @@ sys.modules['sip'] = __import__('stub_sip')
 sys.modules['webpages'] = __import__('stub_webpages')
 sys.modules['blinker'] = __import__('stub_blinker')
 sys.modules['smbus'] = __import__('stub_smbus')
+
+from ssd1306 import Screen
+
+class Ssd1306CustomAssertions:
+    def assertScreenBytes(self, expected_bytes, screen):
+        if screen.bytes != expected_bytes:
+            error_string = (
+                "Expected Screen:\n"
+                + Screen.bytes_to_string(expected_bytes)
+                + "\nActual Screen:\n"
+                + str(screen)
+                + "\n"
+                + ",\n".join(["bytearray({})".format(list(row)) for row in screen.bytes])
+            )
+            raise AssertionError(error_string)

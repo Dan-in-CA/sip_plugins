@@ -8,6 +8,9 @@ import ssd1306_test_base
 from ssd1306 import Lcd, Screen, JUSTIFY_LEFT, JUSTIFY_RIGHT, JUSTIFY_CENTER
 import ssd1306
 
+# Make sure the plugin thread stops right away
+ssd1306.lcd_plugin.stop()
+
 class LcdTestCase(unittest.TestCase):
     @classmethod
     def setUp(cls):

@@ -19,7 +19,7 @@ import sys
 from time import sleep
 
 # threads
-from threading import Thread, Lock, RLock, Condition
+from threading import Thread, Lock, RLock, Condition, BoundedSemaphore
 
 # get open sprinkler signals
 from blinker import signal
@@ -267,11 +267,20 @@ class Screen:
         """
         return self._screen_bytes
 
+    @staticmethod
+    def bytes_to_string(screen_bytes):
+        screen_width = len(screen_bytes[0])
+        out_string = '-' * (screen_width + 2) + '\n'
+        for row in screen_bytes:
+            for mask in [0x01 << i for i in range(8)]:
+                out_string += ''.join(['|'] +
+                                      ['X' if mask & int(col) != 0 else ' ' for col in row] +
+                                      ['|\n'])
+        out_string += '-' * (screen_width + 2) + '\n'
+        return out_string
+
     def __str__(self):
-        return str(self.get_screen_block(row_start=self.row_start,
-                                         row_end=self.row_end,
-                                         col_start=self.col_start,
-                                         col_end=self.col_end))
+        return Screen.bytes_to_string(self.bytes)
 
     def set_bytes(self,
                   b,
@@ -421,16 +430,7 @@ class ScreenBlock:
                 for i in range(self.row_start, self.row_end + 1)]
 
     def __str__(self):
-        screen_bytes = self.bytes
-        screen_width = len(screen_bytes[0])
-        out_string = '-' * (screen_width + 2) + '\n'
-        for row in screen_bytes:
-            for mask in [0x01 << i for i in range(8)]:
-                out_string += ''.join(['|'] +
-                                      ['X' if mask & int(col) != 0 else ' ' for col in row] +
-                                      ['|\n'])
-        out_string += '-' * (screen_width + 2) + '\n'
-        return out_string
+        return Screen.bytes_to_string(self.bytes)
 
     def set_bytes(self, b, cur_row, cur_col):
         """
@@ -973,7 +973,9 @@ class LcdPlugin(Thread):
         self._lcd = None
         self._running = True
         self._display_condition = Condition()
-        self._display_notify_thread = Thread(target=self._notify_display_condition)
+        self._notify_display_sem = BoundedSemaphore(1)
+        self._notify_display_sem.acquire()
+        self._notify_display_thread = Thread(target=self._notify_display_task)
         # All of the idle values need to be read and set as one
         self._idle_lock = RLock()
         self._custom_display_lock = RLock()
@@ -1018,9 +1020,9 @@ class LcdPlugin(Thread):
             if old_addr != self._lcd_hw_address:
                 reinit_required = True
         if reinit_required and allow_reinit:
-            self._lcd.set_power(on=False)
-            self.initialize(load_settings=False)
-            self._reset_lcd_state()
+            self._lcd.set_power(on=False) # Power off current LCD
+            self.initialize(load_settings=False) # Initialize new LCD
+            self._reset_lcd_state() # Make sure state is refreshed on next loop
 
     def _load_settings(self):
         """
@@ -1335,10 +1337,21 @@ class LcdPlugin(Thread):
         delay = self._show_top_custom_display()
         return delay
 
+    def _notify_display_task(self):
+        # It may seem silly to notify a condition through a semaphore, but acquiring the condition
+        # lock may block for a while if the LCD is busy writing to I2C.
+        while self._running:
+            self._notify_display_sem.acquire()
+            self._display_condition.acquire()
+            self._display_condition.notify_all()
+            self._display_condition.release()
+
     def _notify_display_condition(self):
-        self._display_condition.acquire()
-        self._display_condition.notify_all()
-        self._display_condition.release()
+        try:
+            self._notify_display_sem.release()
+        except ValueError:
+            # This is fine; something else already released it
+            pass
 
     def display_signal(self, name, **kw):
         """
@@ -1368,6 +1381,7 @@ class LcdPlugin(Thread):
         """
         Main execution method which is executed when the super class (Thread) is started
         """
+        self._notify_display_thread.start()
         sleep(5)
         print(u"SSD1306 plugin: active")
         self._display_condition.acquire()

@@ -979,7 +979,7 @@ class LcdPlugin(Thread):
         # All of the idle values need to be read and set as one
         self._idle_lock = RLock()
         self._custom_display_lock = RLock()
-        self._custom_display_queue = []
+        self._custom_display_queue = [] # Not using real queue to limit number of libraries needed
         self._set_default_settings()
 
     def _reset_lcd_state(self):
@@ -1236,10 +1236,13 @@ class LcdPlugin(Thread):
             # If previously idle, reset flag and make sure display is on
             self._wake_display()
 
-    def _refresh_custom_display_stack(self, last_wait_time):
+    def _decrement_custom_display_stack(self, last_wait_time):
+        """
+        Decrements the delays of all items in the display stack and removes any displays which have
+        delays close to 0.
+        """
         if self._custom_screens_stack:
             key_list = list(self._custom_screens_stack.keys())
-            top_key = key_list[-1]
             # Decrement delays and remove items from stack
             if last_wait_time > 0:
                 for key in key_list:
@@ -1248,13 +1251,6 @@ class LcdPlugin(Thread):
                         if self._custom_screens_stack[key][u"delay"] <= 0.25:
                             # Close enough to 0 that this item should be removed
                             del self._custom_screens_stack[key]
-            if (
-                top_key not in self._custom_screens_stack.keys()
-                and not self._custom_display_queue
-                and self._custom_screens_stack
-            ):
-                # Display the next screen in the stack
-                self._show_top_custom_display()
 
     def _show_top_custom_display(self):
         delay = 0 # by default, immediately go to normal display
@@ -1272,10 +1268,8 @@ class LcdPlugin(Thread):
         """
         Displays a custom message
         """
-        delay = 0 # by default, immediately go to next item in stack or normal display
-        wake = False
         # If there are items in the stack, first decrement pop whatever is necessary
-        self._refresh_custom_display_stack(last_wait_time)
+        self._decrement_custom_display_stack(last_wait_time)
         while self._custom_display_queue:
             self._custom_display_lock.acquire()
             try:
@@ -1291,6 +1285,8 @@ class LcdPlugin(Thread):
             screen = self._custom_screens[screen_name]
             # If cancel is set, all other data will be ignored and screen will be popped
             cancel = queue_item.get(u"cancel", False)
+            delay = 0
+            wake = False
             if not cancel:
                 text = queue_item.get(u"txt", u"")
                 row_start = queue_item.get(u"row_start", 0)
@@ -1309,7 +1305,9 @@ class LcdPlugin(Thread):
                                         u"CENTER": JUSTIFY_CENTER}
                 justification = justification_lookup.get(justification_string, JUSTIFY_LEFT)
                 append = queue_item.get(u"append", False)
-                delay = queue_item.get(u"delay", 1) # None is allowed to display until cancelled
+                # None is allowed for delay to display until cancelled
+                # Delay <= 0 has the same result as cancel=True
+                delay = queue_item.get(u"delay", 1)
                 wake = queue_item.get(u"wake", True)
                 # If this data is not to be appended, first clear screen
                 if not append:
@@ -1339,7 +1337,8 @@ class LcdPlugin(Thread):
 
     def _notify_display_task(self):
         # It may seem silly to notify a condition through a semaphore, but acquiring the condition
-        # lock may block for a while if the LCD is busy writing to I2C.
+        # lock may block for a while if the LCD is busy writing to I2C. Python semaphores don't have
+        # a timed wait method. I'd otherwise just use a semaphore instead of the condition variable.
         while self._running:
             self._notify_display_sem.acquire()
             self._display_condition.acquire()
@@ -1388,16 +1387,16 @@ class LcdPlugin(Thread):
         try:
             last_waited_time = 0
             while self._running:
-                wait_time = 0
-                if self._custom_display_queue or self._custom_screens_stack:
-                    # This will return a wait time of 0 if we need to drop into normal display.
-                    wait_time = self._display_custom(last_waited_time)
+                # This will return a wait time of 0 if we need to drop into normal display.
+                wait_time = self._display_custom(last_waited_time)
                 if wait_time == 0:
                     self._display_normal()
                     wait_time = 1 # Refresh time
                 # Only wait if we are still running by this point
                 if self._running:
                     start_time = time.time()
+                    # This is the only reason the condition variable is needed - to be able to wait
+                    # with a specified timeout.
                     self._display_condition.wait(wait_time)
                     last_waited_time = time.time() - start_time
         finally:

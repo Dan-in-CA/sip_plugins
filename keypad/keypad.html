@@ -268,8 +268,14 @@ select{ width: 100%; }
             <tr>
                 <td style='text-transform: none;'>$_('Cancel Beep List (milliseconds)')</td>
             </tr>
+            <tr class="padBottom">
+                <td><input class="listonly" type="text" name="cancel_beep" value="${settings['cancel_beep'] if 'cancel_beep' in settings else '50, 50, 100' }"></td>
+            </tr>
             <tr>
-                <td><input class="listonly" type="text" name="cancel_beep" value="${settings['cancel_beep'] if 'cancel_beep' in settings else '100, 100, 500' }"></td>
+                <td style='text-transform: none;'>$_('Error Beep List (milliseconds)')</td>
+            </tr>
+            <tr>
+                <td><input class="listonly" type="text" name="error_beep" value="${settings['error_beep'] if 'error_beep' in settings else '100, 100, 500' }"></td>
             </tr>
         </table>
 

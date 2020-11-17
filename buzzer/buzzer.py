@@ -19,7 +19,7 @@ import sys
 from time import sleep
 
 # threads
-from threading import Thread, Timer
+from threading import Thread, Timer, BoundedSemaphore, RLock, Condition
 
 # get open sprinkler signals
 from blinker import signal
@@ -75,6 +75,13 @@ class Buzzer(Thread):
         self.active_high = active_high
         # Set all default settings
         self._set_default_settings()
+        # Used in buzz thread
+        self._current_buzz_list = []
+        self._buzz_sem = BoundedSemaphore(1)
+        self._buzz_sem.acquire()
+        self._buzz_cancel = False
+        self._buzz_data_lock = RLock()
+        self._buzz_condition = Condition()
         # Running flag just to ensure that we stop buzzing when shutting down
         self._running = True
 
@@ -203,14 +210,16 @@ class Buzzer(Thread):
         buzz_on = True
         # Loop through each time in list
         for v in time_list:
-            if not self._running:
+            if not self._running or self._buzz_cancel:
                 break
             # If this value is on time, turn on the buzzer
             if buzz_on and v > 0:
                 self._set_buzzer_pin(True)
             # Suspend for the given time
             if v > 0:
-                sleep(v)
+                self._buzz_condition.acquire()
+                self._buzz_condition.wait(v)
+                self._buzz_condition.release()
             # Always shut off buzzer before next iteration
             self._set_buzzer_pin(False)
             # Invert
@@ -226,13 +235,23 @@ class Buzzer(Thread):
         """
         if self.pin >= 0 and self.pin_initialized and time is not None:
             # Generate the list of times
-            time_list = []
             if isinstance(time, list):
                 time_list = time
             else:
-                time_list.append(time)
+                time_list = [time]
+            self._buzz_data_lock.acquire()
             # Spin off an execute thread so this call is non-blocking
-            Thread(target=self._execute_buzz, kwargs={'time_list':time_list}).start()
+            self._current_buzz_list = time_list
+            self._buzz_cancel = True # To cancel current buzz
+            self._buzz_condition.acquire()
+            self._buzz_condition.notify_all()
+            self._buzz_condition.release()
+            self._buzz_data_lock.release()
+            try:
+                self._buzz_sem.release()
+            except ValueError:
+                # This is fine; something else already released it
+                pass
         return True
 
     def _wait_for_ready(self):
@@ -277,6 +296,14 @@ class Buzzer(Thread):
         Main execution method which is executed when the super class (Thread) is started
         """
         self._buzzer_init_task()
+        while self._running:
+            self._buzz_sem.acquire()
+            self._buzz_data_lock.acquire()
+            buzz_list = self._current_buzz_list
+            self._buzz_cancel = False
+            self._buzz_data_lock.release()
+            if self._running:
+                self._execute_buzz(buzz_list)
 
     ### Restart ###
     # Restart signal needs to be handled in 1 second or less
@@ -284,6 +311,12 @@ class Buzzer(Thread):
         # Make sure whatever timers running don't turn the buzzer on as we are restarting
         self._running = False
         self._set_buzzer_pin(is_on=False, force=True)
+        # Release the thread
+        try:
+            self._buzz_sem.release()
+        except ValueError:
+            # This is fine; something else already released it
+            pass
 
 
 # Our main Buzzer object for this module

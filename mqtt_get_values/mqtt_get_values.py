@@ -74,7 +74,7 @@ def notify_value_change(name, **kw):
         u"rdst": gv.sd[u"rdst"],
         u"loc": gv.sd[u"loc"],
         u"wl": gv.sd[u"wl"],
-        u"wl_weather": gv.sd[u"wl_weather"],
+#         u"wl_weather": gv.sd[u"wl_weather"],
         u"sbits": gv.sbits,
         u"ps": gv.ps,
         u"lrun": gv.lrun,

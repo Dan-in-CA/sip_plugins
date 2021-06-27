@@ -1,0 +1,7 @@
+This plugin can be used to stop SIP running.
+
+##### List all plugin files below preceded by a blank line [file_name.ext path] relative to SIP directory #####
+
+shutdown_button.py plugins
+shutdown_button.html templates
+shutdown_button.manifest plugins/manifests

@@ -1,0 +1,39 @@
+$def with()
+
+$var title: $_(u'SIP shutdown button')
+$var page: shutdown_button
+<script>
+
+    // Initialize behaviors
+    jQuery(document).ready(function(){
+
+        jQuery("button#cCancel").click(function(){
+            window.location="/";
+        });
+        
+        jQuery("button#cshutdown").click(function(){
+            window.location="endSip";
+        });        
+
+    });
+</script>
+
+<div id="sd_button">
+
+	<p>Warning!</p> 
+	<p>Clicking the Stop SIP button will end the program.</p> 
+	<p>If SIP is stopped from a remote location there may be no way to restart.</p><br>
+	<p>Procede with caution.</p><br>
+	
+	
+    
+    <div class="title">
+    <button class="danger" id="cshutdown" type="button" >Stop SIP</button>
+    </div>
+
+    </form><br>
+
+<div class="controls">
+    <button id="cCancel" class="cancel danger">$_(u'Cancel')</button>
+</div>
+</div>

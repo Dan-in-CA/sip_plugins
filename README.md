@@ -111,6 +111,10 @@ relay_board
 ----------
 A plugin for using relay boards to control sprinkler valves, etc
 
+shutdown_button
+----------
+Provides a means of stopping the SIP program from the UI.
+
 signaling_examples
 ----------
 Example plugin provides functions triggered by signals from core program (installed by default)

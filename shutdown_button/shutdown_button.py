@@ -17,8 +17,6 @@ from sip import template_render  #  Needed for working with web.py templates
 from urls import urls  # Get access to SIP's URLs
 import web  # web.py framework
 from webpages import ProtectedPage  # Needed for security
-from webpages import showInFooter # Enable plugin to display readings in UI footer
-from webpages import showOnTimeline # Enable plugin to display station data on timeline
 
 
 # Add new URLs to access classes in this plugin.

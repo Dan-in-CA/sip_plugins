@@ -70,9 +70,9 @@ def set_stations(virt):
             if gv.srvals[sidx]: #  If this station should be on
                 gv.sbits[b] |= 1 << s #  station bits, used to display stations that are on in UI (list of bytes, one byte per board)                
                 gv.ps[sidx][0] = 1
+                gv.rs[sidx] =  gv.rs[vid]
                 if not gv.sd[u'mm']: #  If under program control
-                    gv.ps[sidx][1] = gv.rs[vid][2]                
-                    gv.rs[sidx] =  gv.rs[vid]
+                    gv.ps[sidx][1] = gv.rs[vid][2]              
     set_output()
 
 class settings(ProtectedPage):
@@ -109,9 +109,17 @@ def modify_zone_change(name, **kw):
             ):
             prior_virt = virt
             set_stations(virt)    
-
 zones = signal(u"zone_change")
-zones.connect(modify_zone_change)    
+zones.connect(modify_zone_change)
+
+### Clear prior_virt after all stations have run ###
+def clear_prior_virt(name, **kw):
+    global prior_virt
+    if not any(gv.srvals):
+        prior_virt = None
+    
+complete = signal(u"station_completed")
+complete.connect(clear_prior_virt)
 
 
 #  Run when plugin is loaded

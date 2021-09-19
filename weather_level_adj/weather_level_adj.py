@@ -364,6 +364,15 @@ class update(ProtectedPage):
             lwa_options[u"days_forecast"] = 5
 
         # write the settings to file
+        
+        # allow for google map loc format (lat, lon)
+        loc = lwa_options[u"loc"]
+        q_contain_letters = loc.lower().islower() # city name would contain some letters
+        if not(q_contain_letters) and (", " in loc):
+            lat, lon = loc.split(", ") # assume google map location format: loc="lat, lon"
+            lat, lon = map(lambda s: str(round(float(s),4)), [lat, lon]) # keep only 4 decimal places
+            loc = "lat="+lat+"_lon="+lon
+            lwa_options[u"loc"] = loc
         with open(u"./data/weather_level_adj.json", u"w") as f:
             json.dump(lwa_options, f, indent=4, sort_keys=True)
         raise web.seeother(u"/lwa")

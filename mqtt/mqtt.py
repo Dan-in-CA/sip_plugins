@@ -169,6 +169,16 @@ def subscribe(topic, callback, qos=0):
         else:
             _subscriptions[topic].append(callback)
 
+def unsubscribe(topic):
+    """
+    Unsubscribes to a topic 
+    """
+    global _subscriptions
+    client = get_client()
+    if client:
+        if topic in _subscriptions:
+            del _subscriptions[topic]
+            client.unsubscribe(topic)
 
 def on_restart():
     global _client

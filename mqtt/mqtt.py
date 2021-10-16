@@ -14,6 +14,7 @@ import atexit  # For publishing down message
 import json  # for working with data file
 
 # local module imports
+from blinker import signal  # To receive station notifications
 import gv  # Get access to SIP's settings
 from sip import template_render  #  Needed for working with web.py templates
 from urls import urls  # Get access to SIP's URLs
@@ -54,9 +55,19 @@ gv.plugin_menu.append([u"MQTT", u"/mqtt-sp"])
 
 NO_MQTT_ERROR = u"MQTT plugin requires paho mqtt python library. On the command line run `pip install paho-mqtt` and restart SIP to get it."
 
+mqtt_settings_change = signal(u"mqtt_settings_change")
+
+
+def report_mqtt_settings_change():
+    """
+    Send blinker signal indicating that mqtt settings changed.
+    """
+    mqtt_settings_change.send()
+
 
 class settings(ProtectedPage):
-    """Load an html page for entering plugin settings.
+    """
+    Load an html page for entering plugin settings.
     """
 
     def GET(self):
@@ -74,6 +85,7 @@ class save_settings(ProtectedPage):
     """
 
     def GET(self):
+        previous = _settings.copy()
         qdict = (
             web.input()
         )  # Dictionary of values returned as query string from settings page.
@@ -94,7 +106,7 @@ class save_settings(ProtectedPage):
                 )
             else:
                 json.dump(_settings, f, indent=4, sort_keys=True)  # save to file
-                publish_status()
+                apply_new_mqtt_settings(previous)
         raise web.seeother(u"/")  # Return user to home page.
 
 
@@ -111,6 +123,49 @@ def get_settings():
     except IOError as e:
         print(u"MQTT Plugin couldn't open data file:", e)
     return _settings
+
+
+def apply_new_mqtt_settings(previous):
+    """
+    Apply MQTT server and up/down topic status on settings change
+    """
+    global _settings
+    global _client
+
+    status_topic_change = False
+    if (
+        previous[u"publish_up_down"] != _settings[u"publish_up_down"]
+        and previous[u"publish_up_down"] != ""
+    ):
+        status_topic_change = True
+
+    server_changed = False
+    for i in [
+        u"broker_port",
+        u"broker_username",
+        u"broker_password",
+        u"broker_host",
+    ]:
+        if previous[i] != _settings[i]:
+            server_change = True
+
+    if _client:
+        if status_topic_change:
+            # Update previous status
+            _client.publish(
+                previous[u"publish_up_down"], json.dumps("Down"), qos=1, retain=True
+            )
+            # Clear out previous status
+            _client.publish(previous[u"publish_up_down"], "", qos=1, retain=True)
+
+        # Close previous connection
+        if server_change:
+            on_restart()
+
+    if status_topic_change or server_change:
+        report_mqtt_settings_change()
+
+    publish_status()  # Continu or restart session with the new settings
 
 
 def on_message(client, userdata, msg):

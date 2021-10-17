@@ -139,7 +139,7 @@ def apply_new_mqtt_settings(previous):
     ):
         status_topic_change = True
 
-    server_changed = False
+    server_change = False
     for i in [
         u"broker_port",
         u"broker_username",

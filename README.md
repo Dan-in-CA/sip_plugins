@@ -79,6 +79,11 @@ mqtt_zones
 -------------
 Relies on MQTT, broadcasts the current status of all zones.
 
+pcf857x_port_expander
+----------
+Provides an easy, inexpensive solution for adding a large number of stations.
+Requires Python 3.
+
 pcf_8591_adj
 ----------
 Read sensor data (temp or voltage) from I2C PCF8591 ADC/DAC

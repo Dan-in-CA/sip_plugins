@@ -1,0 +1,14 @@
+Description: Allows the SIP program to use I2C IO extender boards based on the Philips/NXP PCF857x chip.
+Copyright 2021
+Author: Gerard van Seventer
+Email:
+License: GNU GPL 3.0
+
+Requirements: I2C must be enabled on the Raspberry PI and smbus lib must be installed 
+
+##### List all plugin files below preceded by a blank line [file_name.ext path] relative to SIP directory #####
+
+pcf857x.py plugins
+pcf857x.html templates
+pcf857x.json data (generated)
+pcf857x.manifest plugins/manifests

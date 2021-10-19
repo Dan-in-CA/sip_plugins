@@ -1,0 +1,158 @@
+$def with(commands)
+
+$var title: $_(u'SIP PCF857x Plugin') 
+$var page: pcf857x
+
+<script>
+
+    // Initialize behaviors
+    jQuery(document).ready(function(){
+
+        jQuery("#cSubmit").click(function() {     	
+        	jQuery("#clic").submit();
+        });
+        jQuery("button#cCancel").click(function(){
+            window.location= "/";
+        });
+        jQuery("#cSubmitt").click(function() {     	
+        	jQuery("#clict").submit();
+        });
+        jQuery("#cSubmitscan").click(function() {     	
+        	jQuery("#clicscan").submit();
+        });
+        jQuery("button#docButton").click(function(){
+            window.open("https://gitlab.com/seventer/pcf857x_plugin_sip/-/blob/main/doc/pcf857x-doc.md", "_blank");
+        });
+    });
+</script>
+
+<style>
+.columnName {
+    text-align: center;
+}
+</style>
+
+<div id="plugin">
+<!--     <div class="title">Command Line Control -->
+<!--     <button class="execute" id="docButton" type="button" >$_('Help')</button> -->
+<!--     </div> -->
+    <div>
+    <div class="title">$_(u'PCF857x IO extender boards.') 
+    <button class="execute" id="docButton" type="button">$_(u'Help')</button></div>
+    
+    $if u"warnmsg" in commands:
+        $if len(commands['warnmsg'])>0:
+            <p><h2>$commands['warnmsg']</h2></p>
+    
+    <br>
+    <p>Connect up to 64 (or 128) stations via multiple IO extender boards based on the pcf8574 (or pcf8575)</p>
+    <p>See help page for supported options or ask for support on the SIP forum</p>
+    <br>
+    </div>
+
+</script>
+<div id="stations">
+    <div class="title">$_(u'Settings')</div>
+    <form id="clic" name="clic" action="/pcf857xu" method="get">
+        
+        <table id="optionList">
+            <tr>
+                <td style='text-transform: none;'>$_(u'SMBus id:')</td> 
+                <td><input type="number" min="0" max="1" name="bus" value="${commands['bus']}"> (usually 1)</td>
+            </tr>
+            <tr><td colspan="2"><hr></td></tr>
+            <tr>
+                <td style='text-transform: none;'>$_(u'IC Type: '):</td>
+                <td><input type="radio" id="pcf8574" name="ictype" value="pcf8574" ${"checked" if commands['ictype' ] =="pcf8574"  else ""}>
+                    <label for="pcf8574">pcf8574 (8bit)</label></td>
+                    <td><input type="radio" id="pcf8575" name="ictype" value="pcf8575" ${"checked" if commands['ictype' ] =="pcf8575"  else ""}>
+                        <label for="pcf8575">pcf8575 (16bit)  ---->  Future use, this setting is ignored for now.</label></td>
+            </tr>
+        </table>
+        <hr>
+        <table>
+            <tr>
+                <th class="stationNumber">$_(u'Board')</th>
+                <th class="columnName">$_(u'0xAdr')</th>
+            </tr>
+            $for bid in range(0,gv.sd['nbrd']):
+                    <tr>
+                        <td class="BoardID">${bid + 1}</td>
+                        <td class="command">                         
+                            <input type="text" size="10" value="${commands['adr'][bid] if bid < len(commands['adr']) else ''}" id="con${bid}" name="con${bid}">
+                        </td>                       
+                    </tr>
+        </table>
+        
+            $for bid in range(gv.sd['nbrd']):
+            	<input type="hidden" id="i${bid}" name="i${bid}"/>
+        
+        <input type="checkbox" name="debug" id="debug" ${"checked" if commands['debug' ] =="1" else ""}>
+        <label for="debug">log extended information</label>
+        
+    </form>
+            <p></p>
+</div>
+<div class="controls">
+    <button id="cSubmit" class="submit"><b>$_(u'Submit')</b></button>
+    <button id="cCancel" class="cancel danger">$_(u'Cancel')</button>
+</div>
+
+<br><hr>
+
+<div id="tools">
+    <div class="title">$_(u'Search for devices')</div>
+    
+    <div class="controls">
+        <button id="cSubmitscan" class="submitscan"><b>$_(u'Scan devices')</b></button>
+    </div>
+    
+    <form id="clicscan" name="clicscan" action="/pcf857x_scan" method="GET">
+        
+        $if len(commands['devices'])>0:
+            <h4>$_(u'Devices found')</h4>
+            <table style= "border: 1px solid black" id=deviceresults>
+                $for i in commands['devices']:
+                    <tr>
+                        <td style= "border: 1px solid black">${hex(i)}</td>
+                    </tr>
+            </table>
+        $else:
+            <input type="hidden" id="scanme" name="scanme" value="true"/>
+    </form>
+    <br>
+    <div class="title">$_(u'Advanced (i2c) tools')</div> see helppage
+    <form id="clict" name="clict" action="/pcf857xt" method="POST">
+        <table id="smbusCommand">
+            <tr>
+                <td>smbus</td>
+                <td>0xadr</td>
+                <td>0xdata</td>
+            </tr>
+            <tr>
+                <td>
+                    <input type="text" size="2" value="1" name="tst_smbus">
+                </td>
+                <td>
+                    <input type="text" size="4" value="${commands['adr'][0]}" name="tst_adres">
+                </td>
+                <td>
+                    <input type="text" size="4" value="0x08" name="tst_value">
+                </td>
+                <td>0x00 = all On  0xFF = all off</td>
+            </tr>
+
+        </table>
+    </form>
+</div>
+
+<div class="controls">
+    <button id="cSubmitt" class="submitt"><b>$_(u'Set')</b></button>
+</div>
+
+<p>
+</p>
+
+<p></p>
+
+</div>

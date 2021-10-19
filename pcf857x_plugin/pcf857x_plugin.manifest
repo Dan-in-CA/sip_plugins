@@ -11,4 +11,4 @@ Requirements: I2C must be enabled on the Raspberry PI and smbus lib must be inst
 pcf857x.py plugins
 pcf857x.html templates
 pcf857x.json data (generated)
-pcf857x.manifest plugins/manifests
+pcf857x_plugin.manifest plugins/manifests

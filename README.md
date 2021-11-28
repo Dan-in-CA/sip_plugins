@@ -59,6 +59,12 @@ Requires base mqtt plugin.
 Can be used to read SIP's gv.* settings.  
 See gv_reference.txt in the SIP folder for a list of settings.
 
+mqtt_hass
+----------
+Home Assistant integration using MQTT autodiscovery.
+Requires SIP version 4.1.25 or later, and base mqtt plugin
+Run "python3 -m pip install python-slugify --upgrade" before installing this plugin.  
+
 mqtt_set_values
 ----------
 Requires base mqtt plugin.  

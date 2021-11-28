@@ -1,0 +1,209 @@
+<!DOCTYPE HTML>
+<HTML>
+
+<HEAD>
+	<META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=windows-1252">
+	<TITLE>mqtt_hass-docs.html</TITLE>
+	<META NAME="viewport" CONTENT="width=device-width, initial-scale=1.0">
+	<STYLE TYPE="text/css">
+		<!--
+		P {
+			font-family: "Lucida Grande", "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", "Lucida Sans Unicode", "Helvetica", "Arial", sans-serif
+		}
+
+		H2.cjk {
+			font-family: "SimSun"
+		}
+
+		H2.ctl {
+			font-family: "Mangal"
+		}
+
+		PRE.cjk {
+			font-family: "NSimSun", monospace
+		}
+
+		CODE.cjk {
+			font-family: "NSimSun", monospace
+		}
+		-->
+	</STYLE>
+</HEAD>
+
+<BODY LANG="en-US" BGCOLOR="#ffffff" DIR="LTR" STYLE="border: none; padding: 0in">
+	<H1><A NAME="mqtt_hass-plugin-documentation"></A>MQTT HASS Plugin
+		Documentation</H1>
+	<H2 CLASS="western"><A NAME="about-the-mqtt_hass-plugin"></A>About the
+		MQTT HASS Plugin</H2>
+	<P>The MQTT HASS plugin implement MQTT Discovery for Home Assistant (HASS),
+		including report and control of some SIP system settings and valves (stations) over MQTT.
+		MQTT Discovery enables automatic devices and entities enrolment from HASS user interface configuration pannel,
+		including plug-and-play availability detection, status and control.</P>
+	<H2 CLASS="western"><A NAME="using-the-mqtt_hass-plugin"></A>Using
+		MQTT HASS plugin</H2>
+	<P>This plugin is disabled by default. If you are reading this, the
+		mqtt_hass plugin is probably enabled on your system. Otherwise you can
+		enable it using the plugin manager or by setting the group
+		permissions of the <STRONG>mqtt_hass.py</STRONG> file to <STRONG>executable</STRONG>.
+		Once it is enabled, and the SIP program has been restarted, you can
+		verify it is working by selecting it from the PLUGINS drop down menu
+		of the main program&rsquo;s web interface. You should be taken to the
+		plugin&rsquo;s Settings page.</P>
+
+	<h2>Requirements</h2>
+	<ul>
+		<li>An MQTT broker such as Mosquitto is required to be accessible by
+			SIP device and HASS. This broker can be on different parts of the local
+			network, on a remote network, or installed on either SIP or HASS system.</li>
+		<li>A working HASS system with an MQTT Integration such as Mosquitto broker</li>
+		<li>A SIP system with the base mqtt plugin installed and configured (see bellow).</li>
+		<li>This plugin installed and configured on the same SIP system as the base mqtt plugin (see bellow).</li>
+	</ul>
+
+	<h2>Setup</h2>
+	<h3>On SIP - base MQTT plugin setup</h3>
+	<ul>
+		<li>Install <i>eclipse paho</i> if not already on the Pi</li>
+		<li>Install the base mqtt plugin</li>
+		<li>Configure base MQTT plugin</li>
+		<ul>
+			<li>MQTT Broker Host: This will be the URL of the MQTT broker or localhost if the
+				broker is running on SIP</li>
+			<li>MQTT Broker Port: Default is 1883 but may be different depending on your
+				MQTT broker</li>
+			<li>MQTT Broker Username: Default is mosquitto but depends on your setup.</li>
+			<li>MQTT Broker Password: Depends on your setup. Use pass as default</li>
+			<li>MQTT Publish up/down topic: It needs to be set for proper SIP availability detection by HASS. We suggest
+				to use the SIP System name as set on Options webpage</li>
+			<li>MQTT Client ID: A unique name for SIP system. Default is SIP System name but can be
+				changed on Options webpage.</li>
+		</ul>
+	</ul>
+	<h3>On SIP - MQTT HASS plugin setup</h3>
+	<ul>
+		<li>Install Python <i>python-slugify</i> package if not already on the pi.</li>
+		<i>sudo python -m pip install python-slugify</i>
+		<li>Install the MQTT HASS plugin.</li>
+		<li>Configure MQTT HASS plugin.</li>
+		<ul>
+			<li>Topic prefix: This prefix is used for SIP system parameters and zones published to the MQTT broker.
+			</li>
+			Leave this option empty to use a slugified SIP System name. This setting will be slugified when saved.<br>
+			(Default: System name or 'SIP' if System name is empty).
+			<li>Name prefix: Used as prefix for all HASS devices and entities names.</li>
+			Leave this option empty to use a SIP System name as prefix. For entities, this setting will be slugified.
+			<br>
+			(Default: System name or 'SIP' if System name is empty).
+			<li>SIP FQDN: SIP network name or IP address. Used to compose the URL link to SIP web interface displayed in
+				HASS devices settings.</li>
+			Leave this option empty to use SIP hostname or IP address used to connect with the MQTT broker.
+			<br>
+			(Default: SIP hostname).
+			<li>Device is Station name: if checked, use <i>station name</i> as part of HASS Device name.</li>
+			Changes to SIP <i>station name</i> will update HASS Device name.<br>
+			(Default: unchecked)
+			<li>Publish disabled zone: if checked, disabled stations will also be published to the MQTT broker and
+				discovered by HASS.</li>
+			NOTE: For safety, disabled stations can't be controlled from MQTT nor HASS.<br>
+			(Default: unchecked)<br>
+		</ul>
+	</ul>
+
+	<h3>On Home Assistant - MQTT setup</h3>
+	<ul>
+		<li>Follow Home Assistant instructions to add MQTT integration via the user interface.</li>
+		MQTT discovery feature is enabled by default.
+		MQTT integration will detect SIP settings parameters and zones as devices and entities.<br>
+		<li>Follow Home Assistant instructions to configure and use the newly added devices and entities.</li>
+	</ul>
+
+	<h3>Multiple SIP system conneted to the same MQTT broker or Home Assistant instance</h3>
+	<ul>
+		To integrate multiple SIP system, on each SIP:
+		<li>Use different "System name" as set on SIP Options webpage. Default SIP System name is "SIP"</li>
+		<li>For each base MQTT plugin settings use different MQTT Publish up/down topic and MQTT Client ID.</li>
+		<li>For each MQTT HASS plugin use different Topic prefix and Name prefix.</li>
+	</ul>
+	<h2>Home Assistant - available SIP Devices and Entities</h2>
+	Devices and associated Entities made available with this plugin are:
+	<ul>
+		<li>Device: SIP (name: <i>NamePrefix</i>)</li>
+		MQTT HASS plugin create a single device per SIP system.
+		This device regroup the supported SIP system parameters and sensors.<br>
+		<i>NamePrefix</i> is MQTT HASS "Name prefix" option.
+		Unless specified the associated entities have the same behavior as on SIP home webpage.<br>
+		Entities name prefix use a slugified version of the device name (<i>nameprefix</i>).
+		Entities:
+		<ul>
+			<li>Control Entity: SIP System Enable (ID: select.<i>nameprefix</i>_enable)</li>
+			HASS "Select entity" showing and controling SIP System Enable (Values: "on", Off")<br>
+			Setting it to "off" will disable all other system parameters and zone control from HASS.
+			<li>Configuration Entity: SIP Mode (ID: select.<i>nameprefix</i>_mode)</li>
+			HASS "Select entity" showing and controling SIP Mode (Values: "Automatic", "Manual")<br>
+			<li>Configuration Entity: Rain sensor enable (ID: select.<i>nameprefix</i>_rain_sensor_enable)</li>
+			HASS "Select entity" showing and controling SIP Rain sensor enable (Values: "on", "off")<br>
+			Same behavior as "Use rain sensor" in SIP Options webpage.<br>
+			<li>Configuration Entity: Rain delay timer (ID: number.<i>nameprefix</i>_rain_delay_timer)</li>
+			HASS "Number entity" showing and controling SIP Rain delay timer (Range: 0 to 24 hours, Default 0)<br>
+			This entity has the following JSON attributes and default values when the timer is active / inactive
+			(default):
+			<ul>
+				<li>Attribute: state</li>
+				The number of hours as set from SIP user interface or MQTT (Default 0).
+				<li>Attribute: start_time</li>
+				Unix time when the delay timer started (Default "None").
+				<li>Attribute: duration</li>
+				Total number of seconds of the delay timer (Default 0).
+			</ul>
+			<li>Configuration Entity: Water level adjust (ID: number.<i>nameprefix</i>.water_level_adjust)</li>
+			HASS "Number entity" showing and controling SIP Water level adjust (Range: 0 to 100 %, Default 100)<br>
+			<li>Diagnostic Entity: Rain detect sensor (ID: binary_sensor.<i>nameprefix</i>.rain_detect)</li>
+			HASS "Binary sensor entity" reporting SIP Rain sensor state (Values: "on","off")
+			<li>Diagnostic Entity: Running program (ID: sensor.<i>nameprefix</i>.running_program)</li>
+			HASS "Sensor entity" showing SIP Running program (Values: "Manual", "Run Once, or program number).
+			Zones controlled from HASS are shown as "Run Once" program.
+		</ul>
+		<li>Devices: Zone (name: <i>nameprefix</i> - Z<i>xx</i> or <i>nameprefix</i> - <i>station name</i>)</li>
+		MQTT HASS plugin create one device per SIP station (zone).<br>
+		Device name is <i>nameprefix</i> - Z<i>xx</i> unless option "Device is Station name" is checked.<br>
+		The number of devices will track the number of SIP "Stations Extensions" set on the Options webpage.<br>
+		Each zone device has a single "switch" entity.
+		Entity:
+		<ul>
+			ID is switch.<i>nameprefix</i>.z<i>xx</i> where xx is a double digit from 01 to the number of SIP
+			stations.<br>
+			Entity name and availability will track changes made on SIP Stations webpage.<br>
+			This entity has the following JSON attributes and values:
+			<ul>
+				<li>Attribute: state</li>
+				The actual zone state. Value is "on" when active and "off" when inactive.
+				<li>Attribute: start_time</li>
+				Unix time when the zone turned "on".<br>
+				If state is "off": Value is "None".
+				<li>Attribute: duration</li>
+				Total number of seconds the zone state will be "on".<br>
+				If state is "on": Value is the duration as set from a running program or run once or "Inf" if zone is
+				activated from manual mode or from MQTT HASS switch.<br>
+				If state is "off": Value is "Inf".
+				<li>Attribute: program</li>
+				The program number that turned the zone state to "on".<br>
+				If state is "on": Value is program number, "Run Once" or "Manual"<br>
+				If state is "off": Value is "None"
+			</ul>
+		</ul>
+
+		<h2>Test your setup</h2>
+		From HASS and SIP user interface:
+		<ul>
+			<li>Compare the state of select.<i>nameprefix</i>.enable with SIP web interface System Enable.<br>
+				Change the system enable from HASS and SIP to verify that the state is changed on the other end.<br>
+				When disabled, observe that all the other HASS system parameters and zone entities are not available in
+				HASS user
+				interface (grayed)</li>
+			<li>With System enable, change one enabled zone state from HASS and verify the zone state on SIP
+				webpage.<br>
+				Observe the active program is set to "Run Once" when setting a zone "on" from HASS.</li>
+		</ul>
+</BODY>
+
+</HTML>

@@ -1,0 +1,80 @@
+$def with(settings, error_msg)
+
+$var title: $_('SIP MQTT HASS Plugin')
+$var page: mqtt_hass_plugin
+<script>
+    // Initialize behaviors
+    jQuery(document).ready(function () {
+
+        jQuery("#cSubmit").click(function () {
+            jQuery("#pluginForm").submit();
+        });
+        jQuery("button#cCancel").click(function () {
+            window.location = "/";
+        });
+
+        jQuery("button#docButton").click(function () {
+            window.open("static/docs/plugins/mqtt_hass-docs.html", "_blank");
+        });
+
+    });
+</script>
+
+<div id="plugin">
+    <div class="title">MQTT Home Assistant (HASS) Plugin
+        <button class="execute" id="docButton" type="button">$_('Help')</button>
+    </div>
+    <div>
+        <p>Require base MQTT plugin.</p>
+        <p>Click the Submit button below even if using the default topic.</p>
+    </div>
+
+    <div id="errorMessage">${error_msg}</div>
+
+    <form id="pluginForm" action="/mqtt_hass-save" method="get">
+
+        <table class="optionList">
+            <tr>
+                <td style="text-transform: none;">$_(u"Topic prefix"):</td>
+                <td>MQTT base topic for system parameters and zones (Default: System name)<br />
+                    <input type="text" name="hass_sip_topic" value="${settings.get(u'hass_sip_topic',u'')}">
+                </td>
+            </tr>
+            <tr>
+                <td style="text-transform: none;">$_(u"Name prefix"):</td>
+                <td>HASS name prefix for devices and zones (Default: System name)<br />
+                    <input type="text" name="hass_sip_name" value="${settings.get(u'hass_sip_name',u'')}">
+                </td>
+            </tr>
+            <tr>
+                <td style="text-transform: none;">$_(u"SIP FQDN"):</td>
+                <td>SIP network name or IP address for web access from HASS (Default: auto detect)<br />
+                    <input type="text" name="hass_sip_fqdn" value="${settings.get(u'hass_sip_fqdn',u'')}">
+                </td>
+            </tr>
+            <tr>
+                <td style="text-transform: none;">$_(u"Device name is Station name"):</td>
+                <td>Use station name for HASS zone device name (Default: uncheck)<br />
+                    <input type="checkbox" name="hass_device_is_station_name" ${u" checked" if settings.get(u'hass_device_is_station_name','')==u'On' else u"" }>
+                </td>
+            </tr>
+            <tr>
+                <td style="text-transform: none;">$_(u"Publish disabled zones"):</td>
+                <td>MQTT publish all zones states (Default: uncheck)<br />
+                    <input type="checkbox" name="hass_pub_disabled" ${u" checked" if settings.get(u'hass_pub_disabled','')==u'On' else u"" }>
+                </td>
+            </tr>
+            <tr>
+                <td style='text-transform: none;'>$_(u"Discovery UUID prefix"):</td>  <!--Edit-->
+                <td>Unique identifier used as prefix for MQTT Discovery by HASS <br />
+                Prefix = ${settings.get(u"hass_uuid","")}</td>
+            </tr>
+
+        </table>
+    </form>
+
+    <div class="controls">
+        <button id="cSubmit" class="submit"><b>$_(u'Submit')</b></button>
+        <button id="cCancel" class="cancel danger">$_(u'Cancel')</button>
+    </div>
+</div>

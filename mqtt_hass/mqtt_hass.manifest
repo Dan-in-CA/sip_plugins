@@ -1,0 +1,11 @@
+Description: MQTT plugin compatible with Home Assistant MQTT discovery
+
+Requirements: MQTT Plugin by Daniel Casner
+
+##### List all plugin files below preceded by a blank line [file_name.ext path] relative to SIP directory #####
+
+mqtt_hass.py plugins
+mqtt_hass.html templates
+mqtt_hass.json data (generated)
+mqtt_hass-docs.html static/docs/plugins
+mqtt_hass.manifest plugins/manifests

@@ -31,7 +31,7 @@ Allows multiple stations to be run at the same time (concurrently) when SIP is i
 
 email_adj
 ----------
-Sends status email to google email account
+Sends status email to google email account. **NOTE: This plugin runs under Python2x only**.
 
 keypad
 ----------

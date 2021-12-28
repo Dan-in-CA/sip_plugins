@@ -273,7 +273,7 @@ class mqtt_hass_base:
         self._unit = unit
 
         self._value = None
-        self._json_state = False
+        self._json_state = True
 
         self.discovery_topic = self.discovery_topic_get()
         self.state_topic = self.state_topic_get()
@@ -445,6 +445,7 @@ class mqtt_hass_base:
                     + MQTT_HASS_SYSTEM_ENABLE_SUB_TOPIC,
                     u"payload_available": HASS_ON,
                     u"payload_not_available": HASS_OFF,
+                    u"value_template": "{{ value_json.state }}",
                 }
             )
 
@@ -519,7 +520,11 @@ class mqtt_hass_base:
         if value == self._value and not force_update:
             return
         self._value = value
-        payload = value
+        if self._json_state:
+            payload = {}
+            payload[u"state"] = value
+        else:
+            payload = value
         self._publish(self.state_topic, payload)
 
     def state_unpublish(self, force_enable=False):
@@ -604,7 +609,7 @@ class mqtt_hass_system_param(mqtt_hass_base):
         )
         self._gv_sd = gv_sd
         if self._component == u"binary_sensor":
-            self._options = {"Off": 0, "On": 1}
+            self._options = {HASS_OFF: 0, HASS_ON: 1}
 
     def set_sip_value(self, value):
         """Set SIP setting according to direct value or key name in option{}"""
@@ -815,7 +820,7 @@ class mqtt_hass_zone(mqtt_hass_base):
 
     def device_name(self):
         """Return zone Device name"""
-        if _settings[MQTT_HASS_DEVICE_IS_STATION_NAME] == "on":
+        if _settings[MQTT_HASS_DEVICE_IS_STATION_NAME] == HASS_ON:
             return super().device_name() + u" - " + self._name
         else:
             return super().device_name() + u" Z" + u"{0:02d}".format(self._index + 1)
@@ -864,7 +869,7 @@ class mqtt_hass_zone(mqtt_hass_base):
     def state_publish(self, force_enable=False, force_update=False):
         """
         Publish zone state only if changed unless forces to do it
-        Attributes includes state, start time, total duration in seconds and the program that trigered the state "on" """
+        Attributes includes state, start time, total duration in seconds and the program that trigered the state "ON" """
         if self._publish_disabled(force_enable):
             return
 

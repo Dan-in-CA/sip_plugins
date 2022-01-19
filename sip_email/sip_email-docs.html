@@ -1,0 +1,81 @@
+<!DOCTYPE HTML>
+<HTML>
+<HEAD>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>sip_email-docs</title>
+    <link href="../../themes/basic/base.css" rel="stylesheet" type="text/css"/>
+</HEAD>
+<BODY LANG="en-US" BGCOLOR="#ffffff" DIR="LTR" STYLE="border: none; margin: 10px; ">
+<H1><A NAME="proto-plugin-documentation"></A>sip_email Plugin Documentation</H1>
+<H2 CLASS="western"><A NAME="about-the-email-plugin"></A>About the
+sip_email Plugin</H2>
+<P>The sip_email plugin can be used to send notifications when important events occur at your SIP installation.</P>
+<P>Enter the numbers (separated by commas) into the <b>SIP events to report</b> field for the events you wish to have the plugin report.</P>
+<p>For example: 1, 2, 4 would send messages when SIP has restarted, a program began running, and when manual rain delay has ended.</p>
+<P>The plugin can report the following events:</P>
+<UL>
+	<LI><P STYLE="margin-bottom: 0in"><STRONG>1 Restart notice</STRONG><BR>Sent when The SIP software has re-started. 
+	This can indicate a power cut or other problem has occurred. The message body includes the most recent log entries to help 
+	determine if a scheduled irrigation program was interrupted or skipped. 
+	</P>
+	<LI><P STYLE="margin-bottom: 0in"><STRONG>2 Program start</STRONG><BR>
+	Sent when an irrigation program has started. The message body includes the start time
+	and lists stations scheduled in the program.
+	</P>
+	<LI><P STYLE="margin-bottom: 0in"><STRONG>3 Program end</STRONG><BR>
+	Sent when an irrigation program has finished. The message body includes the ending time of the program and log entries for each station.
+	</P>
+	<LI><P STYLE="margin-bottom: 0in"><STRONG>4 Rain delay expired</STRONG><BR>
+	Sent when a manually set rain delay has timed out. A reminder that scheduled irrigation 
+	programs will resume operation.
+	</P>
+	<LI><P><STRONG>5 Rain detected</STRONG><BR>
+	Indicates that a rain sensor connected to the SIP hardware has been triggered by rain. 
+	The message body includes the time and date of the occurrence.
+	</P>
+	<LI><P><STRONG>6 Rain sensor off</STRONG><BR>
+	Indicates that a rain sensor connected to the SIP hardware has ended irrigation suppression and scheduled programs will resume. 
+	The message body includes the time and date of the occurrence.
+	</P>	
+</UL>
+
+
+<H2 CLASS="western">Email Setup</H2>
+<P>This plugin is designed to work with the free Google GMail service for sending messages <b>(Sender address)</b>.</p> 
+<p>You can use a different email provider for sending messages but you will need to find the correct SMTP server, Port, and password settings for your provider of choice.
+</P><br>
+<P>You can use any email address to receive messages <b>(Send-to address)</b>. The sender address and send-to address can be the same.
+</P>
+<P></P>
+<P>Using the default GMail SMTP server and port you will need to enter these items:</P>
+<UL>
+	<LI><P STYLE="margin-bottom: 0in">SIP events to report</P>
+	<p>This field takes one ore more numbers separated by commas. You can also add a space between items for better legibility.</P>
+	<p>The numbers correspond to SIP events that are listed above.</p><br>
+	<LI><P STYLE="margin-bottom: 0in">Sender address</P>
+	<p>This will be the email address of the GMail account you will use for sending messages.</p>
+	<p>If you have an existing GMail account you can use that and get an app password for SIP so that you will not need to expose your main account password.</p><br>
+	<LI><P>App password</P>
+	<p>This is a special password GMail provides for the exclusive use of SIP.</p>
+	<p>See the instructions below under Getting an app password.</p><br>
+	<LI><P>Send-to address</P>
+	<p>The email address you will use to receive SIP notifications.</p>
+</UL>
+
+<H3>If you don't have a GMail account</H3>
+	<p>Go to <b>www.gmail.com</b>.</p>
+	<p>Click <b>Create account</b> and follow the on screen instructions.</p>
+
+<H3>Getting an app password</H3>
+<ol>
+	<li>Sign in to your Google account and click the <b>Google account</b> button at the upper right of the page.</li>
+	<li>Click <b>Security</b> on the menu that appears at the left of the page.</li>
+	<li>Scroll down to <b>Signing in to Google</b>.</li>
+	<li>Click on <b>App passwords</b> and enter your GMail password to procede.</li>
+	<li>On the App passwords page click <b>App</b> and select <b>Mail</b>.</li>
+	<li>Click <b>Select device</b> and select <b>Other (custom name)</b>, then enter a name for your SIP installation e.g. "SIP on Raspberry Pi".</li>
+	<li>Click <b>Generate</b> and copy or make a note of the generated app password. Use this app password on the plugin's setup page.</li>
+</ol>
+</BODY>
+</HTML>

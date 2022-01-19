@@ -1,0 +1,10 @@
+Description: This plugin sends email using google GMail.
+Author: Dan Kimberling 
+
+##### List all plugin files below preceded by a blank line [file_name.ext path] relative to OSPi directory #####
+
+sip_email.py plugins
+sip_email.html templates
+sip_email.json data (generated)
+sip_email-docs.html static/docs/plugins
+sip_email.manifest plugins/manifests

@@ -18,7 +18,7 @@ from sip import template_render
 from webpages import ProtectedPage
 from helpers import timestr
 
-from email import Encoders
+from email import encoders
 import smtplib
 from email.MIMEMultipart import MIMEMultipart
 from email.MIMEBase import MIMEBase
@@ -225,7 +225,7 @@ def email(subject, text, attach=None):
         if attach is not None:  # If insert attachments
             part = MIMEBase(u"application", u"octet-stream")
             part.set_payload(open(attach, u"rb").read())
-            Encoders.encode_base64(part)
+            encoders.encode_base64(part)
             part.add_header(
                 u"Content-Disposition",
                 u'attachment; filename="%s"' % os.path.basename(attach),

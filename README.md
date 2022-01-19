@@ -31,7 +31,8 @@ Allows multiple stations to be run at the same time (concurrently) when SIP is i
 
 email_adj
 ----------
-Sends status email to google email account. **NOTE: This plugin runs under Python2x only**.
+Sends status email to google email account. **NOTE: This plugin runs under Python2x only**.  
+may use obsolete code - see **sip_email** plugin for updated version.
 
 keypad
 ----------
@@ -121,6 +122,11 @@ Supports up to 16 relays. Requires SIP 3.2.43 or later.
 relay_board
 ----------
 A plugin for using relay boards to control sprinkler valves, etc
+
+sip_email
+----------
+Sends email notifications of important SIP events.
+Python 3 only.
 
 shutdown_button
 ----------

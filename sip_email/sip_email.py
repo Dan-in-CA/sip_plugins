@@ -131,12 +131,15 @@ def send_restart_notice():  # Notice 1
             message += "In case running or scheduled programs were interrupted please check SIP's log page.\n"
             message += "The last 5 log entries are shown below for quick reference. \n\n"
             message += "Date\t\tStartTime\tDuration\tProgram\tStation\n"
-            with open("./data/log.json") as logf:
-                i = 0
-                while i < 5:
-                    line_dict = json.loads(logf.readline())
-                    message += f"{line_dict['date']}\t{line_dict['start']}\t{line_dict['duration']}\t\t{line_dict['program']}\t{gv.snames[line_dict['station']]}\n"
-                    i += 1
+            try:
+                with open("./data/log.json") as logf:
+                    i = 0
+                    while i < 5:
+                        line_dict = json.loads(logf.readline())
+                        message += f"{line_dict['date']}\t{line_dict['start']}\t{line_dict['duration']}\t\t{line_dict['program']}\t{gv.snames[line_dict['station']]}\n"
+                        i += 1
+            except IOError:
+                pass
             email(subject, message)
             sent = 1
 
@@ -157,7 +160,7 @@ def email_start_stop(name, **kw):  # Notice 2 and 3
             else:
                 prog_name = ""
                 subject = f"SIP program {p_num} started."
-                message = f"Program {p_num} started at {str(gv.nowt.tm_hour)+':'+str(gv.nowt.tm_min)}.\n\m"
+                message = f"Program {p_num} started at {str(gv.nowt.tm_hour)+':'+str(gv.nowt.tm_min)}.\n\n"
             message += "Scheduled in this program:\n"
             for i, e in enumerate(gv.rs):
                 if any(e):
@@ -173,15 +176,19 @@ def email_start_stop(name, **kw):  # Notice 2 and 3
                 message = f"The {prog_name} program ended at {str(gv.nowt.tm_hour)+':'+str(gv.nowt.tm_min)}.\n\n"
             else:
                 subject = f"SIP program {gv.lrun[1]} completed."
-                message = f"Program {gv.lrun[1]} ended at {str(gv.nowt.tm_hour)+':'+str(gv.nowt.tm_min)}.\n\m"
+                message = f"Program {gv.lrun[1]} ended at {str(gv.nowt.tm_hour)+':'+str(gv.nowt.tm_min)}.\n\n"
             message += "Stations logged in this program:\n"
             message += "Date\t\tStartTime\tDuration\tStation\n"
-            with open("./data/log.json") as logf:
-                i = 0
-                while i < stn_sum:
-                    line_dict = json.loads(logf.readline())
-                    message += f"{line_dict['date']}\t{line_dict['start']}\t{line_dict['duration']}\t\t{gv.snames[line_dict['station']]}\n"
-                    i += 1
+            
+            try:
+                with open("./data/log.json") as logf:
+                    i = 0
+                    while i < stn_sum:
+                        line_dict = json.loads(logf.readline())
+                        message += f"{line_dict['date']}\t{line_dict['start']}\t{line_dict['duration']}\t\t{gv.snames[line_dict['station']]}\n"
+                        i += 1
+            except IOError:
+                pass
             stn_sum = 0
             email(subject, message)
     

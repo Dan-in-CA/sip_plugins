@@ -108,7 +108,7 @@ def on_zone_change(name, **kw):
         byte = 0xFF
         for s in range(8): # for each virtual board
             sid = b * 8 + s  # station index in gv.srvals           
-            if gv.srvals[sid]:  # station is on
+            if gv.output_srvals[sid]:  # station is on
                 byte = byte ^ (1 << s) # use exclusive or to set station bit to 0
         #print("adding byte: ", hex(byte))
         i2c_bytes.append(byte)
@@ -120,9 +120,18 @@ def on_zone_change(name, **kw):
             print("demo: bus.write_byte(" + str(int(pcf[u"adr"][s],16)) + "," + hex(i2c_bytes[s]) + ")" )
         else:
             # the real stuff here
-            if pcf[u"debug"]=="1":
-                print("bus.write_byte(" + str(int(pcf[u"adr"][s],16)) + "," + hex(i2c_bytes[s]) + ")" )
-            bus.write_byte(int(pcf[u"adr"][s],16) , i2c_bytes[s])
+            try:
+                if pcf[u"debug"]=="1":
+                  print("bus.write_byte(" + str(int(pcf[u"adr"][s],16)) + "," + hex(i2c_bytes[s]) + ")" )
+
+                bus.write_byte(int(pcf[u"adr"][s],16) , i2c_bytes[s])
+            except ValueError:
+                print("ValueError: have you any i2c device configured?")
+                pass
+            except OSError:
+                print("OSError: All i2c devices entered correctly?")
+                pass
+
             
 
 

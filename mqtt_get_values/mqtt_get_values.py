@@ -19,7 +19,7 @@ from sip import template_render  #  Needed for working with web.py templates
 from urls import urls  # Get access to SIP's URLs
 import web  # web.py framework
 from webpages import ProtectedPage  # Needed for security
-from helpers import get_cpu_temp 
+from helpers import get_cpu_temp
 
 # Add new URLs to access classes in this plugin.
 # fmt: off
@@ -63,7 +63,7 @@ class save_settings(ProtectedPage):
 
 
 ### System settings ###
-def notify_value_change(name, **kw):  
+def notify_value_change(name, **kw):
     payload = {
         u"devt": gv.now,
         u"nbrd": gv.sd[u"nbrd"],
@@ -74,13 +74,17 @@ def notify_value_change(name, **kw):
         u"rdst": gv.sd[u"rdst"],
         u"loc": gv.sd[u"loc"],
         u"wl": gv.sd[u"wl"],
-#         u"wl_weather": gv.sd[u"wl_weather"],
         u"sbits": gv.sbits,
         u"ps": gv.ps,
         u"lrun": gv.lrun,
         u"ct": get_cpu_temp(),
         u"tu": gv.sd[u"tu"]
     }
+    # for plugin compatibility read all water level adjustment settings (wl_*)
+    for entry in gv.sd:
+        if entry.startswith(u"wl_"):
+            payload[entry] = gv.sd[entry]
+
     get_values_topic = mqtt.get_settings().get(u"get_values_topic")
     if get_values_topic:
         client = mqtt.get_client()

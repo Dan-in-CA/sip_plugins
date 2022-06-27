@@ -1,0 +1,118 @@
+#include <Wire.h>
+
+// Declare variables
+
+//Common user settings
+const byte flowPin = 2; // Arduino pin receiving flow sensor signals
+const int signal_measure = FALLING; // Sensor signal type
+const byte CLIENT_ADDRESS = 0x44; // Define the client address of this device.
+
+// Variables for keeping track of time
+unsigned long lastRead = 0;
+unsigned long currentMillis = 0;
+const unsigned long interval = 1000;//length of interval in ms used to determine pulses/second
+
+// Variables for tracking pulses and pulse rate
+volatile long pulsesCounter = 0; // Main pulses counter
+long pulsesCounterPrior = 0; // Holds prior pulses count for change detection
+float pulsesPerSecond = 0;
+byte t = 0x00; //0x00 is production mode, 0x01 is test mode. Test mode will send random numbers
+
+void setup() {
+  pinMode(13, OUTPUT); //onboard LED will light when picking up signals from sensor
+  pinMode(flowPin, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(flowPin), rpm, signal_measure);
+
+  //Set up as I2C Client and tie to event
+  Wire.begin(CLIENT_ADDRESS);
+  Wire.onReceive(receiveI2cMsg); //function called when data is received from Pi
+  Wire.onRequest(respondI2cMsg); //function called when Pi requests data
+
+  Serial.begin(9600);
+  while (!Serial) {
+    ; // wait for serial port to connect. Needed for native USB port only
+  }
+  Serial.print("Hello World\n");
+  
+  //start measuring flow
+  lastRead = millis();
+  sei();
+}
+
+void rpm ()    
+{
+  pulsesCounter++; // Every FALLING pulse causes pulsesCounter to increase by one
+}
+
+void receiveI2cMsg(int) {
+  // Receive the pulse value request from the server
+  while (Wire.available()) {
+    t = Wire.read();
+  }
+}
+
+void respondI2cMsg() {
+  // When server asks, send back pulsesCountedPrior as long converted to 4 bytes
+  byte b[4];
+  unsigned long r = 0;
+  if (t == 0x00) {
+    for (int i=0; i<4; i++) {
+      Wire.write(((pulsesCounterPrior>>(i*8)) & 0xff)); //extract the right-most byte of the shifted variable
+    }
+  }
+  else {
+    // Server has asked for test data. Send a random number
+    if (random(1000) < 200) {
+      r = 0;
+    } else {
+      r=random(1024);
+    }
+    
+    for (int i=0; i<4; i++) {
+      Wire.write(((r>>(i*8)) & 0xff));
+    }
+  }
+}
+
+void loop() {
+  // main loop:
+
+  if (lastRead > millis()) {
+    // millis counter has been reset. Throw out the results.
+    cli();
+    pulsesCounter = 0;
+    lastRead = millis();
+    sei();
+  } 
+  else if (millis() - lastRead >= interval) {
+    // time to take a reading!!
+    cli();
+    currentMillis = millis();
+    if (lastRead > currentMillis) {
+      // millis counter has been reset. Throw out the results.
+      cli();
+      pulsesCounter = 0;
+      lastRead = millis();
+      sei();
+    }
+    else {
+      pulsesPerSecond = 1000 * pulsesCounter/(currentMillis - lastRead);
+      Serial.print("Pulses per second = ");     
+      Serial.print(pulsesPerSecond);
+      Serial.print("\n");
+      //Serial.print("   MS = ");
+      //Serial.print(currentMillis - lastRead);
+      //Serial.print("\n");
+      if (pulsesCounter > 0) {
+        digitalWrite(13, HIGH);
+      }
+      else {
+        digitalWrite(13, LOW);
+      }
+      pulsesCounterPrior = pulsesCounter;
+      pulsesCounter = 0;
+      lastRead = millis();
+      sei();
+    }
+  }
+}

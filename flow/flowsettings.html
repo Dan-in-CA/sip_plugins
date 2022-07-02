@@ -1,0 +1,304 @@
+$def with(settings, runtime_values, records)
+
+<!-- Edit: Replace "proto_vals" with settings values for your plugin if used-->
+
+$var title: $_(u'SIP Flow Monitor Settings') 
+$var page: flow_plugin  <!--Edit: page name, used internally-->
+
+$var title: $_(u'SIP flow')
+$code:
+	snames = gv.snames
+	if gv.sd['lg'] == 1:
+		log_state = _(u"Enabled")
+		log_option = "checked"
+	else:
+		log_state = _(u"Disabled")
+		log_option = ""
+
+	def formatTime(t):
+		if gv.sd['tf']:
+			return t
+		else:
+			hour = int(t[0:2])
+			newhour = hour
+			if hour == 0:
+				newhour = 12
+			if hour > 12:
+				newhour = hour-12
+			return str(newhour) + t[2:] + (" am" if hour<12 else " pm")
+
+<script>
+
+    // Initialize behaviors
+    jQuery(document).ready(function(){
+
+        jQuery("#cSubmit").click(function() {
+            jQuery("#pluginForm").submit();
+        });
+        jQuery("button#cCancel").click(function(){
+            window.location="/";
+        });
+
+        jQuery("button#docButton").click(function(){
+            window.open("https://github.com/IMHarris/SIP_plugins/wiki", "_blank");
+        });
+        
+        jQuery("button#logButton").click(function(){
+            window.open("flow-sp", "_self");
+        });
+
+    });
+    
+</script>
+<script>   
+
+    document.getElementByName("text-master-sensor-addr").innerHTML = "";
+    
+</script>
+<noscript>Sorry, your browser does not support JavaScript!</noscript>
+
+
+<div id="plugin">
+    <div class="title">Flow settings<!--Edit: User page heading, Make relevant to your plugin-->
+    <button class="execute" id="logButton" type="button" >$_(u'Flow Log')</button>
+    <button class="execute" id="docButton" type="button" >$_(u'Help')</button>
+    </div>
+
+    <p>$_(u' ')</p>
+    <form id="pluginForm" action="${'/flow-save'}" method="get"> 
+        <header>
+            <h3>Settings</h3>
+        </header>
+        <table class="optionList">
+            <!--Check boxes-->
+            <thead>
+                <th class="stationNumber">$_(u' ')</th>  <!--Edit: Optional-->
+                <th class="stationNumber">$_(u' ')</th>  <!--Edit: Optional-->
+            </thead>
+            <tr>
+                <td style='text-transform: none;'>$_(u'Volume measure'):</td>
+                <td><input type="text" name="text-volume-measure" id="lbl3" value="${settings['text-volume-measure'] if 'text-volume-measure' in settings else ''}"></td>
+                </td>
+            </tr>
+            <tr>
+                <td style='text-transform: none;'>$_(u'Sensor pulses per volume'):</td>
+                <td><input type="text" name="text-pulses-per-measure" id="lbl2" value="${settings['text-pulses-per-measure'] if 'text-pulses-per-measure' in settings else ''}"></td>
+            </tr>  
+            <tr>
+                <td style='text-transform: none;'>$_(u'Enable logging'):</td>
+                <td><input type="checkbox" name="chk-enable-logging"  ${"checked" if 'chk-enable-logging' in settings else ""}></td>
+            </tr>
+            <tr>
+                <td style='text-transform: none;'>$_(u'Max log entries'):</td>
+                <td><input type="text" name="text-max-log-entries" id="max-log-entries" value="${settings['text-max-log-entries'] if 'text-max-log-entries' in settings else ''}"></td>
+            </tr>
+            <tr>
+                <td style='text-transform: none;'>$_(u'Master sensor address'):</td>
+                <td> ${runtime_values['sensor-addr'] if 'sensor-addr' in runtime_values else ''}</td>
+            </tr>
+            <tr>
+                <td style='text-transform: none;'>$_(u'Sensor connected'):</td>
+                <td id="text-sensor-connected" >${runtime_values['sensor-connected'] if 'sensor-connected' in runtime_values else ''}</td>
+            </tr>
+            <tr>
+                <td style='text-transform: none;'>Calibration mode</td>
+                <td><input type="checkbox" id="check-calibration" ${'disabled' if runtime_values['sensor-connected'] == 'no' else ''}  ></td>
+            </tr>
+        </table></br>
+        
+        <header>
+            <h3 id="hdr-calibration" hidden="hidden" >Calibration data</h3>
+        </header>
+        
+        <table class="optionList" id="tbl-calibration", hidden="hidden">
+            <tr>
+                <!--<td style="font-size:2em;text-align:left" > <p id='lbl-flow' value='27 Gallons/hour '></p></td>-->
+                <td id='lbl-flow' style="font-size:2em;text-align:left" >  </td>
+                <td id="lbl-cal-btn" rowspan="2"> <button type="button" id="btn-calibrate" background-color= #AAA hidden>Start Calibration</button></td>
+            </tr>
+            <tr>
+                <td id="lbl-usage" style="font-size:1.25em;text-align:left"> </td>
+            </tr>
+        </table>
+        </br>
+        </br>
+    
+    </form>
+    
+<div class="controls">
+    <button id="cSubmit" class="submit"><b>$_(u'Submit')</b></button>
+    <button id="cCancel" class="cancel danger">$_(u'Cancel')</button>
+</div>
+</div>
+
+<script>   
+    //This code polls the server for flow rate    
+    
+    // User configuration variables
+    var href = window.location.href
+    var apiURL = href.substr(0, href.lastIndexOf("/") + 1) + "flow-data"  //page name delivering flow info in JSON
+    const updateInterval = 3000  //flow info update frequency in milliseconds
+    
+    //Create a request variable and assign a new XMLHttpRequest object to it.
+    var request = new XMLHttpRequest()
+    
+    function fnPostFlow(flowData, arg) {
+        //Determines when the polling should stop based on the count of n
+        //document.getElementById("lbl-flow").textContent = String(flowData.pulse_rate) + " hi";
+        if (arg == "pulserate") {
+            document.getElementById("lbl-flow").textContent = String(flowData.pulse_rate) + " pulses/second";
+        } else if (arg == "flowrate") {
+            //var flow_rate = round(flowData.pulse_rate/Number(settings['text-pulses-per-measure'])*100)/100;
+            //var measure = settings['text-volume-measure']
+            document.getElementById("lbl-flow").textContent = String(flowData.flow_rate_raw) + " " + flowData.volume_measure;
+        }
+    };
+    
+    request.onreadystatechange = function() {
+        //function called when XHR data is loaded
+        if (this.readyState == 4 && this.status == 200) {
+            var flowData = JSON.parse(this.responseText);
+            if (flowData.pulse_rate < 0) {
+                // A pulse rate < 0 indicates the sensor is disconnected
+                document.getElementById("text-sensor-connected").textContent = "no";
+                if (calibrationMode) {
+                    document.getElementById("check-calibration").disabled = false;
+                } else {
+                    document.getElementById("check-calibration").disabled = true;
+                }
+            } else {
+                // Sensor is connected
+                document.getElementById("text-sensor-connected").textContent = "yes";
+                document.getElementById("check-calibration").disabled = false;
+            }
+            
+            if (calibrationMode) {             
+                if (isCalibrating) {
+                    if (resetCalibration) {
+                        // Start calibration button just pressed. Check again to ensure water has stopped
+                        // before initating calibration. When it has, reset the pulse start value and tell
+                        // the user to begin.
+                        if (flowData.pulse_rate == 0){
+                            // Button was just pressed and water is not flowing. Tell user to start water flow
+                            pulseStartValue = flowData.total_pulses;
+                            resetCalibration = false;
+                            document.getElementById("btn-calibrate").disabled = true;
+                            document.getElementById("lbl-flow").textContent = "Ready";
+                            document.getElementById("lbl-usage").textContent = "Start water flow into container";
+                        } else {
+                            // Button has been pressed, but water is flowing. Need to wait for water flow to stop
+                            fnPostFlow(flowData,"pulserate");
+                            document.getElementById("btn-calibrate").disabled = true;
+                            document.getElementById("lbl-usage").textContent = "Cannot start until flow = 0";
+                        }
+                    } else if (flowData.total_pulses - pulseStartValue > 0) {
+                        //user has started water flow
+                        document.getElementById("lbl-flow").textContent = String(Math.round((flowData.total_pulses  - pulseStartValue)*10)/10) + " pulses";
+                        document.getElementById("lbl-usage").textContent = String(flowData.pulse_rate) + " pulses/sec";
+                        if (flowData.pulse_rate > 0) {
+                            document.getElementById("btn-calibrate").innerHTML = "Restart Calibration";
+                            document.getElementById("btn-calibrate").disabled = true;
+                        } else {
+                            document.getElementById("btn-calibrate").disabled = false;
+                        }              
+                    } 
+                } else {
+                    // we're in calibration mode, but calibration hasn't started yet (button not yet pressed)
+                    //need to check that flow=0, so that we can enable the start button
+                    if (flowData.pulse_rate > 0  || document.getElementById("lbl-flow").textContent == "Wait") {
+                         fnPostFlow(flowData,"pulserate");
+                         document.getElementById("btn-calibrate").disabled = true;
+                         document.getElementById("lbl-usage").textContent = "Cannot start until flow = 0";
+                     } else {
+                         fnPostFlow(flowData,"pulserate");
+                         document.getElementById("lbl-usage").textContent = "Ready to start";
+                         document.getElementById("btn-calibrate").disabled = false;
+                     }     
+                }  
+            } 
+        }
+    };
+
+    // Open a new connection, using the GET request on the URL endpoint
+    request.open('GET', apiURL, true);
+
+    async function poll(fn, fnCondition, milli) {
+         // This function drives the polling
+         let result = await fn(-1);
+         while (fnCondition(result)) {
+             await wait(milli);
+             if (calibrationMode) {
+                 result = await fn(result);
+             }
+         }
+         return result;
+    }
+
+    function wait(msec) {
+        return new Promise(resolve => {
+        setTimeout(resolve, msec);
+        });
+    } 
+
+    function fnGet(n = 0) {
+        // Sends the GET request to the server to get the flow info
+        n++
+        request.open('GET', apiURL, true)
+        request.send()
+        return n;
+    }
+
+    function fnCondition(n = 0) {
+        //Determines when the polling should stop based on the count of n
+        if (n >= 1000) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+    
+    // Let the polling of the server for flow info begin!
+    poll(fnGet, fnCondition, updateInterval);
+    
+    //Code for flow calibration mode
+    
+    // btn-calibrate sets pulses to zero and starts the counting
+    isCalibrating=false;
+    resetCalibration = false;
+    document.getElementById("btn-calibrate").addEventListener("click", fnCalibrate);
+    
+    function fnCalibrate() {
+        // Start the calibration
+        resetCalibration = true;
+        isCalibrating = true;
+        document.getElementById("lbl-flow").textContent = "Wait";
+        document.getElementById("btn-calibrate").disabled = true;    
+    }
+     
+    // The check-calibration checkbox turns calibration mode on and off 
+    document.getElementById("check-calibration").addEventListener("click", fnCalibrationMode);
+    
+    calibrationMode = false;
+    function fnCalibrationMode() {
+        // Turns calibration mode on/off
+        if (document.getElementById("check-calibration").checked == true) {
+            // Turn calibration mode on
+            calibrationMode = true;
+            document.getElementById("lbl-flow").textContent = "Wait";
+            document.getElementById("btn-calibrate").disabled = true;
+            document.getElementById("btn-calibrate").hidden = false;
+            document.getElementById("tbl-calibration").hidden =false;
+            document.getElementById("hdr-calibration").hidden =false;
+        } else {
+            // Turn calibration mode off
+            calibrationMode = false;
+            isCalibrating = false
+            document.getElementById("btn-calibrate").hidden = true;
+            document.getElementById("btn-calibrate").innerHTML = "Start Calibration";
+            document.getElementById("tbl-calibration").hidden =true;
+            document.getElementById("hdr-calibration").hidden =true;
+        }    
+    }         
+
+</script>
+

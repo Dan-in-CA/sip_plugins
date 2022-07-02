@@ -24,7 +24,7 @@ from webpages import showInFooter  # Enable plugin to display station data on ti
 # from webpages import showOnTimeline  # Enable plugin to display station data on timeline
 
 # Global variables
-sensor_register = 0x00  # 0x00 to receive sensor readings, 0x01 to have the sensor send random numbers to use for testing
+sensor_register = 0x01  # 0x00 to receive sensor readings, 0x01 to have the sensor send random numbers to use for testing
 # Number of readings to average for the flow rate reading display passed to flow smoother.
 # This is for display purposes only and does not change the usage
 # calculation in any way
@@ -342,16 +342,18 @@ def main_loop():
         # Update the application footer with flow information
         rate_footer.label = u"Flow rate"
         rate_footer.unit = u" " + ls.volume_measure + u"/hr"
-        if fs.last_reading() >= 0 and ls.pulses_per_measure > 0:
+        if ls.pulses_per_measure == 0:
+            rate_footer.val = "N/A"
+        elif fs.last_reading() >= 0 and ls.pulses_per_measure > 0:
             rate_footer.val = f'{round(fs.ave_reading() * 3600 / ls.pulses_per_measure, 1):,}'
         else:
-            rate_footer.val = 0
+            rate_footer.val = "0"
 
         volume_footer.label = u"Water usage"
         if ls.pulses_per_measure > 0:
             volume_footer.val = f'{round((all_pulses - fw.start_pulses) / ls.pulses_per_measure, 1):,}'
         else:
-            volume_footer.val = 0
+            volume_footer.val = "0"
         volume_footer.unit = u" " + ls.volume_measure
 
         time.sleep(1)

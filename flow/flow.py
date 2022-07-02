@@ -21,11 +21,11 @@ from urls import urls  # Get access to SIP's URLs
 import web  # web.py framework
 from webpages import ProtectedPage, WebPage  # Needed for security
 from webpages import showInFooter  # Enable plugin to display station data on timeline
-from webpages import showOnTimeline  # Enable plugin to display station data on timeline
+# from webpages import showOnTimeline  # Enable plugin to display station data on timeline
 
 # Global variables
 sensor_register = 0x00  # 0x00 to receive sensor readings, 0x01 to have the sensor send random numbers to use for testing
-# Number of readings to average for the flow rate reading display.
+# Number of readings to average for the flow rate reading display passed to flow smoother.
 # This is for display purposes only and does not change the usage
 # calculation in any way
 fs = flowhelpers.FlowSmoother(4)
@@ -36,12 +36,10 @@ master_sensor_addr = 0
 pulse_rate = 0  # holds last captured flow rate
 flow_loop_running = False  # Notes if the main loop has started
 valve_loop_running = False  # Notes if the valve loop has started
-valve_open = False  # Shows as true if any valve is open
+# valve_open = False  # Shows as true if any valve is open
 ls = flowhelpers.LocalSettings()
 fw = flowhelpers.FlowWindow(ls)
 valve_messages = queue.Queue()  # Carries messages from notify_zone_change to the changed_valves_loop
-flow1 = showOnTimeline()  # instantiate class to enable data on timeline
-open_valves_str = []
 
 # Variables for the flow controller client
 client_addr = 0x44
@@ -97,9 +95,11 @@ def changed_valves_loop():
     Monitors valve_messages queue for notices that the valve state has changed and takes appropriate action
     """
     global changed_valves
-    global valve_open
+    # global valve_open
     global fw
-    
+    global valve_loop_running
+
+    valve_loop_running = True
     while True:
         
         while not valve_messages.empty():
@@ -125,8 +125,6 @@ def changed_valves_loop():
                             else:
                                 changed_valves[i] = u"off"
                     i = i + 1
-                # print("valveopen:",str(valve_open), ", valvenowopen:",str(valve_now_open))
-                # print("valveopen:", str(fw.valve_open()), ", valvenowopen:", str(fw_new.valve_open()))
                 if fw.valve_open() and not fw_new.valve_open():
                     # All valves are now closed end current flow window
                     fw.end_pulses = capture_flow_counter
@@ -230,8 +228,8 @@ class save_settings(ProtectedPage):
         with open(u"./data/flow.json", u"w") as f:  # Edit: change name of json file
             json.dump(qdict, f)  # save to file
         ls.load_settings()
-        print(u"Flow settings after update")
-        print_settings()
+        # print(u"Flow settings after update")
+        # print_settings()
         # actions_on_change_settings()
         raise web.seeother(u"/")  # Return user to home page.
  
@@ -318,7 +316,7 @@ def main_loop():
     """
     global flow_loop_running
     global pulse_rate
-    global valve_open
+    # global valve_open
     global all_pulses
     flow_loop_running = True
     print(u"Flow plugin main loop initiated.")
@@ -339,7 +337,7 @@ def main_loop():
             all_pulses = all_pulses + time_elapsed.total_seconds() * pulse_rate
             start_time = stop_time
 
-        # Update the home page with flow information
+        # Update the application footer with flow information
         rate_footer.label = u"Flow rate"
         rate_footer.unit = u" " + ls.volume_measure + u"/hr"
         if fs.last_reading() >= 0:

@@ -34,6 +34,10 @@ email_adj
 Sends status email to google email account. **NOTE: This plugin runs under Python2x only**.  
 may use obsolete code - see **sip_email** plugin for updated version.
 
+flow
+----------
+Allows the addition of a water flow sensor to enable real time flow data and logging of watter usage.
+
 keypad
 ----------
 A plugin for using an 4X4 scanning keypad to execute simple functions without the use of an external peripheral.  

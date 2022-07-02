@@ -1,0 +1,18 @@
+Description: Measure irrigation flow.
+Copyright 2022
+Author: Ian Harris
+Email: ianmarcharris@gmail.com
+License: GNU GPL 3.0
+revision: 1.0
+
+Requirements: Python 3.7
+
+##### List all plugin files below preceded by a blank line [file_name.ext path] relative to SIP directory #####
+
+flow.py plugins
+flowhelpers.py plugins/flowhelpers
+arduinocode.txt plugins/flowhelpers
+flow.html templates
+flowsettings.html templates
+flow.json data (generated)
+flowlog.json data (generated)

@@ -246,11 +246,10 @@ class flowdata(ProtectedPage):
         web.header(b"Cache-Control", b"no-cache")
         qdict = {u"pulse_rate": pulse_rate}
         qdict.update({u"total_pulses": all_pulses})
-        pulses_per_measure = ls.pulses_per_measure
-        if pulses_per_measure > 0:
+        if ls.pulses_per_measure > 0:
             if fs.last_reading() >= 0:
-                flow_rate = round(fs.ave_reading() * 3600 / pulses_per_measure, 3)
-                flow_rate_raw = round(fs.last_reading() * 3600 / pulses_per_measure, 3)
+                flow_rate = round(fs.ave_reading() * 3600 / ls.pulses_per_measure, 3)
+                flow_rate_raw = round(fs.last_reading() * 3600 / ls.pulses_per_measure, 3)
                 qdict.update({u"flow_rate": f'{round(flow_rate, 1):,}'})
                 qdict.update({u"flow_rate_raw": f'{round(flow_rate_raw, 1):,}'})
             else:
@@ -262,7 +261,10 @@ class flowdata(ProtectedPage):
         qdict.update({u"volume_measure": ls.volume_measure + "/hr"})
         
         # Water usage since beginning of window
-        water_use = round((all_pulses - fw.start_pulses) / ls.pulses_per_measure, 1)
+        if ls.pulses_per_measure > 0:
+            water_use = round((all_pulses - fw.start_pulses) / ls.pulses_per_measure, 1)
+        else:
+            water_use = 0
         water_use_str = str(water_use) + " " + ls.volume_measure
         qdict.update({u"water_use": water_use_str})
         

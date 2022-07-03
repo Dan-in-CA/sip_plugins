@@ -1,0 +1,12 @@
+Description: Allows SIP to install plugins (installed by default)
+Copyright 2022
+Author: Dan-in-CA
+Email: dkimberling59@gmail.com
+License: GNU GPL 3.0
+
+Requirements:
+
+##### List all plugin files below preceded by a blank line [file_name.ext path] relative to SIP directory #####
+
+plugin_manage.py plugins
+plugin_manage.manifest plugins/manifests

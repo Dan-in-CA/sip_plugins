@@ -35,7 +35,9 @@ class LocalSettings:
             with open(u"./data/flow.json", u"r") as f:
                 saved_settings = json.load(f)
             if u"text-pulses-per-measure" in saved_settings.keys():
-                self.pulses_per_measure = float(saved_settings["text-pulses-per-measure"])
+                pulses_per_measure = saved_settings["text-pulses-per-measure"]
+                if pulses_per_measure.replace(".", "").isnumeric():
+                    self.pulses_per_measure = float(saved_settings["text-pulses-per-measure"])
             if u"enable-logging" in saved_settings.keys():
                 self.enable_logging = True
             if u"text-volume-measure" in saved_settings.keys():

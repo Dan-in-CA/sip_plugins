@@ -24,7 +24,7 @@ from webpages import showInFooter  # Enable plugin to display station data on ti
 # from webpages import showOnTimeline  # Enable plugin to display station data on timeline
 
 # Global variables
-sensor_register = 0x01  # 0x00 to receive sensor readings, 0x01 to have the sensor send random numbers to use for testing
+sensor_register = 0x00  # 0x00 to receive sensor readings, 0x01 to have the sensor send random numbers to use for testing
 # Number of readings to average for the flow rate reading display passed to flow smoother.
 # This is for display purposes only and does not change the usage
 # calculation in any way

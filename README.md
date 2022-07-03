@@ -99,6 +99,10 @@ pcf_8591_adj
 ----------
 Read sensor data (temp or voltage) from I2C PCF8591 ADC/DAC
 
+plugin_manager
+----------
+Allows SIP to install plugins (installed by default)
+
 pressure_adj
 ----------
 Checks water pressure when master station is switched on

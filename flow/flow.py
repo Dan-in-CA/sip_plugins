@@ -342,13 +342,18 @@ def main_loop():
         # Update the application footer with flow information
         rate_footer.label = u"Flow rate"
         rate_footer.unit = u" " + ls.volume_measure + u"/hr"
-        if fs.last_reading() >= 0:
+        if ls.pulses_per_measure == 0:
+            rate_footer.val = "N/A"
+        elif fs.last_reading() >= 0 and ls.pulses_per_measure > 0:
             rate_footer.val = f'{round(fs.ave_reading() * 3600 / ls.pulses_per_measure, 1):,}'
         else:
-            rate_footer.val = "N/A"
+            rate_footer.val = "0"
 
         volume_footer.label = u"Water usage"
-        volume_footer.val = f'{round((all_pulses - fw.start_pulses) / ls.pulses_per_measure, 1):,}'
+        if ls.pulses_per_measure > 0:
+            volume_footer.val = f'{round((all_pulses - fw.start_pulses) / ls.pulses_per_measure, 1):,}'
+        else:
+            volume_footer.val = "0"
         volume_footer.unit = u" " + ls.volume_measure
 
         time.sleep(1)

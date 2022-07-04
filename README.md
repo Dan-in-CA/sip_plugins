@@ -36,7 +36,9 @@ may use obsolete code - see **sip_email** plugin for updated version.
 
 flow
 ----------
-Allows the addition of a water flow sensor to enable real time flow data and logging of watter usage.
+Allows the addition of a water flow sensor to enable real-time flow data and logging of water usage.
+Requires SIP v4.1.46 (or later) or the most current version of the plugin_manager from the plugins list.
+Requires Python 3.
 
 keypad
 ----------

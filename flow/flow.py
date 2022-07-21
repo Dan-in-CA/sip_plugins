@@ -4,7 +4,7 @@ from __future__ import print_function
 
 # Flow SIP addin
 import sys
-sys.path.insert(0, '/home/pi/SIP/plugins/flowhelpers')
+sys.path.insert(0, './flowhelpers')
 import flowhelpers
 import ast
 from blinker import signal

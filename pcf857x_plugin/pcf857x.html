@@ -8,6 +8,10 @@ $var page: pcf857x
     // Initialize behaviors
     jQuery(document).ready(function(){
 
+        jQuery("#optionList").change(function() {
+            jQuery("#repo_msg").text("submit settings before update!");
+        });
+
         jQuery("#cSubmit").click(function() {     	
         	jQuery("#clic").submit();
         });
@@ -19,6 +23,9 @@ $var page: pcf857x
         });
         jQuery("#cSubmitscan").click(function() {     	
         	jQuery("#clicscan").submit();
+        });
+        jQuery("#cSubmUPD").click(function() {     	
+        	jQuery("#clicupd").submit();
         });
         jQuery("button#docButton").click(function(){
             window.open("https://gitlab.com/seventer/pcf857x_plugin_sip/-/blob/main/doc/pcf857x-doc.md", "_blank");
@@ -33,11 +40,8 @@ $var page: pcf857x
 </style>
 
 <div id="plugin">
-<!--     <div class="title">Command Line Control -->
-<!--     <button class="execute" id="docButton" type="button" >$_('Help')</button> -->
-<!--     </div> -->
     <div>
-    <div class="title">$_(u'PCF857x IO extender boards.') 
+    <div class="title">$_(u'PCF8574 IO extender boards.') 
     <button class="execute" id="docButton" type="button">$_(u'Help')</button></div>
     
     $if u"warnmsg" in commands:
@@ -45,7 +49,7 @@ $var page: pcf857x
             <p><h2>$commands['warnmsg']</h2></p>
     
     <br>
-    <p>Connect up to 64 (or 128) stations via multiple IO extender boards based on the pcf8574 (or pcf8575)</p>
+    <p>Connect up to 64 stations via multiple IO extender boards based on the pcf8574</p>
     <p>See help page for supported options or ask for support on the SIP forum</p>
     <br>
     </div>
@@ -53,21 +57,35 @@ $var page: pcf857x
 </script>
 <div id="stations">
     <div class="title">$_(u'Settings')</div>
+
     <form id="clic" name="clic" action="/pcf857xu" method="get">
-        
         <table id="optionList">
+            <tr>
+                <td><label for="repo">Update channel:</label></td>
+                <td>
+                    <select name="repo" id="repo">
+                        <option value="S" ${"selected" if commands['repo' ] =="S"  else ""} >Stable</option>
+                        <option value="B" ${"selected" if commands['repo' ] =="B"  else "" } >Beta</option>
+                    </select>
+                </td>
+                <td id=repo_msg> </td>
+              </tr>
+              <tr><td colspan="2"><hr></td></tr>    
             <tr>
                 <td style='text-transform: none;'>$_(u'SMBus id:')</td> 
                 <td><input type="number" min="0" max="1" name="bus" value="${commands['bus']}"> (usually 1)</td>
             </tr>
-            <tr><td colspan="2"><hr></td></tr>
-            <tr>
+            <tr style="display: none;">
                 <td style='text-transform: none;'>$_(u'IC Type: '):</td>
-                <td><input type="radio" id="pcf8574" name="ictype" value="pcf8574" ${"checked" if commands['ictype' ] =="pcf8574"  else ""}>
-                    <label for="pcf8574">pcf8574 (8bit)</label></td>
-                    <td><input type="radio" id="pcf8575" name="ictype" value="pcf8575" ${"checked" if commands['ictype' ] =="pcf8575"  else ""}>
-                        <label for="pcf8575">pcf8575 (16bit)  ---->  Future use, this setting is ignored for now.</label></td>
+                <td>
+                    <input type="radio" id="pcf8574" name="ictype" value="pcf8574" ${"checked" if commands['ictype' ] =="pcf8574"  else ""}>
+                    <label for="pcf8574">pcf8574 (8bit)</label>
+                </td>
+                <td><input type="radio" id="pcf8575" name="ictype" value="pcf8575" ${"checked" if commands['ictype' ] =="pcf8575"  else ""}>
+                        <label for="pcf8575">pcf8575 (16bit)  ---->  Future use, this setting is ignored for now.</label>
+                </td>
             </tr>
+
         </table>
         <hr>
         <table>
@@ -150,9 +168,19 @@ $var page: pcf857x
     <button id="cSubmitt" class="submitt"><b>$_(u'Set')</b></button>
 </div>
 
-<p>
+<form id="clicupd" name="clicupd" action="/pcf857x_upd" method="GET">
+    <tr>
+        <td>
+            <div class="controls">
+                <button id="cSubmUPD" class="submupd"><b>$_(u'Update plugin')</b></button>
+            </div>
+        </td>
+    </tr>
+</form>
+
+<p> </p>
+<p style="text-align:center";>
+    Version: $commands['version']
 </p>
-
-<p></p>
-
+<br>
 </div>

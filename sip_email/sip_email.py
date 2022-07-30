@@ -161,11 +161,11 @@ def email_start_stop(name, **kw):  # Notice 2 and 3
                 if gv.pd[p_idx]["name"]:
                     prog_name = gv.pd[p_idx]["name"] 
                     subject = f"SIP program {prog_name} started."
-                    message = f"The {prog_name} program started at {str(gv.nowt.tm_hour)+':'+str(gv.nowt.tm_min)}.\n\n"
+                    message = f"The {prog_name} program started at {gv.nowt.tm_hour:02d}:{gv.nowt.tm_min:02d}.\n\n"
                 else:
                     prog_name = ""
                     subject = f"SIP program {p_num} started."
-                    message = f"Program {p_num} started at {str(gv.nowt.tm_hour)+':'+str(gv.nowt.tm_min)}.\n\n"
+                    message = f"Program {p_num} started at {gv.nowt.tm_hour:02d}:{gv.nowt.tm_min:02d}.\n\n"
                 message += "Scheduled in this program:\n"
                 for i, e in enumerate(gv.rs):
                     if any(e):
@@ -178,10 +178,10 @@ def email_start_stop(name, **kw):  # Notice 2 and 3
               ):          
             if prog_name:
                 subject = f"SIP program {prog_name} completed."
-                message = f"The {prog_name} program ended at {str(gv.nowt.tm_hour)+':'+str(gv.nowt.tm_min)}.\n\n"
+                message = f"The {prog_name} program ended at {gv.nowt.tm_hour:02d}:{gv.nowt.tm_min:02d}.\n\n"
             else:
                 subject = f"SIP program {gv.lrun[1]} completed."
-                message = f"Program {gv.lrun[1]} ended at {str(gv.nowt.tm_hour)+':'+str(gv.nowt.tm_min)}.\n\n"
+                message = f"Program {gv.lrun[1]} ended at {gv.nowt.tm_hour:02d}:{gv.nowt.tm_min:02d}.\n\n"
             message += "Stations logged in this program:\n"
             message += "Date\t\tStartTime\tDuration\tStation\n"
             

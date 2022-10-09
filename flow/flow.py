@@ -24,11 +24,12 @@ from webpages import showInFooter  # Enable plugin to display station data on ti
 # from webpages import showOnTimeline  # Enable plugin to display station data on timeline
 
 # Global variables
-sensor_register = 0x00  # 0x00 to receive sensor readings, 0x01 to have the sensor send random numbers to use for testing
+SENSOR_REGISTER = 0x00  # 0x00 to receive sensor readings, 0x01 to have the sensor send random numbers to use for testing
 # Number of readings to average for the flow rate reading display passed to flow smoother.
 # This is for display purposes only and does not change the usage
 # calculation in any way
-fs = flowhelpers.FlowSmoother(4)
+plugin_initiated = False
+fs = flowhelpers.FlowSmoother(5)
 settings_b4 = {}
 changed_valves = {}
 all_pulses = 0  # Calculated pulses since beginning of time
@@ -40,10 +41,16 @@ valve_loop_running = False  # Notes if the valve loop has started
 ls = flowhelpers.LocalSettings()
 fw = flowhelpers.FlowWindow(ls)
 valve_messages = queue.Queue()  # Carries messages from notify_zone_change to the changed_valves_loop
+# Variables to note if notification plugins are loaded
+email_loaded = False
+sms_loaded = False
+voice_loaded = False
 
 # Variables for the flow controller client
-client_addr = 0x44
+CLIENT_ADDR = 0x44
 bus = SMBus(1)
+
+# Initiate notifications object
 
 # Add new URLs to access classes in this plugin.
 # fmt: off
@@ -53,7 +60,8 @@ urls.extend([
     u"/flow-data", u"plugins.flow.flowdata",
     u"/flow-settings", u"plugins.flow.settings",
     u"/cfl", u"plugins.flow.clear_log",
-    u"/wfl", u"plugins.flow.download_csv"
+    u"/wfl", u"plugins.flow.download_csv",
+    u"/wfr", u"plugins.flow.download_flowrate_csv"
     ])
 
 # Add this plugin to the PLUGINS menu ["Menu Name", "URL"], (Optional)
@@ -81,21 +89,15 @@ def print_settings(lpad=2):
     """
     Prints the flow settings
     """
-    print(u"{}Master flow sensor address: {}".format(" " * lpad, u"0x%02X" % client_addr))
+    print(u"{}Master flow sensor address: {}".format(" " * lpad, u"0x%02X" % CLIENT_ADDR))
    
-        
-def update_options():
-    """
-    Read key main program options into local variables
-    """
-    print(gv.sd["mas"])
 
 def changed_valves_loop():
     """
     Monitors valve_messages queue for notices that the valve state has changed and takes appropriate action
+    This loop runs on its own thread
     """
     global changed_valves
-    # global valve_open
     global fw
     global valve_loop_running
 
@@ -131,8 +133,8 @@ def changed_valves_loop():
                     fw.end_time = capture_time
                     fw.write_log()
             
-                elif  not fw.valve_open() and fw_new.valve_open():
-                    #Flow has started.  Start a new flow window
+                elif not fw.valve_open() and fw_new.valve_open():
+                    # Flow has started.  New flow window has already been created above
                     pass
             
                 elif fw.valve_open() and fw_new.valve_open():
@@ -141,7 +143,6 @@ def changed_valves_loop():
                     fw.end_pulses = capture_flow_counter
                     fw.end_time = capture_time
                     fw.write_log()
-                # print("valves changed: ", changed_valves)
                 fw = fw_new
         
         time.sleep(0.25)
@@ -158,7 +159,7 @@ class clear_log(ProtectedPage):
 
 class download_csv(ProtectedPage):
     """
-    Downloads log as csv
+    Downloads usage log as csv
     """
     def GET(self):
         records = flowhelpers.read_log()
@@ -195,12 +196,25 @@ class settings(ProtectedPage):
     def GET(self):
         
         try:
-            runtime_values = {"sensor-addr":u"0x%02X" % client_addr}
+            runtime_values = {"sensor-addr": u"0x%02X" % CLIENT_ADDR}
             if pulse_rate >=0:
-                runtime_values.update({"sensor-connected":"yes"})
+                runtime_values.update({"sensor-connected": "yes"})
             else:
-                runtime_values.update({"sensor-connected":"no"})
-            
+                runtime_values.update({"sensor-connected": "no"})
+            if email_loaded:
+                runtime_values.update({"email-loaded": "yes"})
+            else:
+                runtime_values.update({"email-loaded": "no"})
+            if sms_loaded:
+                runtime_values.update({"sms-loaded": "yes"})
+            else:
+                runtime_values.update({"sms-loaded": "no"})
+            if voice_loaded:
+                runtime_values.update({"voice-loaded": "yes"})
+            else:
+                runtime_values.update({"voice-loaded": "no"})
+            runtime_values.update({"valve-measure-time": str(flowhelpers.IGNORE_INITIAL + flowhelpers.MEASURE_TIME)})
+
             with open(
                 u"./data/flow.json", u"r"
             ) as f:  # Read settings from json file if it exists
@@ -208,8 +222,57 @@ class settings(ProtectedPage):
         except IOError:  # If file does not exist return empty value
             settings = {}
 
-        log = flowhelpers.read_log()
+        # Reformat the flow data file
+        x = ls.load_avg_flow_data()
+        log = []
+        for (k, v) in x.items():
+            flow_rate = round(v["rate"] / ls.pulses_per_measure, 1)
+            flow_rate_str = "{:,.1f} {}/hr".format(flow_rate, ls.volume_measure)
+            logline = (
+                u'{"'
+                + u'valve'
+                + u'":"'
+                + gv.snames[int(k)]
+                + u'","'
+                + u'rate'
+                + u'":"'
+                + flow_rate_str
+                + u'","'
+                + u"time"
+                + u'":"'
+                + str(v["time"])
+                + u'"}'
+            )
+            rec = json.loads(logline)
+            log.append(rec)
+
         return template_render.flowsettings(settings, runtime_values, log)  # open flow settings page
+
+
+class download_flowrate_csv(ProtectedPage):
+    """
+    Downloads flow rates as csv
+    """
+    def GET(self):
+        x = ls.load_avg_flow_data()
+        data = _(u"Station, Rate, Units, Recorded") + u"\n"
+        for (k, v) in x.items():
+            flow_rate = round(v["rate"] * 3600 / ls.pulses_per_measure, 1)
+            # flow_rate_str = "{:,.1f} {}/hr".format(flow_rate, ls.volume_measure)
+            data += (
+                '"'
+                + gv.snames[int(k)]
+                + u'", '
+                + '{:.1f}'.format(round(flow_rate / ls.pulses_per_measure, 1))
+                + u', "'
+                + '{}/hr'.format(ls.volume_measure)
+                + '", '
+                + str(v["time"])
+                + '\n'
+            )
+
+        web.header(u"Content-Type", u"text/csv")
+        return data
 
 
 class save_settings(ProtectedPage):
@@ -224,13 +287,35 @@ class save_settings(ProtectedPage):
         qdict = (
             web.input()
         )  # Dictionary of values returned as query string from settings page.
-        
+        # Clean up and sort the events fields
+        if "email-events" in qdict.keys():
+            email_events = qdict["email-events"].replace(" ", "")
+            email_events_list = email_events.split(",")
+            email_events_list2 = []
+            for event in email_events_list:
+                if len(event) > 0:
+                    email_events_list2.append(event)
+            qdict["email-events"] = ",".join(sorted(email_events_list2))
+        if "sms-events" in qdict.keys():
+            sms_events = qdict["sms-events"].replace(" ", "")
+            sms_events_list = sms_events.split(",")
+            sms_events_list2 = []
+            for event in sms_events_list:
+                if len(event) > 0:
+                    sms_events_list2.append(event)
+            qdict["sms-events"] = ",".join(sorted(sms_events_list2))
+        if "voice-events" in qdict.keys():
+            voice_events = qdict["voice-events"].replace(" ", "")
+            voice_events_list = voice_events.split(",")
+            voice_events_list2 = []
+            for event in voice_events_list:
+                if len(event) > 0:
+                    voice_events_list2.append(event)
+            qdict["voice-events"] = ",".join(sorted(voice_events_list2))
         with open(u"./data/flow.json", u"w") as f:  # Edit: change name of json file
             json.dump(qdict, f)  # save to file
         ls.load_settings()
-        # print(u"Flow settings after update")
-        # print_settings()
-        # actions_on_change_settings()
+
         raise web.seeother(u"/")  # Return user to home page.
  
    
@@ -273,27 +358,27 @@ class flowdata(ProtectedPage):
         
         return json.dumps(qdict)
 
+
 class flow(ProtectedPage):
     """View Log"""
 
     def GET(self):
         try:
-            runtime_values = {"sensor-addr": u"0x%02X" % client_addr}
+            runtime_values = {"sensor-addr": u"0x%02X" % CLIENT_ADDR}
             if pulse_rate >= 0:
-                runtime_values.update({"sensor-connected": "no"})
+                runtime_values.update({"sensor-connected": "yes"})
             else:
                 runtime_values.update({"sensor-connected": "no"})
+
             with open(
                     u"./data/flow.json", u"r"
             ) as f:  # Read settings from json file if it exists
                 settings = json.load(f)
-                print(settings)
         except IOError:  # If file does not exist return empty value
             settings = {}
             # Default settings. can be list, dictionary, etc.
 
         records = flowhelpers.read_log()
-
         return template_render.flow(settings, runtime_values, records)
 
 
@@ -318,16 +403,19 @@ def main_loop():
     """
     global flow_loop_running
     global pulse_rate
-    # global valve_open
     global all_pulses
+    global fw
     flow_loop_running = True
     print(u"Flow plugin main loop initiated.")
     start_time = datetime.datetime.now()
+
     while True:
         try:
-            bytes = bus.read_i2c_block_data(client_addr, sensor_register, 4)
+            bytes = bus.read_i2c_block_data(CLIENT_ADDR, SENSOR_REGISTER, 4)
             pulse_rate = int.from_bytes(bytes, u"little")
             fs.add_reading(pulse_rate)
+            fw.set_pulse_values(pulse_rate, all_pulses)
+            # fw.pulse_rate = pulse_rate
 
         except IOError:
             pulse_rate = -1
@@ -340,7 +428,6 @@ def main_loop():
             start_time = stop_time
 
         # Update the application footer with flow information
-        rate_footer.label = u"Flow rate"
         rate_footer.unit = u" " + ls.volume_measure + u"/hr"
         if ls.pulses_per_measure == 0:
             rate_footer.val = "N/A"
@@ -349,7 +436,6 @@ def main_loop():
         else:
             rate_footer.val = "0"
 
-        volume_footer.label = u"Water usage"
         if ls.pulses_per_measure > 0:
             volume_footer.val = f'{round((all_pulses - fw.start_pulses) / ls.pulses_per_measure, 1):,}'
         else:
@@ -381,47 +467,42 @@ def notify_new_day(name, **kw):
     """
     App sends a new_day message after plugins are loaded.
     We'll use this as a trigger to start the threaded loops
+    and run any code that has to run after other plugins are loaded
     """
+    global email_loaded
+    global sms_loaded
+    global voice_loaded
+    global plugin_initiated
+    global fw
+
+    if not plugin_initiated:
+        for entry in gv.plugin_menu:
+            if entry[0] == "Email settings":
+                email_loaded = True
+
+        # Instantiate the first flow window
+        fw = flowhelpers.FlowWindow(ls)
+        fw.start_time = datetime.datetime.now()
+        fw.start_pulses = all_pulses
+        plugin_initiated = True
+
     if not flow_loop_running:
         # This loop watches the flow
         flow_loop.start()
     if not valve_loop_running:
-        # This loop watches for valve changes
+        # This loop watches for valve state changes
         valve_loop.start()
 
 
 new_day = signal(u"new_day")
 new_day.connect(notify_new_day)
 
-
-# Function to be run when signal is recieved.
-def notify_alarm_toggled(name, **kw):
-    pass
-
-
-# instance of named signal
-alarm = signal(u"alarm_toggled")  
-# Connect signal to function to be run.
-alarm.connect(notify_alarm_toggled)
-
-
-# Option settings
-def notify_option_change(name, **kw):
-    update_options()
-    #  gv.sd is a dictionary containing the setting that changed.
-    #  See "from options" in gv_reference.txt
-
-
-option_change = signal(u"option_change")
-option_change.connect(notify_option_change)
-
-
 """
 Run when plugin is loaded
 """
-print(u"Flow Settings")
 print_settings()
 ls.load_settings()
+alarm = signal(u"user_notify")
 
 rate_footer = showInFooter()  # instantiate class to enable data in footer
 rate_footer.label = u"Flow rate"

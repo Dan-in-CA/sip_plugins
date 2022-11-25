@@ -44,7 +44,9 @@ valve_messages = queue.Queue()  # Carries messages from notify_zone_change to th
 # Variables to note if notification plugins are loaded
 email_loaded = False
 sms_loaded = False
+sms_plugin = ""
 voice_loaded = False
+voice_plugin = ""
 
 # Variables for the flow controller client
 CLIENT_ADDR = 0x44
@@ -207,12 +209,16 @@ class settings(ProtectedPage):
                 runtime_values.update({"email-loaded": "no"})
             if sms_loaded:
                 runtime_values.update({"sms-loaded": "yes"})
+                runtime_values.update({"sms-plugin": sms_plugin})
             else:
                 runtime_values.update({"sms-loaded": "no"})
+                runtime_values.update({"sms-plugin": ""})
             if voice_loaded:
                 runtime_values.update({"voice-loaded": "yes"})
+                runtime_values.update({"voice-plugin": voice_plugin})
             else:
                 runtime_values.update({"voice-loaded": "no"})
+                runtime_values.update({"voice-plugin": ""})
             runtime_values.update({"valve-measure-time": str(flowhelpers.IGNORE_INITIAL + flowhelpers.MEASURE_TIME)})
 
             with open(
@@ -486,6 +492,11 @@ def notify_new_day(name, **kw):
         fw.start_pulses = all_pulses
         plugin_initiated = True
 
+        # Ask notification plugins to check in
+        # Enabled notification plugins will respond with a "notification_online" message
+        notification_query = signal("notification_checkin")
+        notification_query.send(u"Flow.py")
+
     if not flow_loop_running:
         # This loop watches the flow
         flow_loop.start()
@@ -496,6 +507,34 @@ def notify_new_day(name, **kw):
 
 new_day = signal(u"new_day")
 new_day.connect(notify_new_day)
+
+def notify_notification_presence(name, **kw):
+    """
+    Responds to messages from notification plugins advertising their presence
+    """
+    global sms_loaded
+    global voice_loaded
+    global sms_plugin
+    global voice_plugin
+    if kw["txt"] == "sms":
+        sms_loaded = True
+        if len(name) > 0:
+            sms_plugin = name
+        else:
+            sms_plugin = "?"
+        print("Flow plugin is sending sms messages to {}".format(sms_plugin))
+    if kw["txt"] == "voice":
+        voice_loaded = True
+        if len(name) > 0:
+            voice_plugin = name
+        else:
+            voice_plugin = "?"
+        print("Flow plugin is sending voice messages to {}".format(voice_plugin))
+
+
+notification_presence = signal(u"notification_presence")
+notification_presence.connect(notify_notification_presence)
+
 
 """
 Run when plugin is loaded

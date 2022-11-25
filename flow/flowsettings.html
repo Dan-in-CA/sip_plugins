@@ -40,7 +40,7 @@ $code:
         });
 
         jQuery("button#docButton").click(function(){
-            window.open("https://github.com/IMHarris/SIP_plugins/wiki", "_blank"); 
+            window.open("https://github.com/IMHarris/SIP_plugins/wiki/SIP-Flow", "_blank");
         });
         
         jQuery("button#logButton").click(function(){
@@ -121,7 +121,7 @@ $code:
             $if runtime_values['sms-loaded'] == 'yes':
                 <tr>
                     <td id="lbl-sms-events" style='text-transform: none;'>
-                        SMS events to report:
+                        SMS events to report (${runtime_values['sms-plugin']}):
                     </td>
                     <td><input type="text" name="sms-events" id="txt-sms-events"
                                value="${settings['sms-events'] if 'sms-events' in settings else ''}"></td>
@@ -138,7 +138,7 @@ $code:
             $if runtime_values['voice-loaded'] == 'yes':
                 <tr>
                     <td id="lbl-voice-events" style='text-transform: none;'>
-                        Voice events to report:
+                        Voice events to report (${runtime_values['voice-plugin']}):
                     </td>
                     <td><input type="text" name="voice-events" id="txt-voice-events"
                                value="${settings['voice-events'] if 'voice-events' in settings else ''}"></td>

@@ -1,0 +1,202 @@
+$def with(settings, runtime_values)
+
+$var title: $_(u'SIP SMS Plivo Plugin')
+$var page: sms_plivo_plugin
+<script>
+
+    // Initialize behaviors
+    jQuery(document).ready(function(){
+
+        jQuery("#cSubmit").click(function() {
+            jQuery("#pluginForm").submit();
+        });
+        jQuery("button#cCancel").click(function(){
+            window.location="/";
+        });
+        jQuery("button#docButton").click(function(){
+            window.open("https://github.com/IMHarris/SIP_plugins/wiki/Plivo-SMS", "_blank");
+        });
+    });
+</script>
+
+<div id="plugin">
+    <div class="title">Plivo Notifications
+    <button class="execute" id="docButton" type="button" >$_(u'Help')</button>
+    </div>
+
+    <p>Enable Notifications</p>
+    <form id="pluginForm" action="${'/sms-plivo-save'}" method="get">
+
+        $if not runtime_values["sms-enabled"] and not runtime_values["voice-enabled"]:
+            </br> </br>
+            <p>ENABLE_SMS or ENABLE_VOICE must be set as True in sms_plivo.py to enable notifications in this plugin</p>
+            </br> </br>
+        <table class="optionList">
+
+            <thead>
+            </thead>
+            $if runtime_values["sms-enabled"]:
+                <tr>
+                    <td style='text-transform: none;'>SMS:</td>
+                    <td><input type="checkbox" name="check-sms" id="check-sms"  ${"checked" if 'check-sms' in settings else ""}></td>
+                </tr>
+            $if runtime_values["voice-enabled"]:
+                <tr>
+                    <td style='text-transform: none;'>Voice:</td>
+                    <td><input type="checkbox" name="check-voice" id="check-voice" ${"checked" if 'check-voice' in settings else ""}></td>
+                </tr>
+
+        </table></br>
+
+        <p>Phone Numbers</p>
+        <table class="optionList">
+
+            $if runtime_values["sms-enabled"]:
+                <tr>
+                    <td style='text-transform: none;'><div id="lbl-sms">SMS:</div></td>
+                    <td><input type="text" name="text-sms" id="text-sms" value="${settings['text-sms'] if 'text-sms' in settings else '' }"></td>
+                    <td> <button type="button" id="btn-test-sms">Test</button></td>
+                </tr>
+            $if runtime_values["voice-enabled"]:
+                <tr>
+                    <td style='text-transform: none;'><div id="lbl-voice">Voice:</div></td>
+                    <td><input type="text" name="text-voice" id="text-voice" value="${settings['text-voice'] if 'text-voice' in settings else ''}"></td>
+                    <td> <button type="button" id="btn-test-voice">Test</button></td>
+                </tr>
+            <tr>
+                <td style='...'><div id="lbl-status">Status:</div></td>
+                <td colspan="2">
+                    <textarea id="text-status"  style="font-family: monospace;" rows="2" cols="35" readonly></textarea>
+                </td>
+            </tr>
+        </table>
+        format +15555555555,+15555555555
+
+    </form></br>
+
+<div class="controls">
+    <button id="cSubmit" class="submit"><b>$_(u'Submit')</b></button>
+    <button id="cCancel" class="cancel danger">$_(u'Cancel')</button>
+</div>
+</div>
+
+<script>
+    var request = new XMLHttpRequest();
+    var href = window.location.href;
+    var apiURL = href.substr(0, href.lastIndexOf("/") + 1) + "sms-plivo-test";
+
+    request.onreadystatechange = function() {
+        //function called when XHR data is loaded
+        if (this.readyState == 4 && this.status == 200) {
+            document.getElementById("text-status").textContent = this.responseText;
+        }
+    }
+    $if runtime_values["sms-enabled"]:
+        document.getElementById("check-sms").addEventListener("change", fnSMSEnabledChange);
+        document.getElementById("btn-test-sms").addEventListener("click", fnTestSMS);
+        txtVariance = getComputedStyle(document.getElementById("text-sms")).getPropertyValue("color");
+        rgbaTxtVariance = txtVariance.match(/[\d.]+/g);
+        // If alpha is not there, add it:
+        if (rgbaTxtVariance.length === 3) {
+                rgbaTxtVariance.push(1);
+            }
+            lblVariance = getComputedStyle(document.getElementById("lbl-sms")).getPropertyValue("color");
+            rgbaLblVariance = lblVariance.match(/[\d.]+/g);
+            // If alpha is not there, add it:
+            if (rgbaLblVariance.length === 3) {
+                rgbaLblVariance.push(1);
+            }
+            fnSMSEnabledChange();
+            function fnSMSEnabledChange() {
+                // enable or disable the phone text box based on enable checkbox
+                if (document.getElementById("check-sms").checked) {
+                    document.getElementById("text-sms").disabled = false;
+                    document.getElementById("text-sms").style.color = "rgba(" + rgbaTxtVariance + ")";
+                    document.getElementById("lbl-sms").style.color = "rgba(" + rgbaLblVariance + ")";
+                    document.getElementById("btn-test-sms").disabled = false;
+                    document.getElementById("lbl-status").style.color = "rgba(" + rgbaLblVariance + ")";
+                    document.getElementById("text-status").disabled = false;
+                } else {
+                    document.getElementById("text-sms").disabled = true;
+                    document.getElementById("text-sms").style.color = "rgba(0,0,0,0.2)";
+                    document.getElementById("lbl-sms").style.color = "rgba(0,0,0,0.2)";
+                    document.getElementById("btn-test-sms").disabled = true;
+                    if (document.getElementById("check-voice")) {
+                        if (document.getElementById("check-voice").checked) {
+                            document.getElementById("lbl-status").style.color = "rgba(" + rgbaLblVariance + ")";
+                            document.getElementById("text-status").disabled = false;
+                        } else {
+                            document.getElementById("lbl-status").style.color = "rgba(0,0,0,0.2)";
+                            document.getElementById("text-status").disabled = true;
+                        }
+                    } else {
+                        document.getElementById("lbl-status").style.color = "rgba(0,0,0,0.2)";
+                        document.getElementById("text-status").disabled = true;
+                    }
+                }
+            }
+
+            function fnTestSMS() {
+                // send an SMS test message
+                document.getElementById("text-status").textContent = "Waiting for response..."
+                request.open('POST', apiURL, true);
+                pkg = JSON.parse('{}');
+                pkg['type'] = 'SMS';
+                pkg['dest'] = document.getElementById("text-sms").value;
+                request.send(JSON.stringify((pkg)));
+            }
+
+    $if runtime_values["voice-enabled"]:
+        document.getElementById("check-voice").addEventListener("change", fnVoiceEnabledChange);
+        document.getElementById("btn-test-voice").addEventListener("click", fnTestVoice);
+        txtVariance = getComputedStyle(document.getElementById("text-voice")).getPropertyValue("color");
+        rgbaTxtVariance = txtVariance.match(/[\d.]+/g);
+        // If alpha is not there, add it:
+        if (rgbaTxtVariance.length === 3) {
+            rgbaTxtVariance.push(1);
+        }
+        lblVariance = getComputedStyle(document.getElementById("lbl-voice")).getPropertyValue("color");
+        rgbaLblVariance = lblVariance.match(/[\d.]+/g);
+        // If alpha is not there, add it:
+        if (rgbaLblVariance.length === 3) {
+            rgbaLblVariance.push(1);
+        }
+        fnVoiceEnabledChange();
+        function fnVoiceEnabledChange() {
+            // enable or disable the phone text box based on enable checkbox
+            if (document.getElementById("check-voice").checked) {
+                document.getElementById("text-voice").disabled = false;
+                document.getElementById("text-voice").style.color = "rgba(" + rgbaTxtVariance + ")";
+                document.getElementById("lbl-voice").style.color = "rgba(" + rgbaLblVariance + ")";
+                document.getElementById("btn-test-voice").disabled = false;
+                document.getElementById("lbl-status").style.color = "rgba(" + rgbaLblVariance + ")";
+                document.getElementById("text-status").disabled = false;
+            } else {
+                document.getElementById("text-voice").disabled = true;
+                document.getElementById("text-voice").style.color = "rgba(0,0,0,0.2)";
+                document.getElementById("lbl-voice").style.color = "rgba(0,0,0,0.2)";
+                document.getElementById("btn-test-voice").disabled = true;
+                if (document.getElementById("check-sms")) {
+                    if (document.getElementById("check-sms").checked) {
+                        document.getElementById("lbl-status").style.color = "rgba(" + rgbaTxtVariance + ")";
+                        document.getElementById("text-status").disabled = false;
+                    } else {
+                        document.getElementById("lbl-status").style.color = "rgba(0,0,0,0.2)";
+                        document.getElementById("text-status").disabled = true;
+                    }
+                } else {
+                    document.getElementById("lbl-status").style.color = "rgba(0,0,0,0.2)";
+                    document.getElementById("text-status").disabled = true;
+                }
+            }
+        }
+        function fnTestVoice() {
+            // send an SMS test message
+            document.getElementById("text-status").textContent = "Waiting for response..."
+            request.open('POST', apiURL, true);
+            pkg = JSON.parse('{}');
+            pkg['type'] = 'Voice';
+            pkg['dest'] = document.getElementById("text-voice").value;
+            request.send(JSON.stringify((pkg)));
+        }
+</script>

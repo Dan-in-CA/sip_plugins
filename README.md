@@ -150,6 +150,11 @@ sms_adj
 ----------
 Control your SIP using SMS (Short Message Service)
 
+sms_plivo
+----------
+Allows plugins that are configured to this messaging framework to send SMS and voice messages through the [Plivo](https://www.plivo.com) service.
+Requires Python 3 and a Plivo account.
+
 ssd1306
 ----------
 Plugin for SSD1306 128x64 pixel display connected to I2C interface.

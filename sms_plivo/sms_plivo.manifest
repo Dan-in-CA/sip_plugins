@@ -1,0 +1,15 @@
+Description: Support messaging using Plivo.com service.
+Copyright 2022
+Author: Ian Harris
+Email: ianmarcharris@gmail.com
+License: GNU GPL 3.0
+revision: 1.0
+
+Requirements: Python 3.7
+
+##### List all plugin files below preceded by a blank line [file_name.ext path] relative to SIP directory #####
+
+sms_plivo.py plugins
+sms_plivo.html templates
+plivo_keys.json data
+sms_plivo.json data (generated)

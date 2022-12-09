@@ -1,6 +1,11 @@
+---
+layout: default
+title: Node_RED Ext,
+---
+
 # Documentation for the SIP Node-RED extension  
 The node-red extension is designed to integrate node red with SIP so that node-red flows can get (read) and set (write) SIP variables.
-You can see a full list of accessible variables in the **[gv_reference.txt](https://github.com/Dan-in-CA/SIP/blob/P3-only/gv_reference.txt)** file with a description of each variable.  
+You can see a full list of accessible variables in the **[gv_reference.txt](https://github.com/Dan-in-CA/SIP/blob/P3-only/gv_reference.txt){:target="_blank" rel="noopener"}** file with a description of each variable.  
   
 ## Node-RED messages  
 The node-red extension enables two-way communication between node-red and SIP by using messages in JSON, a standard data interchange and file format.  

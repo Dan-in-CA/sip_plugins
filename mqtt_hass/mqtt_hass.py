@@ -172,14 +172,12 @@ def mqtt_hass_get_setting(settings, key, slugify):
 
 
 # Add new URLs to access classes in this plugin.
-urls.extend(
-    [
-        u"/mqtt_hass-sp",
-        u"plugins.mqtt_hass.settings",
-        u"/mqtt_hass-save",
-        u"plugins.mqtt_hass.save_settings",
-    ]
-)
+# fmt: off
+urls.extend([
+        u"/mqtt_hass-sp", u"plugins.mqtt_hass.settings",
+        u"/mqtt_hass-save", u"plugins.mqtt_hass.save_settings",
+    ])
+# fmt: on
 
 # Add this plugin to the PLUGINS menu ["Menu Name", "URL"].
 gv.plugin_menu.append([(u"MQTT HASS Plugin"), u"/mqtt_hass-sp"])

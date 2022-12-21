@@ -1,0 +1,3 @@
+[submodule "advance_control"]
+	path = advance_control
+	url = git@github.com:PedroFRCSantos/SIP_extension_advance_control.git

@@ -1,0 +1,116 @@
+$def with(commandsAdv)
+
+$var title: $_(u'SIP ADV Plugin status')
+$var page: advance_control_status
+
+<script>
+	jQuery(document).ready(function () {
+		jQuery("button#statButton").click(function () {
+			window.location = "/advdisp";
+		});
+
+		jQuery("button#defButton").click(function () {
+			window.location = "/advc";
+		});
+
+		jQuery("#cSubmit").click(function () {
+			jQuery("#advc").submit();
+        });
+	});
+
+    function getXHR() {
+	    if (window.XMLHttpRequest) { // code for IE7+, Firefox, Chrome, Opera, Safari
+		    return new XMLHttpRequest();
+	    }
+	    else { // code for IE6, IE5
+		    return new ActiveXObject("Microsoft.XMLHTTP");
+	    }
+    }
+
+    function updateValveStatus() {
+		var xmlhttp = getXHR();
+
+        $for bid in range(0, gv.sd['nbrd']):
+            $for s in range(0, 8):
+                $ sid = bid * 8 + s;
+                    $if commandsAdv[u"typeOutput"][sid] == 'shellyHTTP' or commandsAdv[u"typeOutput"][sid] == 'sonOff':
+		                xmlhttp.open("GET", "/advsts?valveId=${sid}", false);
+		                xmlhttp.send(null);
+		                document.getElementById("valve${sid}").style.backgroundColor = xmlhttp.responseText;
+	}
+
+    const tellTime = async function () {
+		updateValveStatus();
+	}
+
+	const minutes = 0.2;
+	const interval = minutes * 60 * 1000;
+
+	setInterval(function () {
+		// catch all the errors.
+		tellTime().catch(console.log);
+    }, interval);
+
+	document.addEventListener('DOMContentLoaded', function () {
+		updateValveStatus();
+    }, false);
+
+    function sendLatchToValve(valNumber) {
+        var xmlhttp = getXHR();
+        xmlhttp.open("GET", "/advls?valveId=" + valNumber, false);
+        xmlhttp.send(null);
+		document.getElementById("lactchStatus" + valNumber).innerHTML = xmlhttp.responseText;
+	}
+</script>
+
+<style>
+    .columnName {
+        text-align: center;
+    }
+</style>
+
+<div id="plugin">
+    <!--     <div class="title">Command Line Control -->
+    <!--     <button class="execute" id="docButton" type="button" >$_('Help')</button> -->
+    <!--     </div> -->
+    <div>
+        <p>
+            <button class="execute" id="statButton" type="button">Status</button>
+            <button class="execute" id="defButton" type="button">Definition</button>
+        </p>
+        <p>Check if your network valves.</p>
+    </div>
+
+    <br />
+
+    <div align="center">
+        <table width="100%" style="border: 1px solid black;">
+            <tr>
+                <th style="border: 1px solid black;">Valve Name</th>
+                <th style="border: 1px solid black;">Divace type</th>
+                <th style="border: 1px solid black;">Valve Ip</th>
+                <th style="border: 1px solid black;">Is online</th>
+            </tr>
+            $for bid in range(0, gv.sd['nbrd']):
+                $for s in range(0, 8):
+                    $ sid = bid * 8 + s;
+                        $if commandsAdv[u"typeOutput"][sid] == 'shellyHTTP' or commandsAdv[u"typeOutput"][sid] == 'sonOff':
+                            $if commandsAdv[u"useLatch"][sid] == 1:
+                                <tr>
+                                    <td>${gv.snames[sid]}</td>
+                                    <td align="center" width="20%"><img src="static/images/${commandsAdv[u"deviceModel"][sid]}.jpg" width="40%"></td>
+                                    <td>${commandsAdv[u"deviceIP"][sid]}<br /><button id="latchManualSignal${sid}" class="submit" onclick="sendLatchToValve(${sid})"><b>Send latch signal</b></button><div id="lactchStatus${sid}"></div></td>
+                                    <td id="valve${sid}"></td>
+                                </tr>
+                            $else:
+                                <tr>
+                                    <td>${gv.snames[sid]}</td>
+                                    <td align="center" width="20%"><img src="static/images/${commandsAdv[u"deviceModel"][sid]}.jpg" width="40%"></td>
+                                    <td>${commandsAdv[u"deviceIP"][sid]}</td>
+                                    <td id="valve${sid}"></td>
+                                </tr>
+        </table>
+
+        <br /><br />
+    </div>
+</div>

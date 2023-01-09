@@ -1,0 +1,163 @@
+$def with(commandsAdv)
+
+$var title: $_(u'SIP ADV Plugin')
+$var page: advance_control
+
+<script>
+    // Initialize behaviors
+    jQuery(document).ready(function () {
+		jQuery("button#statButton").click(function () {
+			window.location = "/advdisp";
+        });
+
+		jQuery("button#defButton").click(function () {
+			window.location = "/advc";
+		});
+
+        jQuery("#cSubmit").click(function () {
+            jQuery("#advc").submit();
+        });
+
+        jQuery("button#cCancel").click(function () {
+            window.location = "/";
+        });
+
+        $for bid in range(0, gv.sd['nbrd']):
+            $for s in range(0, 8):
+                $ sid = bid * 8 + s;
+		            jQuery("#typeVal${sid}").change(function () {
+                        var e = document.getElementById("typeVal${sid}").value;
+
+						document.getElementById("detailsCommand${sid}").style.display = "none";
+                        document.getElementById("detailsShelly${sid}").style.display = "none";
+                        document.getElementById("detailsSonOff${sid}").style.display = "none";
+
+                        if (e === "comandLine")
+                        {
+                            document.getElementById("detailsCommand${sid}").style.display = "";
+                        }
+                        else if (e === "shellyHTTP")
+                        {
+							document.getElementById("detailsShelly${sid}").style.display = "";
+                        }
+						else if (e === "sonOff")
+                        {
+							document.getElementById("detailsSonOff${sid}").style.display = "";
+                        }
+		            });
+    });
+</script>
+
+<style>
+    .columnName {
+        text-align: center;
+    }
+</style>
+
+<div id="plugin">
+    <!--     <div class="title">Command Line Control -->
+    <!--     <button class="execute" id="docButton" type="button" >$_('Help')</button> -->
+    <!--     </div> -->
+    <div>
+        <button class="execute" id="statButton" type="button">Status</button>
+        <button class="execute" id="defButton" type="button">Definition</button>
+
+        <br /><br />
+
+        <p>This plugin can be used to control devices such as raspery pi.</p>
+        <p>Activate motors if needed, redirect the wather with valves to the correct place.</p>
+
+        <br />
+
+        <form id="advc" name="advc" action="/advu" method="get">
+            <br />
+
+            Activate GPIO
+            <input type="checkbox" name="gpio" ${"checked" if commandsAdv['gpio'] == 1 else "" }>
+            <br /><br />
+
+            $for bid in range(0,gv.sd['nbrd']):
+                $for s in range(0,8):
+                    $ sid = bid*8 + s;
+                    ${gv.snames[sid]}:<br />
+
+                    <select name="typeVal${sid}" id="typeVal${sid}">
+                        <option value="">None</option>
+
+                    $if commandsAdv[u"typeOutput"][sid] == 'comandLine':
+                        <option selected="checked" value="comandLine">Command Line</option>
+                    $else:
+                        <option value="comandLine">Command Line</option>
+
+                    $if commandsAdv[u"typeOutput"][sid] == 'shellyHTTP':
+                        <option selected="checked" value="shellyHTTP">Shelly Divices</option>
+                    $else:
+                        <option value="shellyHTTP">Shelly Divices</option>
+
+                    $if commandsAdv[u"typeOutput"][sid] == 'sonOff':
+                        <option selected="checked" value="sonOff">Soon Of Divice</option>
+                    $else:
+                        <option value="sonOff">Soon Of Divice</option>
+                    </select>
+
+                    <br />
+
+                    <div id="detailsCommand${sid}" style="display:${"" if commandsAdv[u"typeOutput"][sid] == 'comandLine' else "none" }">
+                        <table id="command${sid}">
+                            <tr>
+                                <th class="columnName">$_(u'Start Command')</th>
+                                <th class="columnName">$_(u'Stop Command')</th>
+                            </tr>
+
+                            <tr>
+                                <td class="command">                         
+                                    <input type="text" size="50" value="${commandsAdv['on'][sid] if sid < len(commandsAdv['on']) else ''}" id="con${sid}" name="con${sid}">
+                                </td>
+
+                                <td>
+                                    <input type="text" size="50" value="${commandsAdv['off'][sid] if sid < len(commandsAdv['off']) else ''}"  id="coff${sid}" name="coff${sid}">
+                                </td>                       
+                            </tr>
+                        </table>
+                    </div>
+
+                    <div id="detailsShelly${sid}" name="detailsShelly${sid}" style="display:${"" if commandsAdv[u"typeOutput"][sid] == 'shellyHTTP' else "none" }">
+                        Shelly Type
+                        <select name="shellyModel${sid}" id="shellyModel${sid}">
+                            <option value="shelly1" ${'selected="selected"' if commandsAdv[u"deviceModel"][sid] == 'shelly1' else "" }">Shelly 1 - Channel 1</option>
+                            <option value="shelly2_1" ${'selected="selected"' if commandsAdv[u"deviceModel"][sid] == 'shelly2_1' else "" }">Shelly 2 - Channel 1</option>
+                            <option value="shelly2_2" ${'selected="selected"' if commandsAdv[u"deviceModel"][sid] == 'shelly2_2' else "" }">Shelly 2 - Channel 2</option>
+                            <option value="shelly1Pro" ${'selected="selected"' if commandsAdv[u"deviceModel"][sid] == 'shelly1Pro' else "" }">Shelly 1 Pro - Not supported</option>
+                        </select>
+
+                        <br />
+
+                        IP: <input type="text" size="50" value="${commandsAdv['deviceIP'][sid] if sid < len(commandsAdv['on']) else ''}" id="shellyIP${sid}" name="shellyIP${sid}">
+                        <br /><br />
+                        Port: <input type="text" size="50" value="${commandsAdv['devicePort'][sid] if sid < len(commandsAdv['on']) else ''}" id="shellyPort${sid}" name="shellyPort${sid}">
+                        <br />
+                        User Name: <input type="text" size="50" value="${commandsAdv['deviceUserName'][sid] if sid < len(commandsAdv['on']) else ''}" id="shellyUserName${sid}" name="shellyUserName${sid}"><br />
+                        Password: <input type="password" size="50" value="" id="shellyUserPwd${sid}" name="shellyUserPwd${sid}">
+                        <br />
+
+                        Force to keep state: <input type="checkbox" name="deviceKeepState${sid}" ${"checked" if commandsAdv[u"deviceKeepState"][sid] == 1 else "" }>
+                        <br />http   <input type="radio" id="http${sid}" name="protocol${sid}" value="http" ${"checked" if commandsAdv[u"deviceProtocol"][sid] == 'http' else "" }>
+                        https <input type="radio" id="https${sid}" name="protocol${sid}" value="https" ${"checked" if commandsAdv[u"deviceProtocol"][sid] == 'https' else "" }><br /><br />
+
+                        Use latch relay (pulse): <input type="checkbox" name="useLatch" ${"checked" if commandsAdv[u"useLatch"][sid] == 1 else "" }>
+                        <input type="number" id="latchDutyCicle${sid}" name="latchDutyCicle${sid}" min="1" max="100" value="${commandsAdv['latchDutyCicle'][sid]}"> Working time to pulse
+                    </div>
+
+                    <div id="detailsSonOff${sid}" style="display:${"" if commandsAdv[u"typeOutput"][sid] == 'sonOff' else "none" }">
+                        SonOff ${sid} - Not yeat suported
+                    </div>
+
+                    <br />
+        </form>
+    </div>
+
+    <div class="controls">
+        <button id="cSubmit" class="submit"><b>$_(u'Submit')</b></button>
+        <button id="cCancel" class="cancel danger">$_(u'Cancel')</button>
+    </div>
+</div>

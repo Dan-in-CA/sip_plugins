@@ -172,3 +172,7 @@ Run "pip install python-telegram-bot --upgrade" before installing this plugin.
 weather_level_adj
 ----------
 Adjust irrigation time based on weather forecast
+
+advance_control
+----------
+Plug-in to control valves in shelly, in the future son-off will be supported and more shelly versions. Use HTTP DD commands.

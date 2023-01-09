@@ -22,6 +22,20 @@ import web  # web.py framework
 from webpages import ProtectedPage  # Needed for security
 from helpers import stop_onrain  # For rain delay timer
 
+
+# Add new URLs to access classes in this plugin.
+# fmt: off
+urls.extend([
+        u"/mqtt_hass-sp", u"plugins.mqtt_hass.settings",
+        u"/mqtt_hass-save", u"plugins.mqtt_hass.save_settings",
+    ])
+# fmt: on
+
+# Add this plugin to the PLUGINS menu ["Menu Name", "URL"].
+gv.plugin_menu.append([(u"MQTT HASS Plugin"), u"/mqtt_hass-sp"])
+
+
+
 # local defines
 HASS_ON = u"On"
 HASS_OFF = u"Off"
@@ -170,17 +184,17 @@ def mqtt_hass_get_setting(settings, key, slugify):
     value = value if len(value) else mqtt_hass_system_name(slugify)
     return value
 
-
-# Add new URLs to access classes in this plugin.
-# fmt: off
-urls.extend([
-        u"/mqtt_hass-sp", u"plugins.mqtt_hass.settings",
-        u"/mqtt_hass-save", u"plugins.mqtt_hass.save_settings",
-    ])
-# fmt: on
-
-# Add this plugin to the PLUGINS menu ["Menu Name", "URL"].
-gv.plugin_menu.append([(u"MQTT HASS Plugin"), u"/mqtt_hass-sp"])
+#
+# # Add new URLs to access classes in this plugin.
+# # fmt: off
+# urls.extend([
+#         u"/mqtt_hass-sp", u"plugins.mqtt_hass.settings",
+#         u"/mqtt_hass-save", u"plugins.mqtt_hass.save_settings",
+#     ])
+# # fmt: on
+#
+# # Add this plugin to the PLUGINS menu ["Menu Name", "URL"].
+# gv.plugin_menu.append([(u"MQTT HASS Plugin"), u"/mqtt_hass-sp"])
 
 
 class settings(ProtectedPage):

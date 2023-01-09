@@ -6,7 +6,8 @@ License: GNU GPL 3.0
 
 Requirements:
 
-##### List all plugin files below preceded by a blank line [file_name.ext path] relative to OSPi directory #####
+##### List all plugin files below preceded by a blank line [file_name.ext path] relative to SIP directory #####
+
 advance_control.py plugins
 advance_control.html templates
 advance_control_status.html templates

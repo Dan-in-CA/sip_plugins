@@ -7,7 +7,7 @@ from urls import urls  # Get access to sip's URLs
 from sip import template_render  #  Needed for working with web.py templates
 from webpages import ProtectedPage  # Needed for security
 import json  # for working with data file
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+from telegram.ext import Updater, CommandHandler, MessageHandler, filters
 
 from threading import Thread
 from random import randint
@@ -85,12 +85,12 @@ class SipBot(Thread):
             text=u"Hi! Im a Bot to interface with " + gv.sd[u"name"],
         )
 
-    def _botCmd_subscribe(self, bot, update):
+    async def _botCmd_subscribe(self, bot, update):
         if self.data[u"botAccessKey"] in update.message.text:
             chats = self.currentChats
             chats.add(update.message.chat_id)
             self.currentChats = chats
-            bot.sendMessage(
+            await bot.sendMessage(
                 update.message.chat_id,
                 text=u"Hi! you are now added to the *"
                 + gv.sd[u"name"]
@@ -98,12 +98,12 @@ class SipBot(Thread):
                 parse_mode=u"Markdown",
             )
         else:
-            bot.sendMessage(
+            await bot.sendMessage(
                 update.message.chat_id,
                 text=u"I'm sorry Dave I'm afraid I can't do that, Please enter the correct AccessKey",
             )
 
-    def _botCmd_info(self, bot, update):
+    async def _botCmd_info(self, bot, update):
         print(u"INFO!")
         chat_id = update.message.chat_id
         if chat_id in self.currentChats:
@@ -158,9 +158,9 @@ class SipBot(Thread):
                     txt += u"\nLast program <b>none</b>"
         else:
             txt = u"I'm sorry Dave I'm afraid I can't do that."
-        bot.sendMessage(chat_id, text=txt, parse_mode=u"HTML")
+        await bot.sendMessage(chat_id, text=txt, parse_mode=u"HTML")
 
-    def _botCmd_help(self, bot, update):
+    async def _botCmd_help(self, bot, update):
         chat_id = update.message.chat_id
         if chat_id in self.currentChats:
             txt = u"""Help:
@@ -177,9 +177,9 @@ class SipBot(Thread):
         else:
             txt = u"I'm sorry Dave I'm afraid I can't do that."
 
-        bot.sendMessage(chat_id, text=txt, parse_mode="Markdown")
+        await bot.sendMessage(chat_id, text=txt, parse_mode="Markdown")
 
-    def _botCmd_enable(self, bot, update):
+    async def _botCmd_enable(self, bot, update):
         chat_id = update.message.chat_id
         if chat_id in self.currentChats:
             txt = u"{} System <b>ON</b>".format(gv.sd[u"name"])
@@ -188,9 +188,9 @@ class SipBot(Thread):
             jsave(gv.sd, u"sd")  # save en = 1
         else:
             txt = u"I'm sorry Dave I'm afraid I can't do that."
-        bot.sendMessage(chat_id, text=txt, parse_mode=u"HTML")
+        await bot.sendMessage(chat_id, text=txt, parse_mode=u"HTML")
 
-    def _botCmd_disable(self, bot, update):
+    async def _botCmd_disable(self, bot, update):
         chat_id = update.message.chat_id
         if chat_id in self.currentChats:
             txt = u"{} System <b>OFF</b>".format(gv.sd[u"name"])
@@ -200,9 +200,9 @@ class SipBot(Thread):
         else:
             txt = u"I'm sorry Dave I'm afraid I can't do that."
 
-        bot.sendMessage(chat_id, text=txt, parse_mode=u"HTML")
+        await bot.sendMessage(chat_id, text=txt, parse_mode=u"HTML")
 
-    def _botCmd_runOnce(self, bot, update, args):
+    async def _botCmd_runOnce(self, bot, update, args):
         chat_id = update.message.chat_id
         if chat_id in self.currentChats:
             txt = u"{} RunOnce: program {} Not yet Implemented!!!!!".format(
@@ -213,12 +213,12 @@ class SipBot(Thread):
         else:
             txt = u"I'm sorry Dave I'm afraid I can't do that."
 
-        bot.sendMessage(chat_id, text=txt)
+        await bot.sendMessage(chat_id, text=txt)
 
     def _initBot(self):
-        updater = Updater(self.data[u"botToken"])
+        updater = Application.builder().token(self.data[u"botToken"]).build()
         self._currentChats = set(self.data[u"currentChats"])
-        dp = updater.dispatcher
+        dp = updater.application
         dp.add_error_handler(self._botError)
         dp.add_handler(CommandHandler(u"start", self._botCmd_start_chat))
         dp.add_handler(CommandHandler(u"subscribe", self._botCmd_subscribe))
@@ -231,21 +231,21 @@ class SipBot(Thread):
                 self.data[u"runOnce_cmd"], self._botCmd_runOnce, pass_args=True
             )
         )
-        dp.add_handler(MessageHandler(Filters.text, self._echo))
+        dp.add_handler(MessageHandler(filters.TEXT, self._echo))
         return updater
 
-    def _announce(self, text, parse_mode=None):
+    async def _announce(self, text, parse_mode=None):
         bot = self.bot.bot
         for chat_id in self.currentChats:
             if parse_mode is None:
-                bot.sendMessage(chat_id, text=text)
+                await bot.sendMessage(chat_id, text=text)
             else:
-                bot.sendMessage(chat_id, text=text, parse_mode=parse_mode)
+                await bot.sendMessage(chat_id, text=text, parse_mode=parse_mode)
 
-    def _echo(self, bot, update):
-        bot.sendMessage(update.message.chat_id, text=update.message.text)
+    async def _echo(self, bot, update):
+        await bot.sendMessage(update.message.chat_id, text=update.message.text)
 
-    def run(self):
+    async def run(self):
         try:
             if self.data[u"botToken"] != "":
                 time.sleep(
@@ -258,7 +258,7 @@ class SipBot(Thread):
                     parse_mode=u"Markdown",
                 )
                 # Lets Start the bot
-                self.bot.start_polling()
+                await self.bot.start_polling()
 
         except Exception:
             exc_type, exc_value, exc_traceback = sys.exc_info()
@@ -385,10 +385,12 @@ def set_telegramBot_options(new_data):
     return
 
 
-def run_bot():
+async def run_bot():
     bot = SipBot(gv)
     # wait to the bot to start
-    time.sleep(10)
+    # time.sleep(10)    
+    await asyncio.sleep(10)
+    
     # Connect Signals
     program_started = signal(u"stations_scheduled")
     program_started.connect(bot.notifyStationScheduled)

@@ -46,8 +46,8 @@ $var page: plugins
       <span class='tooltip'>$_(u'Number of relays connected to the Raspberry Pi /(relay boards are commonly 2, 4, 8/)')</span>
    </div>
    <div class='option' title='Active low means the relay turns on when the input is low and turns off when the input is high. Active high does the opposite.'><span class='label'>$_(u'Active'):</span>
-      <input type="radio" name="active" value="low" ${" checked" if m_vals[u"active"]==u"low" else u""}>Low
-      <input type="radio" name="active" value="high" ${" checked" if m_vals[u"active"]==u"high" else u""}>High
+      <input type="radio" name="active" value="low" ${" checked" if m_vals[u"active"]==u"low" else u""}>$_('Low')
+      <input type="radio" name="active" value="high" ${" checked" if m_vals[u"active"]==u"high" else u""}>$_('High')
       <span class='tooltip'>$_('Active low means the relay turns on when the input is low and turns off when the input is high. Active high does the opposite.')</span>
    </div>
    <br>

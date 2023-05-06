@@ -27,7 +27,7 @@ urls.extend(
 # fmt: on
 
 # Add this plugin to the plugins menu
-gv.plugin_menu.append([u"Monthly Adjust", u"/ma"])
+gv.plugin_menu.append([_(u"Monthly Adjust"), u"/ma"])
 
 
 # def set_wl(run_loop=False):

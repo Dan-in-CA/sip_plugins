@@ -55,7 +55,7 @@ urls.extend(
 )
 
 # Add this plugin to the PLUGINS menu ['Menu Name', 'URL'], (Optional)
-gv.plugin_menu.append([u"Buzzer Plugin", u"/buzzer-sp"])
+gv.plugin_menu.append([_(u"Buzzer Plugin"), u"/buzzer-sp"])
 
 class Buzzer(Thread):
     """

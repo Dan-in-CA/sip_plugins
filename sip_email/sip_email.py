@@ -48,7 +48,7 @@ urls.extend(
 # fmt: on
 
 # Add this plugin to the home page plugins menu
-gv.plugin_menu.append(["Email settings", "/emls"])
+gv.plugin_menu.append([_("Email settings"), "/emls"])
 
 sent = 0
 send_lst = []

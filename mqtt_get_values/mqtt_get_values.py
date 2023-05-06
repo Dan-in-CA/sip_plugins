@@ -30,7 +30,7 @@ urls.extend(
     ]
 )
 # fmt: on
-gv.plugin_menu.append([u"MQTT Get Values Plugin", u"/mqtt_get_values-sp"])
+gv.plugin_menu.append([$_(u"MQTT Get Values Plugin"), u"/mqtt_get_values-sp"])
 
 
 class settings(ProtectedPage):

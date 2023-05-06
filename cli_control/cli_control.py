@@ -28,7 +28,7 @@ urls.extend(
 # fmt: on
 
 # Add this plugin to the plugins menu
-gv.plugin_menu.append([u"CLI Control", u"/clic"])
+gv.plugin_menu.append([_(u"CLI Control"), u"/clic"])
 
 commands = {}
 prior = [0] * len(gv.srvals)

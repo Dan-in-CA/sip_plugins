@@ -41,7 +41,7 @@ urls.extend(
 # fmt: on
 
 # Add this plugin to the home page plugins menu
-gv.plugin_menu.append([u"Relay Board", u"/rb"])
+gv.plugin_menu.append([_(u"Relay Board"), u"/rb"])
 
 params = {}
 

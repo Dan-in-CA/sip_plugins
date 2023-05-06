@@ -17,10 +17,10 @@ $var page: mqtt_get_values
 </script>
 
 <div id="plugin">
-    <div class="title">MQTT Get Values Plugin</div>
+    <div class="title">$_(MQTT Get Values Plugin)</div>
     <div>
-    <p>Relies on the base MQTT plugin and sends values changes over MQTT</p>
-    <p>Click the Submit button below even if using the default topic.</p>
+    <p>$_(Relies on the base MQTT plugin and sends values changes over MQTT)</p>
+    <p>$_(Click the Submit button below even if using the default topic.)</p>
     </div>
 
     <div id="errorMessage">${error_msg}</div>
@@ -32,7 +32,7 @@ $var page: mqtt_get_values
             <!--Text fields-->
             <tr>
                 <td style='text-transform: none;'>$_(u'Get values topic'):</td>
-                <td>The topic to broadcast values updates on<br />
+                <td>$_(The topic to broadcast values updates on)<br />
                   <input type="text" name="get_values_topic" value="${get_values_topic}">
                 </td>
             </tr>

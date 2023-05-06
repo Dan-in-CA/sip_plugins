@@ -44,7 +44,7 @@ urls.extend(
 # fmt: on
 
 # Add this plugin to the plugins menu
-gv.plugin_menu.append([u"pcf857x", u"/pcf857x"])
+gv.plugin_menu.append([_(u"pcf857x"), u"/pcf857x"])
 
 pcf = {}
 #prior = [0] * len(gv.srvals)

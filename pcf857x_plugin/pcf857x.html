@@ -49,8 +49,8 @@ $var page: pcf857x
             <p><h2>$commands['warnmsg']</h2></p>
     
     <br>
-    <p>Connect up to 64 stations via multiple IO extender boards based on the pcf8574</p>
-    <p>See help page for supported options or ask for support on the SIP forum</p>
+    <p>$_('Connect up to 64 stations via multiple IO extender boards based on the pcf8574')</p>
+    <p>$_('See help page for supported options or ask for support on the SIP forum')</p>
     <br>
     </div>
 
@@ -61,7 +61,7 @@ $var page: pcf857x
     <form id="clic" name="clic" action="/pcf857xu" method="get">
         <table id="optionList">
             <tr>
-                <td><label for="repo">Update channel:</label></td>
+                <td><label for="repo">$_('Update channel'):</label></td>
                 <td>
                     <select name="repo" id="repo">
                         <option value="S" ${"selected" if commands['repo' ] =="S"  else ""} >Stable</option>
@@ -69,7 +69,7 @@ $var page: pcf857x
                     </select>
                 </td>
                 <td id=repo_msg> </td>
-              </tr>
+            </tr>
               <tr><td colspan="2"><hr></td></tr>    
             <tr>
                 <td style='text-transform: none;'>$_(u'SMBus id:')</td> 

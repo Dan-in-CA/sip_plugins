@@ -25,7 +25,7 @@ urls.extend(
 # fmt: on
 
 gv.plugin_menu.append(
-    [u"Pulse Circuit", u"/puls"]
+    [_(u"Pulse Circuit"), u"/puls"]
 )  # Add this plugin to the home page plugins menu
 
 stop = True

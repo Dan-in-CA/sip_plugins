@@ -27,7 +27,7 @@ urls.extend(
 )
 # fmt: on
 # Add this plugin to the home page plugins menu
-gv.plugin_menu.append([u"California Monthly", u"/cama"])
+gv.plugin_menu.append([_(u"California Monthly"), u"/cama"])
 
 
 def set_wl(month):

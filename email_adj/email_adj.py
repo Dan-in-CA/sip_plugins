@@ -37,7 +37,7 @@ urls.extend(
 # fmt: on
 
 # Add this plugin to the home page plugins menu
-gv.plugin_menu.append([u"Email settings", u"/emla"])
+gv.plugin_menu.append([_(u"Email settings"), u"/emla"])
 
 ################################################################################
 # Main function loop:                                                          #

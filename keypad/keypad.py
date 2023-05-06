@@ -104,7 +104,7 @@ urls.extend(
 )
 
 # Add this plugin to the PLUGINS menu ['Menu Name', 'URL'], (Optional)
-gv.plugin_menu.append(["Keypad Plugin", "/keypad-sp"])
+gv.plugin_menu.append([_("Keypad Plugin"), "/keypad-sp"])
 
 class ScanningKeypad:
     """ This class handles the keypad hardware """

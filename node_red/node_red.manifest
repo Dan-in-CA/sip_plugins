@@ -1,0 +1,14 @@
+Description: A SIP extension allowing node-red flows to interact with SIP.
+Copyright 2023
+Author: Dan Kimberling
+Email: dkimberling59@gmail.com
+License: GNU GPL 3.0
+
+Requirements: Node-red must be installed.
+
+##### List all plugin files below preceded by a blank line [file_name.ext path] relative to SIP directory #####
+
+node_red.py plugins
+node_red.html templates
+node_red.json data (generated)
+node_red.manifest plugins/manifests

@@ -92,6 +92,10 @@ mqtt_zones
 -------------
 Relies on MQTT, broadcasts the current status of all zones.
 
+node_red
+-------------
+Under development. Not fully documented. Use with caution.
+
 pcf857x_plugin
 ----------
 Provides an easy, inexpensive solution for adding a large number of stations.

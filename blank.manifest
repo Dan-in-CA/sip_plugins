@@ -8,8 +8,8 @@ Requirements:
 
 ##### List all plugin files below preceded by a blank line [file_name.ext path] relative to SIP directory #####
 
-.py plugins
-.html templates
-.html static/docs/plugins
-.json data (generated)
-.manifest plugins/manifests
+file_name.py plugins
+file_name.html templates
+file_name.html static/docs/plugins
+file_name.json data (generated)
+file_name.manifest plugins/manifests

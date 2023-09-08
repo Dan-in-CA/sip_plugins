@@ -1,6 +1,6 @@
 $def with(m_vals)
 
-$var title: $_(SIP LCD settings)
+$var title: $_(u'SIP LCD settings')
 $var page: plugins
 
 <script>
@@ -22,7 +22,7 @@ $var page: plugins
 </script>
 
 <div id="plugin">
-    <div class="title">$_(LCD settings)
+    <div class="title">$_(u'LCD settings')
         <button class="execute" id="docButton" type="button">$_(u'Help')</button>
     </div>
 
@@ -30,16 +30,16 @@ $var page: plugins
         <table>
             <tr>
                 <td>
-                    <p>$_(Plugin settings)</p>
+                    <p>$_(u'Plugin settings')</p>
                     <table class="optionList" width="100%">
                         <tr>
-                            <td style='text-transform: none;'>$_(Use I2C LCD):</td>
+                            <td style='text-transform: none;'>$_(u'Use I2C LCD'):</td>
                             <td>
                                 <input name='use_lcd' type='checkbox' ${ u" checked" if m_vals[ 'use_lcd']==u"on" else u""}>
                             </td>
                         </tr>
                         <tr>
-                            <td style='text-transform: none;'>$_(I2C Address):</td>
+                            <td style='text-transform: none;'>$_(u'I2C Address'):</td>
                             <td>
                                 <select name='adress'>
                                     <option value='0x20' ${ " selected" if m_vals[ 'adress']=="0x20" else ""}>0x20 (PCF8574)</option>
@@ -67,10 +67,10 @@ $var page: plugins
             </tr>
             <tr>
                 <td>
-                    <p>$_(Information to display on LCD)</p>
+                    <p>$_(u'Information to display on LCD')</p>
                     <table class="optionList" width="100%">
                         <tr>
-                            <td>$_(SIP Software Version):</td>
+                            <td>$_(u'SIP Software Version'):</td>
                             <td>
                                 <input name='d_sw_version' type='checkbox' ${ u" checked" if m_vals[ 'd_sw_version']==u"on" else u""}>
                             </td>
@@ -82,37 +82,37 @@ $var page: plugins
                             </td>
                         </tr>
                         <tr>
-                            <td>$_(Port):</td>
+                            <td>$_(u'Port'):</td>
                             <td>
                                 <input name='d_port' type='checkbox' ${ u" checked" if m_vals[ 'd_port']==u"on" else u""}>
                             </td>
                         </tr>
                         <tr>
-                            <td>$_(CPU Temp):</td>
+                            <td>$_(u'CPU Temp'):</td>
                             <td>
                                 <input name='d_cpu_temp' type='checkbox' ${ u" checked" if m_vals[ 'd_cpu_temp']==u"on" else u""}>
                             </td>
                         </tr>
                         <tr>
-                            <td>$_(Time and Date):</td>
+                            <td>$_(u'Time and Date'):</td>
                             <td>
                                 <input name='d_date_time' type='checkbox' ${ u" checked" if m_vals[ 'd_cpu_temp']==u"on" else u""}>
                             </td>
                         </tr>
                         <tr>
-                            <td>$_(Uptime):</td>
+                            <td>$_(u'Uptime'):</td>
                             <td>
                                 <input name='d_uptime' type='checkbox' ${ u" checked" if m_vals[ 'd_cpu_temp']==u"on" else u""}>
                             </td>
                         </tr>
                         <tr>
-                            <td>$_(Rain Sensor):</td>
+                            <td>$_(u'Rain Sensor'):</td>
                             <td>
                                 <input name='d_rain_sensor' type='checkbox' ${ u" checked" if m_vals[ 'd_cpu_temp']==u"on" else u""}>
                             </td>
                         </tr>
                         <tr>
-                            <td>$_(Running Stations):</td>
+                            <td>$_(u'Running Stations'):</td>
                             <td>
                                 <input name='d_running_stations' type='checkbox' ${ u" checked" if m_vals[ 'd_cpu_temp']==u"on" else u""}>
                             </td>
@@ -123,7 +123,7 @@ $var page: plugins
             </tr>
             <tr>
                 <td>
-                    <p>$_(Status)</p>
+                    <p>$_(u'Status')</p>
                     <table class="optionList" width="100%">
                         <tr>
                             <td>
@@ -137,6 +137,6 @@ $var page: plugins
     </form>
 </div>
 <div class="controls">
-    <button id="cSubmit" class="submit"><b>$_(Submit)</b></button>
-    <button id="cCancel" class="cancel danger">$_(Cancel)</button>
+    <button id="cSubmit" class="submit"><b>$_(u'Submit')</b></button>
+    <button id="cCancel" class="cancel danger">$_(u'Cancel')</button>
 </div>

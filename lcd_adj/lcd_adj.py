@@ -103,8 +103,8 @@ class LCDSender(Thread):
             self.add_status(u"CPU temperature: / " + temp)
         elif report == u"d_date_time":
             self._lcd.lcd_clear()
-            da = time.strftime(u"%d.%m.%Y", time.gmtime(gv.now))
-            ti = time.strftime(u"%H:%M:%S", time.gmtime(gv.now))
+            da = time.strftime(u"%d.%m.%Y", time.localtime(gv.now))
+            ti = time.strftime(u"%H:%M:%S", time.localtime(gv.now))
             self._lcd.lcd_puts(da, 1)
             self._lcd.lcd_puts(ti, 2)
             self.add_status(da + " " + ti)

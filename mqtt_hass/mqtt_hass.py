@@ -184,18 +184,6 @@ def mqtt_hass_get_setting(settings, key, slugify):
     value = value if len(value) else mqtt_hass_system_name(slugify)
     return value
 
-#
-# # Add new URLs to access classes in this plugin.
-# # fmt: off
-# urls.extend([
-#         u"/mqtt_hass-sp", u"plugins.mqtt_hass.settings",
-#         u"/mqtt_hass-save", u"plugins.mqtt_hass.save_settings",
-#     ])
-# # fmt: on
-#
-# # Add this plugin to the PLUGINS menu ["Menu Name", "URL"].
-# gv.plugin_menu.append([(u"MQTT HASS Plugin"), u"/mqtt_hass-sp"])
-
 
 class settings(ProtectedPage):
     """Load an html page for entering plugin settings."""
@@ -378,10 +366,10 @@ class mqtt_hass_base:
 
     def entity_name(self):
         """
-        HASS slugified Entity ID
+        HASS slugified Entity name
         To be supplemented by children class
         """
-        return hass_entity_ID_slugify(_settings[MQTT_HASS_NAME])
+        return ""
 
     def entity_uid(self):
         """
@@ -646,7 +634,8 @@ class mqtt_hass_system_param(mqtt_hass_base):
 
     def entity_name(self):
         """System parameter entity name"""
-        return super().entity_name() + "_" + self._name
+        """Parameter name - HA discovery will prepend device name"""
+        return self._name
 
     def entity_uid(self):
         """System parameter entity UID"""
@@ -843,7 +832,8 @@ class mqtt_hass_zone(mqtt_hass_base):
 
     def entity_name(self):
         """Return zone switch Entity name"""
-        return super().entity_name() + u"_z" + u"{0:02d}".format(self._index + 1)
+        """Empty - HA discovery default to device name for device with single entity"""
+        return ""
 
     def entity_uid(self):
         """Return zone Entity UID"""

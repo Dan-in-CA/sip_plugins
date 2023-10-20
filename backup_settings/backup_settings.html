@@ -1,7 +1,7 @@
 $def with(status)
 
-$var title: $_('Backup/Restore Plugin') 
-$var page: backup_restore_plugin  
+$var title: $_('Backup Settings Plugin') 
+$var page: backup_settings_plugin  
 <script>
     // Initialize behaviors
     jQuery(document).ready(function(){
@@ -14,7 +14,7 @@ $var page: backup_restore_plugin
         });
 
         jQuery("button#docButton").click(function(){
-            window.open("static/docs/plugins/backup_restore-docs.html", "_blank");
+            window.open("static/docs/plugins/backup_settings-docs.html", "_blank");
         });
 
         jQuery("button#downloadButton").click(function(){
@@ -51,11 +51,11 @@ $var page: backup_restore_plugin
 </style>
 
 <div id="plugin">
-    <div class="title">$_('Backup/Restore Plugin') 
+    <div class="title">$_('Backup/Restore Settings') 
     <button class="execute" id="docButton" type="button" >$_('Help')</button>
     </div>
     
-    <p>$_('Download all settings data and logs in a single file (JSON):')</p>
+    <p>$_('Download a backup copy of all settings data and logs in a single file (JSON):')</p>
     <button class="execute" id="downloadButton" type="button" >$_('Download')</button>
 
     <hr>

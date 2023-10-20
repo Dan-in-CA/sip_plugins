@@ -14,13 +14,13 @@ import json  # for working with data file
 # Add new URLs to access classes in this plugin.
 # fmt: off
 urls.extend([
-    u"/backup", u"plugins.backup_restore.backup",
-    u"/download", u"plugins.backup_restore.download"
+    u"/backup", u"plugins.backup_settings.backup",
+    u"/download", u"plugins.backup_settings.download"
     ])
 # fmt: on
 
 # Add this plugin to the PLUGINS menu ["Menu Name", "URL"], (Optional)
-gv.plugin_menu.append([_(u"Backup/Restore Plugin"), u"/backup"])
+gv.plugin_menu.append([_(u"Backup/Restore Settings"), u"/backup"])
 
 class download(ProtectedPage):
     """
@@ -44,6 +44,7 @@ class download(ProtectedPage):
                         data[filename[:-5]] = json.load(f) # strip off the ".json" for the key name
                     else:
                         data["log"] = read_log()
+                    print("Backing up " + filename)
 
             web.header('Content-Type','text/json')       
             web.header('Content-disposition', 'attachment; filename=SIP-backup-%s.json'%restorePoint)
@@ -72,9 +73,11 @@ class backup(ProtectedPage):
                         lines.append(json.dumps(r) + "\n")
                         with open("./data/log.json", "w", encoding="utf-8") as f:
                             f.writelines(lines)
+                    print("Restored log.json")
                 else:
                     with open(u"./data/" + d + ".json", u"w") as f:
                         json.dump(data[d], f, indent=4, sort_keys=True)
+                    print("Restored " + d + ".json")
 
             raise web.seeother('/backup?success=true&restorePoint=' + restorePoint)
         except IOError:
@@ -84,4 +87,4 @@ class backup(ProtectedPage):
     def GET(self):
         user_data = web.input(success="unknown", restorePoint="")
         status = {"success" : user_data.success, "restorePoint" : user_data.restorePoint }  # report the status 
-        return template_render.backup_restore(status)  # open backup/restore page
+        return template_render.backup_settings(status)  # open backup/restore page

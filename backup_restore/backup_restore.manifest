@@ -1,0 +1,6 @@
+##### List all plugin files below preceded by a blank line [file_name.ext path] relative to SIP directory #####
+
+backup_restore.py plugins
+backup_restore.html templates
+backup_restore-docs.html static/docs/plugins
+backup_restore.manifest plugins/manifests

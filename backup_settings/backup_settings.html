@@ -1,0 +1,78 @@
+$def with(status)
+
+$var title: $_('Backup Settings Plugin') 
+$var page: backup_settings_plugin  
+<script>
+    // Initialize behaviors
+    jQuery(document).ready(function(){
+
+        jQuery("#cSubmit").click(function() {
+            jQuery("#pluginForm").submit();
+        });
+        jQuery("button#cCancel").click(function(){
+            window.location="/";
+        });
+
+        jQuery("button#docButton").click(function(){
+            window.open("static/docs/plugins/backup_settings-docs.html", "_blank");
+        });
+
+        jQuery("button#downloadButton").click(function(){
+            window.location= "/download";
+        });
+    });
+</script>
+
+<style>
+    input.buttonStyle[type=submit] {
+        background-color: #397F19;
+    }
+    input.buttonStyle, input[type=file]::file-selector-button {
+        padding: 4px 12px;
+        font-family: Quicksand, sans-serif;
+        font-size: 12pt;
+        font-weight: 400;
+        text-transform: uppercase;
+        text-align: center;
+        line-height: 14pt;
+        color: white;
+        background-color: #2E3959;
+        margin: 2px;
+        border: 0px;
+        border-radius: 12px;
+        cursor: pointer;
+    }
+    input.fileStyle {
+        border: 1px solid black;
+        border-radius: 12px;
+        font-size: 14pt;
+        width: 80%;
+    }
+</style>
+
+<div id="plugin">
+    <div class="title">$_('Backup/Restore Settings') 
+    <button class="execute" id="docButton" type="button" >$_('Help')</button>
+    </div>
+    
+    <p>$_('Download a backup copy of all settings data and logs in a single file (JSON):')</p>
+    <button class="execute" id="downloadButton" type="button" >$_('Download')</button>
+
+    <hr>
+    $if status["success"] == "unknown":
+        <p>$_('Select a SIP-Backup-***.json file to restore:')</p>
+        <form method="POST" enctype="multipart/form-data" action="">
+            <input class="fileStyle" type="file" name="myfile" />
+            <br/>
+            <input class="buttonStyle" type="submit" />
+        </form>
+
+    $elif status["success"] == "true":
+        <p>$_('All settings and log data restored to date') $(status["restorePoint"]).</p>
+        <button class="execute" id="cCancel" type="button" >$_('Home')</button>
+
+
+    $elif status["success"] == "false":
+        <p>$_('Restore failure!')</p>
+
+</div>

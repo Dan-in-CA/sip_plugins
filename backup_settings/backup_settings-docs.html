@@ -1,0 +1,66 @@
+<!DOCTYPE HTML>
+<HTML>
+<HEAD>
+	<META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset="utf-8">
+	<TITLE>Backup Settings Plugin Docs</TITLE>
+	<META NAME="viewport" CONTENT="width=device-width, initial-scale=1.0">
+	<STYLE TYPE="text/css">
+	<!--
+		BODY { font-family: "Lucida Grande", "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", "Lucida Sans Unicode", "Helvetica", "Arial", sans-serif }
+		H2.cjk { font-family: "SimSun" }
+		H2.ctl { font-family: "Mangal" }
+		PRE.cjk { font-family: "NSimSun", monospace }
+		CODE.cjk { font-family: "NSimSun", monospace }
+	-->
+	</STYLE>
+</HEAD>
+<BODY LANG="en-US" BGCOLOR="#ffffff" DIR="LTR" STYLE="border: none; padding: 0in">
+<H1><A NAME="backup_settings-plugin-documentation"></A>Backup/Restore Settings plugin
+documentation</H1>
+<P>The Backup/Restore Settings plugin allows remote access (download and upload) of all the 
+	settings data necessary for SIP configuration.  This facilitates complete rebuild or
+	replacement of the system without losing any SIP settings or log data, or needing
+	physical access to the device to backup the data.</P>
+
+<H2 CLASS="western"><A NAME="using-the-backup_settings-plugin"></A>Using
+Backup/Restore Settings</H2>
+<P>To backup all settings data, navigate to the Backup/Restore Settings page from 
+the Plugins menu.  Select the "Download" button.  A file will download to your computer
+which includes all the settings data including:</P>
+<UL>
+	<LI>Station names (snames.json)</LI>
+	<LI>Options (sd.json)</LI>
+	<LI>Programs (programData.json)</LI>
+	<LI>Logs (log.json)</LI>
+	<LI>Any other plugin settings (*.json)</LI>
+</UL>
+<P>The downloaded file will be named "SIP-backup-*.json" where * is the current time and date.  The format of the file is JSON, which 
+	which can be opened in any text editor to examine the data if needed.</P>
+
+<p>To restore the settings, typically after a fresh installation, ensure the Backup/Restore Settings 
+	plugin is installed, navigate to the Backup/Restore Settings page
+	and then use "Choose file" to select a SIP-Backup-*.json file previously downloaded.
+	Select "Upload" and the file will be uploaded and overwrite the settings of the system,
+	restoring it to the settings and log state when the backup was taken.</p>
+
+<H2 CLASS="western"><A NAME="Disclaimers"></A>Disclaimers and warnings</H2>
+<p>Note that this plugin is essentially a straightforward copy/paste of .json files and may cause problems, including:</p>
+<ul>
+	<li>If for some reason a file system error occurs halfway through a restore, settings could be only partially
+		restored, with unexpected results.</li>
+	<li>It is impractical to test this on all plugins that save settings in a .json file, results are not guaranteed.</li>
+	<li>Note that log.json is not actually a proper json file, rather it's a collection of json compatible lines.
+		The plugin converts it to proper json in the backup file, and back to individual json lines when restoring.
+		However, other plugins that don't save proper json, or save something other than to a .json file,
+		will not get special treatment and may cause an error or will not be backed up.</li>
+	<li>The plugin doesn't give elaborate warnings, e.g. files not in .json format will be silently skipped.</li>
+	<li>If the settings file formats or names have changed between SIP or plugin versions, there may be
+		unexpected results.  SIP generally can accept outdated settings and generate a new version, some
+		plugins might not be so smart.  However, the older the backup is, the greater the risk of incompatibility.</li>
+</ul>
+<p>In the event of a bad restore, it is best to clear out the contents of the "data" folder and restart SIP
+to return to a fresh install state.  At least you will have a readable backup copy of the settings which may 
+provide a reference in manually reconfiguring the system.</p>
+
+</BODY>
+</HTML>

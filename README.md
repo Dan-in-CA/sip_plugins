@@ -10,6 +10,12 @@ This is free software: you can redistribute it and/or modify it under the terms 
 These programs are distributed in the hope that they will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 <http://opensource.org/licenses/gpl-3.0.html>
 ******************
+backup_settings
+---------
+This plugin allows remote access (download and upload) of all the 
+settings data necessary for SIP configuration.  This facilitates complete rebuild or
+replacement of the system without losing any SIP settings or log data.
+
 buzzer
 ---------
 This plugin has been created to provide simple audio feedback.  This plugin is intended to be controlled through other

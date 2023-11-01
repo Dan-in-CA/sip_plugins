@@ -47,7 +47,7 @@ class download(ProtectedPage):
                     print("Backing up " + filename)
 
             web.header('Content-Type','text/json')       
-            web.header('Content-disposition', 'attachment; filename=SIP-backup-%s.json'%restorePoint)
+            web.header('Content-disposition', 'attachment; filename=SIP-backup-%s-%s.json'%(gv.sd['name'].replace(" ", "_"),restorePoint))
             return json.dumps(data)  # return data as json txt file
         except IOError:  # If file does not exist return empty value
             raise web.seeother('/backup?success=false')

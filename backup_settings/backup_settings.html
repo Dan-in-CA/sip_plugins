@@ -6,11 +6,20 @@ $var page: backup_settings_plugin
     // Initialize behaviors
     jQuery(document).ready(function(){
 
-        jQuery("#cSubmit").click(function() {
+        jQuery("input.fileStyle").change(function() {
+            jQuery("button#cSubmit").prop('disabled', false);
+        });
+        jQuery("button#cSubmit").click(function() {
             jQuery("#pluginForm").submit();
         });
         jQuery("button#cCancel").click(function(){
             window.location="/";
+        });
+        jQuery("button#cHome").click(function(){
+            window.location="/";
+        });
+        jQuery("button#cRestart").click(function(){
+            window.location="/restart";
         });
 
         jQuery("button#docButton").click(function(){
@@ -56,21 +65,27 @@ $var page: backup_settings_plugin
     </div>
     
     <p>$_('Download a backup copy of all settings data and logs in a single file (JSON):')</p>
-    <button class="execute" id="downloadButton" type="button" >$_('Download')</button>
+    <button class="execute" id="downloadButton" type="button" >$_('Backup Settings')</button>
 
     <hr>
     $if status["success"] == "unknown":
-        <p>$_('Select a SIP-Backup-***.json file to restore:')</p>
-        <form method="POST" enctype="multipart/form-data" action="">
-            <input class="fileStyle" type="file" name="myfile" />
-            <br/>
-            <input class="buttonStyle" type="submit" />
-        </form>
-
+        <p>$_('Select a SIP-Backup-***.json file to upload and restore:')
+            <form method="POST" enctype="multipart/form-data" action="">
+                <input class="fileStyle" type="file" name="myfile" />
+                <br/><br/>
+                <button id="cSubmit" class="buttonStyle" disabled="true">$_('Restore Settings')</button>
+            </form>
+        </p>
+        <div class="controls">
+            <button id="cCancel" class="cancel danger">$_('Cancel')</button>
+        </div>
+ 
     $elif status["success"] == "true":
         <p>$_('All settings and log data restored to date') $(status["restorePoint"]).</p>
-        <button class="execute" id="cCancel" type="button" >$_('Home')</button>
-
+        <div class="controls">
+            <button class="buttonStyle" id="cRestart" type="button" >$_('Restart')</button> ($_('Required for options or station name changes to take effect'))<br/>
+            <button class="execute" id="cHome" type="button" >$_('Home')</button>
+        </div>
 
     $elif status["success"] == "false":
         <p>$_('Restore failure!')</p>

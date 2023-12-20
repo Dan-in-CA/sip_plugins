@@ -1,0 +1,70 @@
+<!DOCTYPE HTML>
+<HTML>
+<HEAD>
+	<META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=windows-1252">
+	<TITLE>well-docs.html</TITLE>
+	<META NAME="viewport" CONTENT="width=device-width, initial-scale=1.0">
+	<STYLE TYPE="text/css">
+	<!--
+		P { font-family: "Lucida Grande", "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", "Lucida Sans Unicode", "Helvetica", "Arial", sans-serif }
+		H2.cjk { font-family: "SimSun" }
+		H2.ctl { font-family: "Mangal" }
+		PRE.cjk { font-family: "NSimSun", monospace }
+		CODE.cjk { font-family: "NSimSun", monospace }
+	-->
+	</STYLE>
+</HEAD>
+<BODY LANG="en-US" BGCOLOR="#ffffff" DIR="LTR" STYLE="border: none; padding: 0in">
+<H1><A NAME="well-plugin-documentation"></A>Well control Documentation</H1>
+<H2 CLASS="western"><A NAME="about-the-proto-plugin"></A>About the
+Well control Plugin</H2>
+<P>A SIP plugin to display the status of, and control, a well pump. It will optionally control irrigation according to pump status.<br><br>
+
+This module is designed for a low-permiability bore where high use can run the well dry. It will determine the well depth via sensor, or accept input from an existing control unit and from that wait a set length of time before allowing the pump to [re]start.<br><br>
+
+Options are to shutdown all irrigation while the pump is not running, or the well is low, and to determine this if the sensor input is normally low or normally high.<br><br>
+
+Variable settings are the time in minutes from a control input before a restart signal is sent.</P>
+
+<P>The plugin includes the folowing files:</P>
+<UL>
+	<LI><P STYLE="margin-bottom: 0in"><STRONG>well.py</STRONG><BR>The
+	python program that does the actual work of the plugin. Location:
+	<STRONG>SIP/plugins</STRONG></P>
+	<LI><P STYLE="margin-bottom: 0in"><STRONG>well.html</STRONG><BR>A
+	web.py template that provides the user interface for the plugin. It
+	includes both Python code and web page markup. Location:
+	<STRONG>SIP/templates</STRONG></P>
+	<LI><P STYLE="margin-bottom: 0in"><STRONG>well-docs.html</STRONG><BR>This
+	file. Provides documentation for the plugin including any special hardware needed and set up instructions. Location:
+	<STRONG>SIP/static/docs/plugins</STRONG></P>
+	<LI><P STYLE="margin-bottom: 0in"><STRONG>well.manifest</STRONG><BR>A
+	simple text file containing a list of each of the plugin&rsquo;s
+	files with the path to it&rsquo;s location. The manifest is used by
+	the plugin manager to install and uninstall the plugin
+	Location: <STRONG>SIP/plugins/manifest</STRONG></P>
+	<LI><P><STRONG>well.json</STRONG><BR>A file used for
+	persistant storage of plugin settings. If not already present with data it will be created by the plugin
+	the first time it is run and is not necessarily installed with the other files.
+	settings. Location: <STRONG>SIP/data</STRONG></P>
+</UL>
+<H2 CLASS="western"><A NAME="using-the-proto-plugin"></A>Using the
+well module</H2>
+<P> Once enabled this module will accept input data on the followng GPIO pins:<br><br>
+
+33 - This is control sensor pin which is normally held HIGH, and is grounded to be active<br>
+35 - This is the motor status. It is normally held HIGH, and is grounded to display pump motor status<br><br>
+
+The module will output a signal on the following GPIO pins:<br><br>
+
+37 - Normally LOW. If the control sensor pin is activated this will trigger for 20msec after the timeout period is exceeded.<br><br>
+
+Note that the pin numbers are BOARD assigned, in keeping with the rest of SIP. This means the pin number relates to the physical location of the pins, 33, 35 and 37 (being the last three but one in the inner row together nearby the rightmost USB connector on a standard Pi).<br><br>
+
+As installed, with the well.json file, the defaults are to take an input active LOW from the well control sensor and delay starting the pump for 60 minutes. The timeout is adjustable via the plugins management page in SIP.<br><br>
+
+Options YET TO BE ENABLED are included to accept an active HIGH input for the well control sensor, and to shutdown all irrigation if the well or well pump is itself shutdown.
+
+</P>
+</BODY>
+</HTML>

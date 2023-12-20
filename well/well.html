@@ -1,0 +1,83 @@
+$def with(settings)
+
+$var title: $_('SIP Well Plugin') <!--Title to show on browser tab-->
+$var page: well_plugin  <!--Page name, used internally-->
+<script>
+    // Initialize behaviors
+    jQuery(document).ready(function(){
+
+        jQuery("#cSubmit").click(function() {
+            jQuery("#pluginForm").submit();
+        });
+        jQuery("button#cCancel").click(function(){
+            window.location="/";
+        });
+
+        jQuery("button#docButton").click(function(){
+            window.open("static/docs/plugins/well-docs.html", "_blank"); //Edit: replace "well-docs.html"
+        });
+
+    });
+</script>
+
+<div id="plugin">
+    <div class="title">$(u'Well Control Settings')
+    <button class="execute" id="docButton" type="button" >$_('Help')</button>
+    </div>
+
+<!--    <p>$_(u'Options'):</p> -->
+    <form id="pluginForm" action="/well-save" method="get">
+
+        <p>$_(u'Variable settings'):</p>  <!--Edit-->
+        <table class="optionList">
+      <td title="Test tooltip">
+            <tr>
+                <td style='text-transform: none;'>$_('Minutes to restart pump '):</td>
+                <td><input name="time" type="number" style="width: 7em"  min="0" max="1440" value="${settings['time'] if 'time' in settings else ''}"></td>
+      <td class="tooltip">
+      <span class='tooltip'>$_('Active low means the relay turns on when the output is triggered and turns off when the output is idle. Active high does the opposite.')</span>
+      </td>
+            </tr>
+
+        </table>
+    <br>
+    <p>$_(u'Options'):</p> 
+        <table class="optionList">
+
+            <!--Check boxes
+            <thead>
+                <th class="stationNumber">$_('Heading')</th> 
+                <th class="stationNumber">$_('Heading')</th> 
+            </thead>
+            <tr>
+            --> 
+            <tr>
+                <td style='text-transform: none;'>$_('Stop stations if no water or no pump'):</td> 
+                <td> <input name='stns' type='checkbox'${" checked" if settings['stns'] == "on" else ""}></td>
+            </tr>
+            <tr>
+                <td style='text-transform: none;'>$_('Output set MOMENTARY toggle only'):</td>  <!--Edit-->
+                <td> <input name='moment' type='checkbox'${" checked" if settings['moment'] == "on" else ""}></td>
+            </tr>
+
+        </table></br>
+    <p>$_(u'Active states'):</p>
+
+        <div class='optionList' title='Active low means the relay turns on when the output is triggered and turns off when the output is idle. Active high does the opposite.'><span class='label'>$_(u'Output'):</span>
+            <input type="radio" name="out_act" value="low" ${" checked" if settings[u"out_act"]==u"low" else u""}>$_('Low')
+            <input type="radio" name="out_act" value="high" ${" checked" if settings[u"out_act"]==u"high" else u""}>$_('High')
+            <span class='tooltip'>$_('Active low means the relay turns on when the output is triggered and turns off when the output is idle. Active high does the opposite.')</span>
+        </div>
+   
+        <div class='optionList' title='Active low means the shutdown triggers when the input goes low. Active high does the opposite.'><span class='label'>$_(u'Input'):</span>
+            <input type="radio" name="in_act" value="low" ${" checked" if settings[u"in_act"]==u"low" else u""}>$_('Low')
+            <input type="radio" name="in_act" value="high" ${" checked" if settings[u"in_act"]==u"high" else u""}>$_('High')
+            <span class='tooltip'>$_('Active low means the shutdown triggers when the input goes low. Active high means it triggers on the input going high.')</span>
+        </div>
+    </form>
+
+<div class="controls">
+    <button id="cSubmit" class="submit"><b>$_('Submit')</b></button>
+    <button id="cCancel" class="cancel danger">$_('Cancel')</button>
+</div>
+</div>

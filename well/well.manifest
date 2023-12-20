@@ -1,0 +1,11 @@
+A plugin designed for controlling well pumps with SIP.
+
+Author: eroyee via Github
+
+##### List all plugin files below preceded by a blank line [file_name.ext path] relative to SIP directory #####
+
+well.py plugins
+well.html templates
+well-docs.html static/docs/plugins
+well.json data (generated)
+well.manifest plugins/manifests

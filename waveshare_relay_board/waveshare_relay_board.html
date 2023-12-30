@@ -1,0 +1,54 @@
+$def with (m_vals)
+
+$var title: $_(u'SIP - Relay Board Settings')
+$var page: plugins
+<script>
+   // Initialize behaviors
+   jQuery(document).ready(function(){
+
+      jQuery("#cSubmit").click(function() {
+         jQuery("#pluginForm").submit();
+      });
+      jQuery("button#cCancel").click(function(){
+         window.location="/";
+      });
+   });
+</script>
+
+<div id="plugin">
+   <div class="title">$_(u'Waveshare Relay Board Settings')
+   </div>
+   <p>$_(u'A plugin for using Waveshare RPi Relay Board (B) to control sprinkler valves. See ')
+      <a href="https://www.waveshare.com/wiki/RPi_Relay_Board_(B)">RPi Relay Board (B)</a>
+   </p>
+   <p>$_(u'This plugin is a copy of the relay board plugin, modified to use the pi pins utilised in the Waveshare RPi Relay Board (B)')</p>
+   <br>
+   <form id="pluginForm" action="/rbu" method="get">
+   <div class='option' title='Number of relays in use (Waveshare relay board (B) has a total of 8 relays)'><span class='label'>$_(u'Relay channels'):</span>
+      <select name="relays">
+         <option value="1" ${" selected" if m_vals[u"relays"]==1 else ""}>1</option>
+         <option value="2" ${" selected" if m_vals[u"relays"]==2 else ""}>2</option>
+         <option value="3" ${" selected" if m_vals[u"relays"]==3 else ""}>3</option>
+         <option value="4" ${" selected" if m_vals[u"relays"]==4 else ""}>4</option>
+         <option value="5" ${" selected" if m_vals[u"relays"]==5 else ""}>5</option>
+         <option value="6" ${" selected" if m_vals[u"relays"]==6 else ""}>6</option>
+         <option value="7" ${" selected" if m_vals[u"relays"]==7 else ""}>7</option>
+         <option value="8" ${" selected" if m_vals[u"relays"]==8 else ""}>8</option>
+      </select>
+      <span class='tooltip'>$_(u'Number of relays in use (Waveshare relay board (B) has a total of 8 relays)')</span>
+   </div>
+   <div class='option' title='Active low means the relay turns on when the input is low and turns off when the input is high. Active high does the opposite.'><span class='label'>$_(u'Active'):</span>
+      <input type="radio" name="active" value="low" ${" checked" if m_vals[u"active"]==u"low" else u""}>$_('Low')
+      <input type="radio" name="active" value="high" ${" checked" if m_vals[u"active"]==u"high" else u""}>$_('High')
+      <span class='tooltip'>$_('Active low means the relay turns on when the input is low and turns off when the input is high. Active high does the opposite.')</span>
+   </div>
+   <br>
+   <p><b>$_(u'IMPORTANT'):</b> $_(u'If') <b>$_(u'Active')</b> $_(u'is changed'), <b>$_(u'Relay channels')</b> $_(u'will be set to') <b>1</b> $_(u'to prevent all the relays being switched on, and possibly damaging the power supply.')
+         $_(u'After verifying that the first relay is off, return to this page and set') <b>$_(u'Relay channels')</b> $_(u'to the correct number.')
+   </p>
+   </form>
+</div>
+<div class="controls">
+    <button id="cSubmit" class="submit"><b>$_(u'Submit')</b></button>
+    <button id="cCancel" class="cancel danger">$_(u'Cancel')</button>
+</div>

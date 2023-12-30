@@ -1,0 +1,14 @@
+Description: Allows the SIP program to use the Waveshare RPI Relay Board (B) (https://www.waveshare.com/wiki/RPi_Relay_Board_(B)) to control sprinkler valves etc. This plugin is an exact copy of plugin relay_board excpet for the pinout which is adjusted to the pins used for controlling the relays in Waveshare RPI Relay Board (B).
+Copyright 2023
+Author: Antonios Hatzikonstantinou
+Email: ahatzikonstantinou@protonmail.com
+License: GNU GPL 3.0
+
+Requirements:
+
+##### List all plugin files below preceded by a blank line [file_name.ext path] relative to SIP directory #####
+
+waveshare_relay_board.py plugins
+waveshare_relay_board.html templates
+waveshare_relay_board.json data (generated)
+waveshare_relay_board.manifest plugins/manifests

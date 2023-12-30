@@ -185,7 +185,7 @@ class settings(ProtectedPage):
     def GET(self):
         with open(u"./data/waveshare_relay_board.json", u"r") as f:  # Read the settings from file
             params = json.load(f)
-        return template_render.relay_board(params)
+        return template_render.waveshare_relay_board(params)
 
 
 class settings_json(ProtectedPage):

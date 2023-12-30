@@ -1,23 +1,14 @@
 # !/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Python 2/3 compatibility imports
-from __future__ import print_function
-from six.moves import zip
-from six.moves import range
-try:
-    from urllib.request import urlopen, Request
-except ImportError:
-    from six.moves.urllib.request import urlopen, Request
-
 # standard library imports
 import base64
 import json
-# import os
 import pathlib
 import re
 import subprocess
 import time
+from urllib.request import urlopen
 
 # local module imports
 import gv  # Get access to SIP's settings

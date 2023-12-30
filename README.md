@@ -179,6 +179,10 @@ telegram_bot
 A simple telegram.org bot to interface with a SIP installation.  
 Run "pip install python-telegram-bot --upgrade" before installing this plugin.
 
+waveshare_relay_board
+----------
+A plugin for using Waveshare RPi Relay Board (B) to control sprinkler valves.
+
 weather_level_adj
 ----------
 Adjust irrigation time based on weather forecast

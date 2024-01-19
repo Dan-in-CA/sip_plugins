@@ -20,6 +20,7 @@ from webpages import showOnTimeline  # Enable plugin to display station data on 
 import os
 import datetime
 from plugins import mqtt
+import jmespath
 
 # Add new URLs to access classes in this plugin.
 # fmt: off
@@ -71,31 +72,68 @@ def mqtt_readerx(setting, stop_flag):
 
 
 def mqtt_reader(client, msg):
+    """Sensor callback function for MQTT subscribe. Matches the topic
+    back to the sensor in order to access additional
+    attributes. Parses the message payload for an integer value which
+    it then stores in the senors data file. If the optional path
+    attribute is set then jmsepath is used to parse an integer from
+    the payload.
+
+    """
+
     print(f"reader {settings}")
+
+    # Get sensor from topic
     sensor = [
         k for k, v in settings.items() if "topic" in v and v["topic"] == msg.topic
     ]
     print(sensor)
 
     if len(sensor) > 0:
+        # Could be that one topic is mapped to multiple sensors.
+        # For now just take the first one.
         sensor = sensor[0]
         setting = settings[sensor]
         sensor_file = f"{SENSOR_DATA_PATH}/{sensor}"
 
+        #
+        # Parse the payload
+        #
         try:
             reading = json.loads(msg.payload)
         except ValueError as e:
-            print("mqtt_reader could not decode reading: ", msg.payload, e)
+            print("mqtt_reader could not decode payload: ", msg.payload, e)
             return
 
-        if ("jsonata" in setting) and (setting["jsonata"] != ""):
-            pass
+        path = setting["path"]
+        if path != "":
+            try:
+                reading = jmespath.search(path, reading)
 
+            except (
+                InvalidType,
+                InvalidValue,
+                UnknownFunction,
+                InvalidArity,
+            ) as e:
+                print("mqtt_reader found invalid jmespath expression: ", path, e)
+                return
+
+        if not isinstance(reading, int):
+            print(f"mqtt_reader did not find integer: {reading}")
+            return
+
+        #
+        # Convert reading to %
+        #
+
+        # TODO What about timezones/DST?
+        ts = datetime.datetime.now()
+        ts.strftime("%Y-%m-%dT%H:%M:%S")
+
+        # TODO Error handling
         if os.path.isfile(sensor_file):
             with open(sensor_file, "a") as f:
-                ts = msg.timestamp
-                # ts.strftime("%Y-%m-%dT%H:%M:%S")
-                # reading = msg.payload
                 f.write(f"{ts},{reading}\n")
 
 

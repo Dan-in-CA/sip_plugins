@@ -1,9 +1,0 @@
-A bare bones plugin designed to be used as a starting point for writing plugins.
-
-##### List all plugin files below preceded by a blank line [file_name.ext path] relative to SIP directory #####
-
-moisture_sensor.py plugins
-moisture_sensor.html templates
-moisture_sensor-docs.html static/docs/plugins
-moisture_sensor.json data (generated)
-moisture_sensor.manifest plugins/manifests

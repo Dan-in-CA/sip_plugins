@@ -1,0 +1,83 @@
+$def with(settings)
+
+$var title: $_('SIP Moisture Sensor Control')
+$var page: moisture_sensor_control
+<script>
+    // Initialize behaviors
+    jQuery(document).ready(function(){
+
+        jQuery("#cSubmit").click(function() {
+            jQuery("#pluginForm").submit();
+        });
+        jQuery("button#cCancel").click(function(){
+            window.location="/";
+        });
+
+        jQuery("button#docButton").click(function(){
+            window.open("static/docs/plugins/moisture_sensor_control-docs.html", "_blank");
+        });
+    });
+</script>
+
+<div id="plugin">
+    <div class="title">Moisture Sensor Plugin
+    <button class="execute" id="docButton" type="button" >$_('Help')</button>
+    </div>
+
+    <p>$_('Moisture control')</p>
+    <form id="pluginForm" action="/moisture_sensor_control-save" method="get">
+      <table class="optionList">
+        <tr>
+          <th class="stationNumber"></th>
+          <th class="columnName">
+            <div>$_(u'Sensor')</div>
+          </th>
+          <th class="columnName">
+            <div>$_(u'Threshold') &nbsp;</div>
+          </th>
+          <th class="columnName">
+            <div>$_(u'Enable') &nbsp;</div>
+          </th>
+          <th class="columnName">
+            <div>$_(u'Stale Reading')</div>
+          </th>
+        <tr>
+          ${settings}
+          $for bid in range(0,gv.sd['nbrd']):
+            $for s in range(0,8):
+              $ sid = (bid * 8) + s;
+              $ s_sid = str(sid);
+              <tr>
+                <td class="stationNumber">${gv.snames[sid]} &nbsp;</td>
+                <td>
+                  <select id="sensor${sid}" name="sensor${sid}">
+                    <option value="None">-- Select sensor --</option>
+                    $for sensor in settings["sensors"]:
+                      $if u"sensor" + s_sid in settings and sensor == settings[u"sensor" + s_sid]:
+                        <option value="${sensor}" selected="selected">${sensor}</option>
+                      $else:
+                        <option value="${sensor}">${sensor}</option>
+                  </select> &nbsp;
+                </td>
+                <td>
+                  <input type="text" size="3" maxlength="3" id="threshold${sid}" name="threshold${sid}"
+                         value="${settings[u"threshold" + s_sid] if u"threshold" + s_sid in settings else u""}"> %
+                </td>
+                <td>
+                  <input type="checkbox" id="enabled${sid}" name="enabled${sid}"
+                         ${"checked" if "enabled" + s_sid in settings else ""}>
+                </td>
+                <td>
+                  <input type="text" size="5" maxlength="5" id="stale${sid}" name="stale${sid}"
+                         value="${settings[u"stale" + s_sid] if u"stale" + s_sid in settings else u""}"> mins
+                </td>
+              </tr>
+      </table>
+    </form>
+</br>
+
+<div class="controls">
+    <button id="cSubmit" class="submit"><b>$_('Submit')</b></button>
+    <button id="cCancel" class="cancel danger">$_('Cancel')</button>
+</div>
+</div>

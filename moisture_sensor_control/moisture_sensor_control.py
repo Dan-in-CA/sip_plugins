@@ -17,7 +17,6 @@ from webpages import showInFooter  # Enable plugin to display readings in UI foo
 from webpages import showOnTimeline  # Enable plugin to display station data on timeline
 
 import os
-import csv
 
 # Add new URLs to access classes in this plugin.
 # fmt: off
@@ -72,22 +71,26 @@ def notify_stations_scheduled(station, **kw):
     print("Station {} run started".format(station))
     print(f"srvals {gv.srvals}")
     print(f"rs before {gv.rs}")
-    print(f"rs before {gv.ps}")
-    print(moisture_sensor_settings)
+    print(f"ps before {gv.ps}")
+    print(json.dumps(moisture_sensor_settings, sort_keys=True))
 
     for station_index in range(0, len(gv.rs)):
+        print(f"station index {station_index}")
         if gv.rs[station_index][0] != 0:
             sensor_key = f"sensor{station_index}"
+            enable_key = f"enable{station_index}"
 
-            if sensor_key not in moisture_sensor_settings:
+            print(f"keys {sensor_key} {enable_key}")
+            # If no sensor has been configured for the station or the
+            # sensor has not be enabled do nothing
+            if (sensor_key not in moisture_sensor_settings) or (
+                enable_key not in moisture_sensor_settings
+            ):
                 continue
 
+            print("======================================")
             sensor = moisture_sensor_settings[sensor_key]
             threshold = moisture_sensor_settings[f"threshold{station_index}"]
-
-            # with open(f"./data/moisture_sensor_data/{sensor}", newline="") as csvfile:
-            #    sensor_data = csv.reader(csvfile)
-            #    current_reading = next(sensor_data)
 
             with open(f"./data/moisture_sensor_data/{sensor}") as f:
                 for sensor_data in f:

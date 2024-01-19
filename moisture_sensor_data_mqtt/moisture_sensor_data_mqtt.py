@@ -41,9 +41,9 @@ ATTRIBUTES = [
     "sensor",
     "topic",
     "path",
-    "dryest",
-    "wetest",
-    "enabled",
+    "driest",
+    "wettest",
+    "enable",
     "retention",
 ]
 
@@ -110,7 +110,7 @@ def create_mqtt_readerx(setting):
 
 
 def create_mqtt_reader(setting):
-    if "topic" in setting:
+    if ("enable" in setting) and ("topic" in setting):
         mqtt.subscribe(setting["topic"], mqtt_reader, qos=0)
 
 
@@ -175,34 +175,27 @@ class save_settings(ProtectedPage):
     """
 
     def gather_attributes(qdict, index, old_setting):
-        setting = {}
-        updates = False
+        new_setting = {}
 
         for attribute in ATTRIBUTES:
             if f"{attribute}{index}" in qdict:
-                setting[f"{attribute}"] = qdict[f"{attribute}{index}"]
-                if (attribute not in old_setting) or (
-                    qdict[f"{attribute}{index}"] != old_setting[attribute]
-                ):
-                    updates = True
+                new_setting[f"{attribute}"] = qdict[f"{attribute}{index}"]
 
-        print(f"Gather attrs {index} {old_setting} {updates} {setting}")
+        updated = old_setting == new_setting
 
-        return updates, setting
+        print(f"Gather attrs {index} {updated} {old_setting} {new_setting}")
+
+        return updated, new_setting
 
     def GET(self):
         global settings
         print(settings)
-        # Dictionary of values returned as query string from settings page.
-        qdict = web.input()
 
+        qdict = web.input()
         new_settings = {}
 
         index = 0
         while f"sensor{index}" in qdict:
-            updated = False
-            new_setting = None
-
             old_sensor = qdict[f"o_sensor{index}"]
             if old_sensor == "":
                 old_setting = {}

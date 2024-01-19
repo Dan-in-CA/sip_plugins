@@ -20,11 +20,10 @@ $var page: moisture_sensor_control
 </script>
 
 <div id="plugin">
-    <div class="title">Moisture Sensor Plugin
+    <div class="title">Moisture Sensor Control
     <button class="execute" id="docButton" type="button" >$_('Help')</button>
     </div>
 
-    <p>$_('Moisture control')</p>
     <form id="pluginForm" action="/moisture_sensor_control-save" method="get">
       <table class="optionList">
         <tr>
@@ -42,7 +41,7 @@ $var page: moisture_sensor_control
             <div>$_(u'Stale Reading')</div>
           </th>
         <tr>
-          ${settings}
+          $#{settings}
           $for bid in range(0,gv.sd['nbrd']):
             $for s in range(0,8):
               $ sid = (bid * 8) + s;
@@ -64,8 +63,8 @@ $var page: moisture_sensor_control
                          value="${settings[u"threshold" + s_sid] if u"threshold" + s_sid in settings else u""}"> %
                 </td>
                 <td>
-                  <input type="checkbox" id="enabled${sid}" name="enabled${sid}"
-                         ${"checked" if "enabled" + s_sid in settings else ""}>
+                  <input type="checkbox" id="enable${sid}" name="enable${sid}"
+                         ${"checked" if "enable" + s_sid in settings else ""}>
                 </td>
                 <td>
                   <input type="text" size="5" maxlength="5" id="stale${sid}" name="stale${sid}"

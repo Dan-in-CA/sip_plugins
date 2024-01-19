@@ -30,26 +30,26 @@ $var page: moisture_sensor_data_mqtt
                 <th>Sensor</th>
                 <th class="columnName">
                   <div>$_(u'Reading')</div>
-                  <div>$_(u'Topic')</div>
+                  <div>$_(u'topic')</div>
                 </th>
                 <th class="columnName">
                   <div>$_(u'Reading')</div>
-                  <div>$_(u'Path')</div>
+                  <div>$_(u'path')</div>
                 </th>
                 <th class="columnName">
-                  <div>$_(u'Dryest')&nbsp;</div>
+                  <div>$_(u'Driest')&nbsp;</div>
                   <div>$_(u'value')</div>
                 </th>
                 <th class="columnName">
-                  <div>$_(u'Wetest')&nbsp;</div>
+                  <div>$_(u'Wettest')&nbsp;</div>
                   <div>$_(u'value')</div>
                 </th>
                 <th class="columnName">
-                  <div>$_(u'Enabled')&nbsp;</div>
+                  <div>$_(u'Enable')&nbsp;</div>
                 </th>
                 <th class="columnName">
                   <div>$_(u'Retention')</div>
-                  <div>$_(u'Period')</div>
+                  <div>$_(u'period')</div>
                 </th>
             <tr>
             ${settings}
@@ -69,23 +69,23 @@ $var page: moisture_sensor_data_mqtt
               </td>
               <td>
                 <input type="text" size="20" maxlength="50" id="topic${sid}" name="topic${sid}"
-                       value="${setting[u"topic" ] if u"topic"  in setting else u""}"> &nbsp;
+                       value="${setting[u"topic" ] if u"topic" in setting else u""}"> &nbsp;
               </td>
               <td>
                 <input type="text" size="20" maxlength="50" id="path${sid}" name="path${sid}"
-                       value="${setting[u"path" ] if u"path"  in setting else u""}"> &nbsp;
+                       value="${setting[u"path" ] if u"path" in setting else u""}"> &nbsp;
               </td>
               <td>
-                <input type="text" size="3" maxlength="4" id="dryest${sid}" name="dryest${sid}"
-                       value="${setting[u"dryest" ] if u"dryest"  in setting else u""}">
+                <input type="text" size="3" maxlength="4" id="driest${sid}" name="driest${sid}"
+                       value="${setting[u"driest" ] if u"driest" in setting else u""}"> &nbsp;
               </td>
               <td>
-                <input type="text" size="3" maxlength="4" id="wetest${sid}" name="wetest${sid}"
-                       value="${setting[u"wetest" ] if u"wetest"  in setting else u""}">
+                <input type="text" size="3" maxlength="4" id="wettest${sid}" name="wettest${sid}"
+                       value="${setting[u"wettest" ] if u"wettest" in setting else u""}">
               </td>
               <td>
-                <input type="checkbox" id="enabled${sid}" name="enabled${sid}"
-                       ${"checked" if "enabled"  in setting else ""}>
+                <input type="checkbox" id="enable${sid}" name="enable${sid}"
+                       ${"checked" if "enable" in setting else ""}>
               </td>
               <td>
                 <input type="text" size="3" maxlength="3" id="retention${sid}" name="retention${sid}"

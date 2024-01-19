@@ -61,13 +61,11 @@ def load_moisture_sensor_settings():
     print(moisture_sensor_settings)  # for testing
 
 
-#
-#
-# https://stackoverflow.com/questions/46258499/how-to-read-the-last-line-of-a-file-in-python#:~:text=seek(%2D200%2C%202)%20will,from%20readlines()%20and%20decoded.
-#
-#
-# Station Schedule
 def notify_stations_scheduled(station, **kw):
+    """Suppress a program from running if the station has an active
+    (enabled) moisture sensor assigned and the current moisture
+    reading from the sensor is above the threshold value."""
+
     print("Station {} run started".format(station))
     print(f"srvals {gv.srvals}")
     print(f"rs before {gv.rs}")
@@ -75,23 +73,22 @@ def notify_stations_scheduled(station, **kw):
     print(json.dumps(moisture_sensor_settings, sort_keys=True))
 
     for station_index in range(0, len(gv.rs)):
-        print(f"station index {station_index}")
         if gv.rs[station_index][0] != 0:
             sensor_key = f"sensor{station_index}"
             enable_key = f"enable{station_index}"
 
-            print(f"keys {sensor_key} {enable_key}")
             # If no sensor has been configured for the station or the
-            # sensor has not be enabled do nothing
+            # sensor has not be enabled take not action
             if (sensor_key not in moisture_sensor_settings) or (
                 enable_key not in moisture_sensor_settings
             ):
                 continue
 
-            print("======================================")
             sensor = moisture_sensor_settings[sensor_key]
             threshold = moisture_sensor_settings[f"threshold{station_index}"]
 
+            # This could get slow for large files. See solution based on seek
+            # https://stackoverflow.com/questions/46258499/how-to-read-the-last-line-of-a-file-in-python
             with open(f"./data/moisture_sensor_data/{sensor}") as f:
                 for sensor_data in f:
                     pass

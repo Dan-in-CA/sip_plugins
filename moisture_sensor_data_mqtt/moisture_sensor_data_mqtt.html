@@ -1,0 +1,107 @@
+$def with(settings)
+
+$var title: $_('SIP Moisture Sensor Data MQTT')
+$var page: moisture_sensor_data_mqtt
+<script>
+    // Initialize behaviors
+    jQuery(document).ready(function(){
+
+        jQuery("#cSubmit").click(function() {
+            jQuery("#pluginForm").submit();
+        });
+        jQuery("button#cCancel").click(function(){
+            window.location="/";
+        });
+
+        jQuery("button#docButton").click(function(){
+            window.open("static/docs/plugins/moisture_sensor_data_mqtt-docs.html", "_blank");
+        });
+    });
+</script>
+
+<div id="plugin">
+    <div class="title">Moisture Sensor Data MQTT
+    <button class="execute" id="docButton" type="button" >$_('Help')</button>
+    </div>
+    <form id="pluginForm" action="/moisture_sensor_data_mqtt-save" method="get">
+
+        <table class="optionList">
+            <tr>
+                <th>Sensor</th>
+                <th class="columnName">
+                  <div>$_(u'Reading')</div>
+                  <div>$_(u'Topic')</div>
+                </th>
+                <th class="columnName">
+                  <div>$_(u'Reading')</div>
+                  <div>$_(u'Path')</div>
+                </th>
+                <th class="columnName">
+                  <div>$_(u'Dryest')&nbsp;</div>
+                  <div>$_(u'value')</div>
+                </th>
+                <th class="columnName">
+                  <div>$_(u'Wetest')&nbsp;</div>
+                  <div>$_(u'value')</div>
+                </th>
+                <th class="columnName">
+                  <div>$_(u'Enabled')&nbsp;</div>
+                </th>
+                <th class="columnName">
+                  <div>$_(u'Retention')</div>
+                  <div>$_(u'Period')</div>
+                </th>
+            <tr>
+            ${settings}
+            $# Temporarily add key for empty table row
+            $ settings['.'] = {}
+            $ sid = 0
+            $ sensors = list(settings.keys())
+            $ sensors.sort()
+            $for sensor in sensors:
+            $ setting = settings[sensor]
+            <tr>
+              <td>
+                <input type="hidden" size="20" maxlength="50" id="o_sensors${sid}" name="o_sensor${sid}"
+                       value="${setting[u"sensor"] if u"sensor" in setting else u""}">
+                <input type="text" size="20" maxlength="50" id="sensors${sid}" name="sensor${sid}"
+                       value="${setting[u"sensor"] if u"sensor" in setting else u""}"> &nbsp;
+              </td>
+              <td>
+                <input type="text" size="20" maxlength="50" id="topic${sid}" name="topic${sid}"
+                       value="${setting[u"topic" ] if u"topic"  in setting else u""}"> &nbsp;
+              </td>
+              <td>
+                <input type="text" size="20" maxlength="50" id="path${sid}" name="path${sid}"
+                       value="${setting[u"path" ] if u"path"  in setting else u""}"> &nbsp;
+              </td>
+              <td>
+                <input type="text" size="3" maxlength="4" id="dryest${sid}" name="dryest${sid}"
+                       value="${setting[u"dryest" ] if u"dryest"  in setting else u""}">
+              </td>
+              <td>
+                <input type="text" size="3" maxlength="4" id="wetest${sid}" name="wetest${sid}"
+                       value="${setting[u"wetest" ] if u"wetest"  in setting else u""}">
+              </td>
+              <td>
+                <input type="checkbox" id="enabled${sid}" name="enabled${sid}"
+                       ${"checked" if "enabled"  in setting else ""}>
+              </td>
+              <td>
+                <input type="text" size="3" maxlength="3" id="retention${sid}" name="retention${sid}"
+                       value="${setting[u"retention" ] if u"retention"  in setting else u""}"> days
+              </td>
+
+            </tr>
+            $ sid += 1
+        </table>
+        $# Remove temporary key
+        $ del settings['.']
+    </form>
+
+</br>
+<div class="controls">
+    <button id="cSubmit" class="submit"><b>$_('Submit')</b></button>
+    <button id="cCancel" class="cancel danger">$_('Cancel')</button>
+</div>
+</div>

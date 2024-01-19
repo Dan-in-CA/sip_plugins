@@ -3,13 +3,11 @@
 
 # standard library imports
 import json  # for working with data file
-from threading import Thread
-from time import sleep
 
 # local module imports
 from blinker import signal
 import gv  # Get access to SIP's settings
-from sip import template_render  #  Needed for working with web.py templates
+from sip import template_render  # Needed for working with web.py templates
 from urls import urls  # Get access to SIP's URLs
 import web  # web.py framework
 from webpages import ProtectedPage  # Needed for security
@@ -112,28 +110,8 @@ class get_settings(ProtectedPage):
     def GET(self):
         load_moisture_sensor_settings()
 
-        return template_render.moisture_sensor_control(
-            moisture_sensor_settings
-        )  # open settings page
-
-        try:
-            with open(
-                "./data/moisture_sensor_control.json", "r"
-            ) as f:  # Read settings from json file if it exists
-                settings = json.load(f)
-
-        except IOError:  # If file does not exist return empty value
-            settings = {}  # Default settings. can be list, dictionary, etc.
-
-        settings["sensors"] = []
-        if os.path.isdir("./data/moisture_sensor_data"):
-            files = glob.glob("./data/moisture_sensor_data/*.current")
-            for file in files:
-                settings["sensors"].append(os.path.splitext(os.path.basename(file))[0])
-
-        print(settings)  # for testing
-
-        return template_render.moisture_sensor_control(settings)  # open settings page
+        # open settings page
+        return template_render.moisture_sensor_control(moisture_sensor_settings)
 
 
 class save_settings(ProtectedPage):
@@ -145,16 +123,13 @@ class save_settings(ProtectedPage):
 
     def GET(self):
         global moisture_sensor_settings
-        qdict = (
-            web.input()
-        )  # Dictionary of values returned as query string from settings page.
-        print(qdict)  # for testing
-        with open(
-            "./data/moisture_sensor_control.json", "w"
-        ) as f:  # Edit: change name of json file
-            json.dump(qdict, f)  # save to file
-            # json.dump(dict(sorted(qdict.items())), f)  # save to file
-            moisture_sensor_settings = qdict
+
+        # Dictionary of values returned as query string from settings page.
+        qdict = web.input()
+        moisture_sensor_settings = qdict
+
+        with open("./data/moisture_sensor_control.json", "w") as f:
+            json.dump(qdict, f)
 
         # Redisplay the plugin page
         raise web.seeother("/moisture_sensor_control")

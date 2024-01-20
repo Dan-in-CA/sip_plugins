@@ -10,12 +10,10 @@ from time import sleep
 # local module imports
 from blinker import signal
 import gv  # Get access to SIP's settings
-from sip import template_render  #  Needed for working with web.py templates
+from sip import template_render  # Needed for working with web.py templates
 from urls import urls  # Get access to SIP's URLs
 import web  # web.py framework
 from webpages import ProtectedPage  # Needed for security
-from webpages import showInFooter  # Enable plugin to display readings in UI footer
-from webpages import showOnTimeline  # Enable plugin to display station data on timeline
 
 import os
 import datetime
@@ -74,10 +72,11 @@ def mqtt_readerx(setting, stop_flag):
 def mqtt_reader(client, msg):
     """Sensor callback function for MQTT subscribe. Matches the topic
     back to the sensor in order to access additional
-    attributes. Parses the message payload for an integer value which
-    it then stores in the senors data file. If the optional path
-    attribute is set then jmsepath is used to parse an integer from
-    the payload.
+    attributes. Parses the message payload for an integer value. If
+    the optional path attribute is set then jmsepath is used to parse
+    an integer from the payload. This value is then converted to a
+    percent value based on the wetest/driest attributes and it then
+    stores it in the senors' data file.
 
     """
 
@@ -110,12 +109,7 @@ def mqtt_reader(client, msg):
             try:
                 reading = jmespath.search(path, reading)
 
-            except (
-                InvalidType,
-                InvalidValue,
-                UnknownFunction,
-                InvalidArity,
-            ) as e:
+            except Exception as e:
                 print("mqtt_reader found invalid jmespath expression: ", path, e)
                 return
 
@@ -126,6 +120,13 @@ def mqtt_reader(client, msg):
         #
         # Convert reading to %
         #
+        driest = setting["driest"]
+        wettest = setting["wettest"]
+        if driest < wettest:
+            reading = (reading - driest) / (wettest - driest) * 100
+        else:
+            reading = (driest - reading) / (driest - wettest) * 100
+        reading = round(reading)
 
         # TODO What about timezones/DST?
         ts = datetime.datetime.now()
@@ -269,13 +270,14 @@ class save_settings(ProtectedPage):
                         os.rename(old_file, new_file)
 
             else:
-                if updated:
-                    stop_mqtt_reader(old_sensor)
-                    create_mqtt_reader(new_setting)
-
                 # Do we really need this?
                 # if not os.path.isfile(old_file):
                 #     create_sensor_data_file(new_file)
+
+                if updated:
+                    # Case: Attributes updated
+                    stop_mqtt_reader(old_sensor)
+                    create_mqtt_reader(new_setting)
 
             if new_sensor != "":
                 # Sensor was not deleted so store the attributes
@@ -284,7 +286,6 @@ class save_settings(ProtectedPage):
             index += 1
 
         settings = new_settings
-
         with open("./data/moisture_sensor_data_mqtt.json", "w") as f:
             json.dump(settings, f)
 

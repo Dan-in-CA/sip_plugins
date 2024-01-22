@@ -6,6 +6,10 @@ The Moisture Sensor Data MQTT plugin subscribes to moisture sensor
 readings sent to an MQTT topic and makes the readings available to the
 Moisture Sensor Control plugin.
 
+## Dependencies
+
+This plugin requires the MQTT plugin to be installed.
+
 ## Configuring
 
 |Field |Description|

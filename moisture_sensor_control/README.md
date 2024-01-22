@@ -2,7 +2,7 @@
 
 ## Introduction
 
-The Moisture Control plugin can be configure to either
+The Moisture Sensor Control plugin can be configure to either
 
 - decrease the moisture level of plants by suppressing a schedule (program).
 - increase the moisture level of plants by triggering a run once program.
@@ -13,6 +13,10 @@ and is applied on the station level.
 The plugin only evaluates moisture sensor data but does not itself
 capture the data so it requires that a moisture sensor data plugin be enable that
 does so, for example the Moisture Sensor Data MQTT plugin.
+
+## Dependencies
+
+This plugin requires a moisture sensor data plugin to be installed, for example the Moisture Sensor Data MQTT plugin.
 
 ## For users
 

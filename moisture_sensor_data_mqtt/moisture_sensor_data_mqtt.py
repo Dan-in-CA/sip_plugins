@@ -80,7 +80,7 @@ def mqtt_reader(client, msg):
 
     """
 
-    print(f"reader {settings}")
+    # print(f"reader {settings}")
 
     # Get sensor from topic
     sensor = [
@@ -120,17 +120,26 @@ def mqtt_reader(client, msg):
         #
         # Convert reading to %
         #
-        driest = setting["driest"]
-        wettest = setting["wettest"]
-        if driest < wettest:
-            reading = (reading - driest) / (wettest - driest) * 100
-        else:
-            reading = (driest - reading) / (driest - wettest) * 100
-        reading = round(reading)
+        try:
+            driest = int(setting["driest"])
+            wettest = int(setting["wettest"])
+            if driest < wettest:
+                reading = (reading - driest) / (wettest - driest) * 100
+            else:
+                reading = (driest - reading) / (driest - wettest) * 100
+            reading = round(reading)
+        except (TypeError, ValueError) as e:
+            print(f"mqtt_reader wettest or dreiest not integers: {e}")
+            return
 
         # TODO What about timezones/DST?
         ts = datetime.datetime.now()
         ts.strftime("%Y-%m-%dT%H:%M:%S")
+
+        # Send msd signal
+        msd_signal.send(
+            "reading", data={"sensor": sensor, "timestamp": ts, "value": reading}
+        )
 
         # TODO Error handling
         if os.path.isfile(sensor_file):
@@ -254,18 +263,22 @@ class save_settings(ProtectedPage):
                 if old_sensor != "":
                     # Case: Delete sensor
                     stop_mqtt_reader(old_sensor)
+                    msd_signal.send("delete", data={"sensor": f'{"old_sensor"}'})
                     if os.path.isfile(old_file):
                         # missing_ok=True
                         os.remove(old_file)
+
             elif new_sensor != old_sensor:
                 if old_sensor == "":
                     # Case: New sensor
                     create_sensor_data_file(new_file)
+                    msd_signal.send("add", data={"sensor": f"{new_sensor}"})
                     create_mqtt_reader(new_setting)
                 else:
                     # Case: Rename sensor
                     stop_mqtt_reader(old_sensor)
                     create_mqtt_reader(new_setting)
+                    # TODO msd_signal.send("rename", data={...}
                     if os.path.isfile(old_file) and not os.path.isfile(new_file):
                         os.rename(old_file, new_file)
 
@@ -292,6 +305,8 @@ class save_settings(ProtectedPage):
         # Redisplay the plugin page
         raise web.seeother("/moisture_sensor_data_mqtt")
 
+
+msd_signal = signal("moisture_sensor_data")
 
 #  Run when plugin is loaded
 moisture_sensor_data_init()

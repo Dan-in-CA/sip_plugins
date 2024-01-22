@@ -27,9 +27,12 @@ $var page: moisture_sensor_data_mqtt
 
         <table class="optionList">
             <tr>
+                <th class="columnName">
+                  <div>$_(u'Enable')&nbsp;</div>
+                </th>
                 <th>Sensor</th>
                 <th class="columnName">
-                  <div>$_(u'Reading')</div>
+                  <div>$_(u'MQTT')</div>
                   <div>$_(u'topic')</div>
                 </th>
                 <th class="columnName">
@@ -45,14 +48,11 @@ $var page: moisture_sensor_data_mqtt
                   <div>$_(u'value')</div>
                 </th>
                 <th class="columnName">
-                  <div>$_(u'Enable')&nbsp;</div>
-                </th>
-                <th class="columnName">
                   <div>$_(u'Retention')</div>
                   <div>$_(u'period')</div>
                 </th>
             <tr>
-            ${settings}
+            $#{settings}
             $# Temporarily add key for empty table row
             $ settings['.'] = {}
             $ sid = 0
@@ -61,6 +61,10 @@ $var page: moisture_sensor_data_mqtt
             $for sensor in sensors:
             $ setting = settings[sensor]
             <tr>
+              <td>
+                <input type="checkbox" id="enable${sid}" name="enable${sid}"
+                       ${"checked" if "enable" in setting else ""}>
+              </td>
               <td>
                 <input type="hidden" size="20" maxlength="50" id="o_sensors${sid}" name="o_sensor${sid}"
                        value="${setting[u"sensor"] if u"sensor" in setting else u""}">
@@ -82,10 +86,6 @@ $var page: moisture_sensor_data_mqtt
               <td>
                 <input type="text" size="3" maxlength="4" id="wettest${sid}" name="wettest${sid}"
                        value="${setting[u"wettest" ] if u"wettest" in setting else u""}">
-              </td>
-              <td>
-                <input type="checkbox" id="enable${sid}" name="enable${sid}"
-                       ${"checked" if "enable" in setting else ""}>
               </td>
               <td>
                 <input type="text" size="3" maxlength="3" id="retention${sid}" name="retention${sid}"

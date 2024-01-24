@@ -19,6 +19,14 @@ $var page: moisture_sensor_data_mqtt
     });
 </script>
 
+<style>
+table, th, td {
+  border: 1px solid lightgray;
+  border-collapse: collapse;
+  padding: 5px;
+}
+</style>
+
 <div id="plugin">
     <div class="title">Moisture Sensor Data MQTT
     <button class="execute" id="docButton" type="button" >$_('Help')</button>
@@ -28,7 +36,7 @@ $var page: moisture_sensor_data_mqtt
         <table class="optionList">
             <tr>
                 <th class="columnName">
-                  <div>$_(u'Enable')&nbsp;</div>
+                  <div>$_(u'Enable')</div>
                 </th>
                 <th>Sensor</th>
                 <th class="columnName">
@@ -40,18 +48,18 @@ $var page: moisture_sensor_data_mqtt
                   <div>$_(u'path')</div>
                 </th>
                 <th class="columnName">
-                  <div>$_(u'Driest')&nbsp;</div>
+                  <div>$_(u'Driest')</div>
                   <div>$_(u'value')</div>
                 </th>
                 <th class="columnName">
-                  <div>$_(u'Wettest')&nbsp;</div>
+                  <div>$_(u'Wettest')</div>
                   <div>$_(u'value')</div>
                 </th>
                 <th class="columnName">
                   <div>$_(u'Retention')</div>
                   <div>$_(u'period')</div>
                 </th>
-            <tr>
+            </tr>
             $#{settings}
             $# Temporarily add key for empty table row
             $ settings['.'] = {}
@@ -69,27 +77,28 @@ $var page: moisture_sensor_data_mqtt
                 <input type="hidden" size="20" maxlength="50" id="o_sensors${sid}" name="o_sensor${sid}"
                        value="${setting[u"sensor"] if u"sensor" in setting else u""}">
                 <input type="text" size="20" maxlength="50" id="sensors${sid}" name="sensor${sid}"
-                       value="${setting[u"sensor"] if u"sensor" in setting else u""}"> &nbsp;
+                       value="${setting[u"sensor"] if u"sensor" in setting else u""}">
               </td>
               <td>
                 <input type="text" size="20" maxlength="50" id="topic${sid}" name="topic${sid}"
-                       value="${setting[u"topic" ] if u"topic" in setting else u""}"> &nbsp;
+                       value="${setting[u"topic"] if u"topic" in setting else u""}">
               </td>
               <td>
                 <input type="text" size="20" maxlength="50" id="path${sid}" name="path${sid}"
-                       value="${setting[u"path" ] if u"path" in setting else u""}"> &nbsp;
+                       value="${setting[u"path"] if u"path" in setting else u""}">
               </td>
               <td>
-                <input type="text" size="3" maxlength="4" id="driest${sid}" name="driest${sid}"
-                       value="${setting[u"driest" ] if u"driest" in setting else u""}"> &nbsp;
+                <input type="text" size="4" maxlength="4" id="driest${sid}" name="driest${sid}"
+                       value="${setting[u"driest"] if u"driest" in setting else u""}"> %
               </td>
               <td>
-                <input type="text" size="3" maxlength="4" id="wettest${sid}" name="wettest${sid}"
-                       value="${setting[u"wettest" ] if u"wettest" in setting else u""}">
+                <input type="text" size="4" maxlength="4" id="wettest${sid}" name="wettest${sid}"
+                       value="${setting[u"wettest"] if u"wettest" in setting else u""}"> %
               </td>
               <td>
                 <input type="text" size="3" maxlength="3" id="retention${sid}" name="retention${sid}"
-                       value="${setting[u"retention" ] if u"retention"  in setting else u""}"> days
+                       value="${setting[u"retention"] if u"retention"  in setting else u""}"
+                       onkeypress="if ( isNaN(String.fromCharCode(event.keyCode) )) return false;"> days
               </td>
 
             </tr>

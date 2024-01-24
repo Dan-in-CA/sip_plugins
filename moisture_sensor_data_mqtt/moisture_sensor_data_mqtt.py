@@ -47,6 +47,17 @@ ATTRIBUTES = [
 ]
 
 
+def validate_int_list(int_list):
+    validated_list = []
+    for index in range(len(int_list)):
+        try:
+            validated_list.append(int(int_list[index]))
+        except (TypeError, ValueError):
+            validated_list.append(None)
+
+    return tuple(validated_list)
+
+
 def create_sensor_data_file(new_file):
     with open(new_file, "w") as f:
         f.write("Timestamp,Reading\n")
@@ -99,7 +110,7 @@ def mqtt_reader(client, msg):
         # Parse the payload
         #
         try:
-            reading = json.loads(msg.payload)
+            raw_reading = json.loads(msg.payload)
         except ValueError as e:
             print("mqtt_reader could not decode payload: ", msg.payload, e)
             return
@@ -107,30 +118,31 @@ def mqtt_reader(client, msg):
         path = setting["path"]
         if path != "":
             try:
-                reading = jmespath.search(path, reading)
+                raw_reading = jmespath.search(path, raw_reading)
 
             except Exception as e:
                 print("mqtt_reader found invalid jmespath expression: ", path, e)
                 return
 
-        if not isinstance(reading, int):
-            print(f"mqtt_reader did not find integer: {reading}")
+        reading, driest, wettest = validate_int_list(
+            [raw_reading, setting["driest"], setting["wettest"]]
+        )
+
+        if reading is None:
+            print(f"mqtt_reader did not find integer: {raw_reading}")
+            return
+
+        if driest is None or wettest is None:
             return
 
         #
         # Convert reading to %
         #
-        try:
-            driest = int(setting["driest"])
-            wettest = int(setting["wettest"])
-            if driest < wettest:
-                reading = (reading - driest) / (wettest - driest) * 100
-            else:
-                reading = (driest - reading) / (driest - wettest) * 100
-            reading = round(reading)
-        except (TypeError, ValueError) as e:
-            print(f"mqtt_reader wettest or dreiest not integers: {e}")
-            return
+        if driest < wettest:
+            reading = (reading - driest) / (wettest - driest) * 100
+        else:
+            reading = (driest - reading) / (driest - wettest) * 100
+        reading = round(reading)
 
         # TODO What about timezones/DST?
         ts = datetime.datetime.now()
@@ -283,10 +295,6 @@ class save_settings(ProtectedPage):
                         os.rename(old_file, new_file)
 
             else:
-                # Do we really need this?
-                # if not os.path.isfile(old_file):
-                #     create_sensor_data_file(new_file)
-
                 if updated:
                     # Case: Attributes updated
                     stop_mqtt_reader(old_sensor)

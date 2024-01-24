@@ -22,9 +22,11 @@ This plugin requires the MQTT plugin to be installed.
 | Wettest value (required)| The raw wettest vale the sensor can send. |
 | Retention period(optional)| The amount of time readings will be saved. Not implemented yet.|
 
+If a required attribute is not set the plugin will quietly skip sensor.
+
 ## Sensor
 
-Sensor namess can be renamed by changing the name of the sensor
+Sensor names can be renamed by changing the name of the sensor
 field. Sensors can be deleted by blanking out the name in the sensor
 field.
 

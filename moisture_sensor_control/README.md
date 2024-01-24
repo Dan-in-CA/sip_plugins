@@ -23,7 +23,7 @@ This plugin requires a moisture sensor data plugin to be installed, for example 
 ### Sensor
 Select the moisture sensor that will be used to control the
 station. The sensors must be configured a moisture sensor data plugin
-that is used to capture the moisture sensor data (e.g.  Moisture
+that is used to capture the moisture sensor data (e.g. Moisture
 Sensor Data MQTT plugin).
 
 ### Decrease moisture
@@ -37,6 +37,8 @@ configuration will suppress the schedule.
 |Enable | Enable or disable the plugin's control of the station.|
 |Threshold (required) | Schedules will be suppressed so long as the last available sensor reading is above this value (0 - 100%).|
 |Stale reading (optional) | To protect against broken sensors the plugin will only interpret sensor reading younger than the  configured number of minutes.|
+
+If a required attribute is not set the plugin will quietly skip the station.
 
 ### Increase moisture
 
@@ -54,6 +56,7 @@ The increase moisture feature is only really useful in concurrent
 station mode as in serial mode the triggering of a run once program
 would stop all other programs on all stations.
 
+If a required attribute is not set the plugin will quietly skip the station.
 
 ## For developers
 

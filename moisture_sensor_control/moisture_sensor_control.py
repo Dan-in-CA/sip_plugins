@@ -32,11 +32,22 @@ moisture_sensor_settings = {}
 moisture_sensor_data = {}
 
 
+def validate_int(int_list):
+    validated_list = []
+    for index in range(len(int_list)):
+        try:
+            validated_list.append(int(int_list[index]))
+        except (TypeError, ValueError):
+            validated_list.append(None)
+
+    return tuple(validated_list)
+
+
 def trigger_run_once(sensor, value):
     for station_index in range(0, len(gv.srvals)):
-
         if gv.srvals[station_index] == 1:
-            # Program already running on station, no need to start one
+            # Program already running on station, no need to start
+            # another one
             continue
 
         mins_key = f"i_mins{station_index}"
@@ -46,31 +57,35 @@ def trigger_run_once(sensor, value):
 
         # If no program has been configured for the station or the
         # sensor has not be enabled take not action
-        if (mins_key not in moisture_sensor_settings) or (
+        if (threshold_key not in moisture_sensor_settings) or (
             enable_key not in moisture_sensor_settings
         ):
             continue
 
-        threshold = moisture_sensor_settings[threshold_key]
-        if threshold.isdigit():
-            threshold = int(threshold)
-        else:
-            continue
+        threshold, mins, secs = validate_int(
+            [
+                moisture_sensor_settings[threshold_key],
+                moisture_sensor_settings[mins_key],
+                moisture_sensor_settings[secs_key],
+            ]
+        )
+
+        if threshold is None or mins is None or secs is None:
+            # Required variable not set, do nothing
+            return
 
         if value < threshold:
-            mins = moisture_sensor_settings[mins_key]
-            secs = moisture_sensor_settings[secs_key]
             duration = 0
-            if mins.isdigit():
-                duration = int(mins) * 60
-            if secs.isdigit():
-                duration = duration + int(secs)
+            if mins is not None:
+                duration = mins * 60
+            if secs is not None:
+                duration = duration + secs
 
-        if duration > 0:
-            # Trigger run once on station
+            if duration > 0:
+                # Trigger run once on station
 
-            # TODO
-            pass
+                # TODO
+                pass
 
 
 def notify_moisture_sensor_data(action, **kw):
@@ -78,7 +93,6 @@ def notify_moisture_sensor_data(action, **kw):
     Functions defined here can be called by classes
     or run when the plugin is loaded. See comment at end.
     """
-    print(f"Data {kw['data']}")
     data = kw["data"]
 
     if action == "reading":
@@ -115,6 +129,7 @@ def notify_stations_scheduled(station, **kw):
         if gv.rs[station_index][0] != 0:
             sensor_key = f"sensor{station_index}"
             enable_key = f"enable{station_index}"
+            threshold_key = f"threshold{station_index}"
 
             # If no sensor has been configured for the station or the
             # sensor has not be enabled take not action
@@ -124,11 +139,9 @@ def notify_stations_scheduled(station, **kw):
                 continue
 
             sensor = moisture_sensor_settings[sensor_key]
+            threshold = validate_int([moisture_sensor_settings[threshold_key]])
 
-            threshold = moisture_sensor_settings[f"threshold{station_index}"]
-            if threshold.isdigit():
-                threshold = int(threshold)
-            else:
+            if sensor == "" or threshold is None:
                 continue
 
             #
@@ -152,6 +165,7 @@ scheduled_signal.connect(notify_stations_scheduled)
 def load_moisture_sensor_settings():
     global moisture_sensor_settings
     global moisture_sensor_data
+
     try:
         with open(
             "./data/moisture_sensor_control.json", "r"
@@ -214,6 +228,8 @@ class save_settings(ProtectedPage):
 
         # Dictionary of values returned as query string from settings page.
         qdict = web.input()
+        # print(qdict)
+
         moisture_sensor_settings = qdict
 
         with open("./data/moisture_sensor_control.json", "w") as f:

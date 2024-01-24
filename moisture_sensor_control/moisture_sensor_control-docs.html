@@ -1,4 +1,13 @@
-<!-- Auto generated with markdown2 README.md --extras tables > moisture_sensor_control-docs.html -->
+<!DOCTYPE HTML>
+<!-- Auto genwerated using markdown2 README.md --extras tables > moisture_sensor_control-docs.html -->
+<html>
+<!doctype html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset="utf-8">
+  <title>Moisture Sensor Control Docs</TITLE>
+</head>
+<body lang="en-us" bgcolor="#ffffff" dir="LTR" style="border: none; padding: 0in">
 <h1>Moisture Control Plugin</h1>
 
 <h2>Introduction</h2>
@@ -27,7 +36,7 @@ does so, for example the Moisture Sensor Data MQTT plugin.</p>
 
 <p>Select the moisture sensor that will be used to control the
 station. The sensors must be configured a moisture sensor data plugin
-that is used to capture the moisture sensor data (e.g.  Moisture
+that is used to capture the moisture sensor data (e.g. Moisture
 Sensor Data MQTT plugin).</p>
 
 <h3>Decrease moisture</h3>
@@ -58,6 +67,8 @@ configuration will suppress the schedule.</p>
 </tr>
 </tbody>
 </table>
+
+<p>If a required attribute is not set the plugin will quietly skip the station.</p>
 
 <h3>Increase moisture</h3>
 
@@ -92,6 +103,8 @@ configuration will trigger a run once program.</p>
 station mode as in serial mode the triggering of a run once program
 would stop all other programs on all stations.</p>
 
+<p>If a required attribute is not set the plugin will quietly skip the station.</p>
+
 <h2>For developers</h2>
 
 <p>On initialisation the plugin will list all the files in ./data/moisture_sensor_data and use the file names to initialse a list of available sensors. The last entry of each file will be read and used as the last sensor reading value. Sensors and readings can be add by signaling the plugin.</p>
@@ -116,3 +129,5 @@ would stop all other programs on all stations.</p>
 </tr>
 </tbody>
 </table>
+</body>
+</html>

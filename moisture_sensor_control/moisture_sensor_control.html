@@ -18,6 +18,7 @@ $var page: moisture_sensor_control
         });
     });
 </script>
+
 <style>
 table, th, td {
   border: 1px solid lightgray;
@@ -25,6 +26,7 @@ table, th, td {
   padding: 5px;
 }
 </style>
+
 <div id="plugin">
   <div class="title">Moisture Sensor Control
     <button class="execute" id="docButton" type="button" >$_('Help')</button>
@@ -66,7 +68,7 @@ table, th, td {
           <th class="columnName">
             <div>$_(u'Duration')</div>
           </th>
-        <tr>
+        </tr>
           $#{settings}
           $for bid in range(0,gv.sd['nbrd']):
             $for s in range(0,8):
@@ -90,13 +92,14 @@ table, th, td {
                          ${"checked" if "enable" + s_sid in settings else ""}>
                 </td>
                 <td>
-                  <input type="text" size="3" maxlength="3" id="threshold${sid}" name="threshold${sid}"
+                  <input type="number" min="0" max="100" id="threshold${sid}" name="threshold${sid}"
                          value="${settings[u"threshold" + s_sid] if u"threshold" + s_sid in settings else u""}"
-                         onkeypress="if ( isNaN(String.fromCharCode(event.keyCode) )) return false;"> %
+                         onkeypress="if (isNaN(String.fromCharCode(event.keyCode))) return false;"> %
                 </td>
                 <td>
-                  <input type="text" size="5" maxlength="5" id="stale${sid}" name="stale${sid}"
-                         value="${settings[u"stale" + s_sid] if u"stale" + s_sid in settings else u""}"> mins
+                  <input type="number" min="1" max="9999" id="stale${sid}" name="stale${sid}"
+                         value="${settings[u"stale" + s_sid] if u"stale" + s_sid in settings else u""}"
+                         onkeypress="if (isNaN(String.fromCharCode(event.keyCode))) return false;"> mins
                 </td>
                 <!-- Increase -->
                 <td>
@@ -104,15 +107,17 @@ table, th, td {
                          ${"checked" if "i_enable" + s_sid in settings else ""}>
                 </td>
                 <td>
-                  <input type="text" size="3" maxlength="3" id="i_threshold${sid}" name="i_threshold${sid}"
+                  <input type="number" min="0" max="100" id="i_threshold${sid}" name="i_threshold${sid}"
                          value="${settings[u"i_threshold" + s_sid] if u"i_threshold" + s_sid in settings else u""}"
-                         onkeypress="if ( isNaN(String.fromCharCode(event.keyCode) )) return false;"> %
+                         onkeypress="if (isNaN(String.fromCharCode(event.keyCode))) return false;"> %
                 </td>
-                <td class=timeInput>
+                <td>
                   <input type="number" min="0" max="999" id="i_mins${sid}" name="i_mins${sid}"
-                         value="${settings[u"i_mins" + s_sid] if u"i_mins" + s_sid in settings else u""}">:
+                         value="${settings[u"i_mins" + s_sid] if u"i_mins" + s_sid in settings else u""}"
+                         onkeypress="if (isNaN(String.fromCharCode(event.keyCode))) return false;"> :
                   <input type="number" min="0" max="60" id="i_secs${sid}" name="i_secs${sid}"
-                         value="${settings[u"i_secs" + s_sid] if u"i_secs" + s_sid in settings else u""}">(mm:ss)
+                         value="${settings[u"i_secs" + s_sid] if u"i_secs" + s_sid in settings else u""}"
+                         onkeypress="if (isNaN(String.fromCharCode(event.keyCode))) return false;"> (mm:ss)
                 </td>
               </tr>
       </table>

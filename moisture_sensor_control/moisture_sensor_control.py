@@ -48,6 +48,10 @@ def validate_int(int_list):
 
 
 def trigger_run_once(sensor, value):
+    """Processes a new reading. Checks if all the required fields are
+    set, checks to see if the pause and threshold values apply and if
+    required triggers an run once for the set time.
+    """
     for station_index in range(0, len(gv.srvals)):
         if gv.srvals[station_index] == 1:
             # Program already running on station, no need to start
@@ -79,8 +83,7 @@ def trigger_run_once(sensor, value):
         if threshold is None or (mins is None and secs is None):
             # Required variable not set, do nothing
             return
-        print(station_last_run)
-        print(pause)
+
         if (
             pause is not None
             and station_index in station_last_run
@@ -101,9 +104,9 @@ def trigger_run_once(sensor, value):
 
 
 def notify_moisture_sensor_data(action, **kw):
-    """
-    Functions defined here can be called by classes
-    or run when the plugin is loaded. See comment at end.
+    """Handles signals (reading, add, rename, delete) from a Moisture
+    Sensor Data plugin and triggers the appropriate action.
+
     """
     data = kw["data"]
 
@@ -130,6 +133,7 @@ def notify_moisture_sensor_data(action, **kw):
             if re.match(r"sensor\d+", k) and v == data["sensor"]:
                 moisture_sensor_settings[k] = ""
         del moisture_sensor_data[data["sensor"]]
+
     else:
         print(f"notify_moisture_sensor_data unknown action {action} {data}")
 
@@ -139,9 +143,9 @@ msd_signal.connect(notify_moisture_sensor_data)
 
 
 def notify_station_completed(station, **kw):
-    print(f"\n\n\nStation {station} run completd")
-    print(gv.sd)
-    print(gv.rs)
+    """Capture the last station run end time. Required for the pause
+    feature.
+    """
     for station_index in range(0, len(gv.rs)):
         if gv.rs[station_index][0] != 0:
             station_last_run[station_index] = gv.rs[station_index][1]
@@ -155,15 +159,6 @@ def notify_stations_scheduled(station, **kw):
     """Suppress a schedule from running if the station has an active
     (enabled) moisture sensor assigned and the current moisture
     reading from the sensor is above the threshold value."""
-
-    print(f"Station {station} run scheduled")
-    print(f"srvals {gv.srvals}")
-    print(f"ps {gv.ps}")
-    print(f"pd {gv.pd}")
-    print(f"pon {gv.pon}")
-    print(f"rs before {gv.rs}")
-    print(json.dumps(moisture_sensor_settings, sort_keys=True))
-    print(moisture_sensor_data)
 
     for station_index in range(0, len(gv.rs)):
         if gv.rs[station_index][0] != 0:
@@ -201,17 +196,13 @@ def notify_stations_scheduled(station, **kw):
                 ts = moisture_sensor_data[sensor]["timestamp"]
                 ts = datetime.datetime.strptime(ts, "%Y-%m-%d %H:%M:%S")
 
-                print(f"stale value{stale}")
                 if stale is not None and ts + datetime.timedelta(
                     minutes=stale
                 ) < datetime.datetime.fromtimestamp(gv.now):
-                    print(f"notify_stations_scheduled stale value {ts} {value}")
                     continue
 
                 # Suppress schedule
                 gv.rs[station_index] = [0, 0, 0, 0]
-
-    print(f"rs after {gv.rs}")
 
 
 scheduled_signal = signal("stations_scheduled")
@@ -254,9 +245,6 @@ def load_moisture_sensor_settings():
                         "value": int(current_reading[1]),
                     }
 
-    print(moisture_sensor_settings)  # for testing
-    print(moisture_sensor_data)  # for testing
-
 
 class get_settings(ProtectedPage):
     """
@@ -284,7 +272,6 @@ class save_settings(ProtectedPage):
 
         # Dictionary of values returned as query string from settings page.
         qdict = web.input()
-        # print(qdict)
 
         moisture_sensor_settings = qdict
 

@@ -93,13 +93,10 @@ def mqtt_reader(client, msg):
 
     """
 
-    # print(f"reader {settings}")
-
     # Get sensor from topic
     sensor = [
         k for k, v in settings.items() if "topic" in v and v["topic"] == msg.topic
     ]
-    print(sensor)
 
     if len(sensor) > 0:
         # Could be that one topic is mapped to multiple sensors.
@@ -134,7 +131,6 @@ def mqtt_reader(client, msg):
             print(f"mqtt_reader did not find integer: {raw_reading}")
             return
 
-        print(last_reading)
         if driest is None or wettest is None:
             return
 
@@ -173,7 +169,6 @@ def create_mqtt_readerx(setting):
     reader.start()
 
     mqtt_readers[setting["sensor"]] = {"reader": reader, "stop_flag": stop_flag}
-    print(f"reader created for {setting['sensor']}")
 
 
 def create_mqtt_reader(setting):
@@ -185,8 +180,6 @@ def stop_mqtt_readerx(sensor):
     if sensor in mqtt_readers:
         stop_flag = mqtt_readers[sensor]["stop_flag"]
         stop_flag.set()
-
-    print(f"reader stopped for {sensor}")
 
 
 def stop_mqtt_reader(setting):
@@ -250,13 +243,10 @@ class save_settings(ProtectedPage):
 
         updated = old_setting == new_setting
 
-        print(f"Gather attrs {index} {updated} {old_setting} {new_setting}")
-
         return updated, new_setting
 
     def GET(self):
         global settings
-        print(settings)
 
         qdict = web.input()
         new_settings = {}

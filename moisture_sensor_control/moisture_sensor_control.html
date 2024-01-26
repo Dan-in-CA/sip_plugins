@@ -43,7 +43,7 @@ table, th, td {
           <th colspan="3" >
             <div>$_(u'Decrease moisture')</div>
           </th>
-          <th colspan="3">
+          <th colspan="4">
             <div>$_(u'Increase moisture')</div>
           </th>
         </tr>
@@ -67,6 +67,9 @@ table, th, td {
           </th>
           <th class="columnName">
             <div>$_(u'Duration')</div>
+          </th>
+          <th class="columnName">
+            <div>$_(u'Pause')</div>
           </th>
         </tr>
           $#{settings}
@@ -118,6 +121,11 @@ table, th, td {
                   <input type="number" min="0" max="60" id="i_secs${sid}" name="i_secs${sid}"
                          value="${settings[u"i_secs" + s_sid] if u"i_secs" + s_sid in settings else u""}"
                          onkeypress="if (isNaN(String.fromCharCode(event.keyCode))) return false;"> (mm:ss)
+                </td>
+                <td>
+                  <input type="number" min="1" max="9999" id="i_pause${sid}" name="i_pause${sid}"
+                         value="${settings[u"i_pause" + s_sid] if u"i_pause" + s_sid in settings else u""}"
+                         onkeypress="if (isNaN(String.fromCharCode(event.keyCode))) return false;"> mins
                 </td>
               </tr>
       </table>

@@ -14,6 +14,7 @@ from webpages import ProtectedPage  # Needed for security
 from webpages import showInFooter  # Enable plugin to display readings in UI footer
 from webpages import showOnTimeline  # Enable plugin to display station data on timeline
 
+from helpers import run_once
 import datetime
 import os
 import re
@@ -32,6 +33,7 @@ gv.plugin_menu.append([("Moisture Sensor Control"), "/moisture_sensor_control"])
 
 moisture_sensor_settings = {}
 moisture_sensor_data = {}
+station_last_run = {}
 
 
 def validate_int(int_list):
@@ -56,25 +58,35 @@ def trigger_run_once(sensor, value):
         secs_key = f"i_secs{station_index}"
         enable_key = f"i_enable{station_index}"
         threshold_key = f"i_threshold{station_index}"
+        pause_key = f"i_pause{station_index}"
 
-        # If no program has been configured for the station or the
-        # sensor has not be enabled take not action
+        # If no threshold has been configured for the station or the
+        # sensor has not been enabled take not action
         if (threshold_key not in moisture_sensor_settings) or (
             enable_key not in moisture_sensor_settings
         ):
             continue
 
-        threshold, mins, secs = validate_int(
+        threshold, mins, secs, pause = validate_int(
             [
                 moisture_sensor_settings[threshold_key],
                 moisture_sensor_settings[mins_key],
                 moisture_sensor_settings[secs_key],
+                moisture_sensor_settings[pause_key],
             ]
         )
 
-        if threshold is None or mins is None or secs is None:
+        if threshold is None or (mins is None and secs is None):
             # Required variable not set, do nothing
             return
+        print(station_last_run)
+        print(pause)
+        if (
+            pause is not None
+            and station_index in station_last_run
+            and station_last_run[station_index] + (pause * 60) > gv.now
+        ):
+            continue
 
         if value < threshold:
             duration = 0
@@ -84,10 +96,8 @@ def trigger_run_once(sensor, value):
                 duration = duration + secs
 
             if duration > 0:
-                # Trigger run once on station
-
-                # TODO
-                pass
+                gv.rovals[station_index] = duration
+                run_once()
 
 
 def notify_moisture_sensor_data(action, **kw):
@@ -128,12 +138,25 @@ msd_signal = signal("moisture_sensor_data")
 msd_signal.connect(notify_moisture_sensor_data)
 
 
+def notify_station_completed(station, **kw):
+    print(f"\n\n\nStation {station} run completd")
+    print(gv.sd)
+    print(gv.rs)
+    for station_index in range(0, len(gv.rs)):
+        if gv.rs[station_index][0] != 0:
+            station_last_run[station_index] = gv.rs[station_index][1]
+
+
+completed_signal = signal("station_completed")
+completed_signal.connect(notify_station_completed)
+
+
 def notify_stations_scheduled(station, **kw):
     """Suppress a schedule from running if the station has an active
     (enabled) moisture sensor assigned and the current moisture
     reading from the sensor is above the threshold value."""
 
-    print("Station {} run started".format(station))
+    print(f"Station {station} run scheduled")
     print(f"srvals {gv.srvals}")
     print(f"ps {gv.ps}")
     print(f"pd {gv.pd}")
@@ -142,7 +165,7 @@ def notify_stations_scheduled(station, **kw):
     print(json.dumps(moisture_sensor_settings, sort_keys=True))
     print(moisture_sensor_data)
 
-    for station_index in range(0, 1):  # range(0, len(gv.rs)):
+    for station_index in range(0, len(gv.rs)):
         if gv.rs[station_index][0] != 0:
             sensor_key = f"sensor{station_index}"
             enable_key = f"enable{station_index}"
@@ -179,10 +202,9 @@ def notify_stations_scheduled(station, **kw):
                 ts = datetime.datetime.strptime(ts, "%Y-%m-%d %H:%M:%S")
 
                 print(f"stale value{stale}")
-                if (stale is not None) and (
-                    ts + datetime.timedelta(minutes=stale)
-                    < datetime.datetime.fromtimestamp(gv.now)
-                ):
+                if stale is not None and ts + datetime.timedelta(
+                    minutes=stale
+                ) < datetime.datetime.fromtimestamp(gv.now):
                     print(f"notify_stations_scheduled stale value {ts} {value}")
                     continue
 

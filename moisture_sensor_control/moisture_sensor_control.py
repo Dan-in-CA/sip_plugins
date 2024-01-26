@@ -14,6 +14,7 @@ from webpages import ProtectedPage  # Needed for security
 from webpages import showInFooter  # Enable plugin to display readings in UI footer
 from webpages import showOnTimeline  # Enable plugin to display station data on timeline
 
+import datetime
 import os
 
 # Add new URLs to access classes in this plugin.
@@ -124,12 +125,14 @@ def notify_stations_scheduled(station, **kw):
     print(f"pon {gv.pon}")
     print(f"rs before {gv.rs}")
     print(json.dumps(moisture_sensor_settings, sort_keys=True))
+    print(moisture_sensor_data)
 
-    for station_index in range(0, len(gv.rs)):
+    for station_index in range(0, 1):  # range(0, len(gv.rs)):
         if gv.rs[station_index][0] != 0:
             sensor_key = f"sensor{station_index}"
             enable_key = f"enable{station_index}"
             threshold_key = f"threshold{station_index}"
+            stale_key = f"stale{station_index}"
 
             # If no sensor has been configured for the station or the
             # sensor has not be enabled take not action
@@ -139,19 +142,35 @@ def notify_stations_scheduled(station, **kw):
                 continue
 
             sensor = moisture_sensor_settings[sensor_key]
-            threshold = validate_int([moisture_sensor_settings[threshold_key]])
+            threshold, stale = validate_int(
+                [
+                    moisture_sensor_settings[threshold_key],
+                    moisture_sensor_settings[stale_key],
+                ]
+            )
 
             if sensor == "" or threshold is None:
+                # Required fields not present silently skip station
                 continue
 
-            #
-            # TODO Check for stale value
-            #
+            if "value" not in moisture_sensor_data[sensor]:
+                # Sensor has not sent any values yet
+                continue
 
-            if (
-                "value" in moisture_sensor_data[sensor]
-                and moisture_sensor_data[sensor]["value"] > threshold
-            ):
+            value = moisture_sensor_data[sensor]["value"]
+            if value > threshold:
+                # Check for stale value
+                ts = moisture_sensor_data[sensor]["timestamp"]
+                ts = datetime.datetime.strptime(ts, "%Y-%m-%d %H:%M:%S")
+
+                print(f"stale value{stale}")
+                if (stale is not None) and (
+                    ts + datetime.timedelta(minutes=stale)
+                    < datetime.datetime.fromtimestamp(gv.now)
+                ):
+                    print(f"notify_stations_scheduled stale value {ts} {value}")
+                    continue
+
                 # Suppress schedule
                 gv.rs[station_index] = [0, 0, 0, 0]
 

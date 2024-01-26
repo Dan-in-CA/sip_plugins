@@ -15,10 +15,10 @@ from urls import urls  # Get access to SIP's URLs
 import web  # web.py framework
 from webpages import ProtectedPage  # Needed for security
 
-import os
 import datetime
-from plugins import mqtt
 import jmespath
+import os
+from plugins import mqtt
 
 # Add new URLs to access classes in this plugin.
 # fmt: off
@@ -71,7 +71,7 @@ def mqtt_readerx(setting, stop_flag):
         if os.path.isfile(sensor_file):
             with open(sensor_file, "a") as f:
                 ts = datetime.datetime.now()
-                ts.strftime("%Y-%m-%dT%H:%M:%S")
+                ts.strftime("%Y-%m-%d %H:%M:%S")
                 f.write(f"{ts},{setting}\n")
 
         else:
@@ -144,9 +144,7 @@ def mqtt_reader(client, msg):
             reading = (driest - reading) / (driest - wettest) * 100
         reading = round(reading)
 
-        # TODO What about timezones/DST?
-        ts = datetime.datetime.now()
-        ts.strftime("%Y-%m-%dT%H:%M:%S")
+        ts = datetime.datetime.fromtimestamp(gv.now).strftime("%Y-%m-%d %H:%M:%S")
 
         # Send msd signal
         msd_signal.send(

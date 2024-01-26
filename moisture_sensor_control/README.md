@@ -36,7 +36,7 @@ configuration will suppress the schedule.
 | :--- | :--- |
 |Enable | Enable or disable the plugin's control of the station.|
 |Threshold (required) | Schedules will be suppressed so long as the last available sensor reading is above this value (0 - 100%).|
-|Stale reading (optional) | To protect against broken sensors the plugin will only interpret sensor reading younger than the  configured number of minutes.|
+|Stale reading (optional) | To protect against broken sensors the plugin will only interpret sensor reading younger than the configured number of minutes.|
 
 If a required attribute is not set the plugin will quietly skip the station.
 

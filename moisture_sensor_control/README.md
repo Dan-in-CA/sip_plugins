@@ -51,6 +51,7 @@ configuration will trigger a run once program.
 |Enable| Enable or disable the plugin's control of the station.|
 |Threshold (required)| A run once program will be started if the sensor reading is below the configured value (0 - 100%).|
 |Duration (required)| The duration of the run once program.|
+|Pause (optional)| The duration between repeated run of the run once program in order to give moisture sensors time to adjust.|
 
 The increase moisture feature is only really useful in concurrent
 station mode as in serial mode the triggering of a run once program

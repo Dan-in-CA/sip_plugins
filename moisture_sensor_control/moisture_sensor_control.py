@@ -16,6 +16,7 @@ from webpages import showOnTimeline  # Enable plugin to display station data on 
 
 import datetime
 import os
+import re
 
 # Add new URLs to access classes in this plugin.
 # fmt: off
@@ -103,8 +104,22 @@ def notify_moisture_sensor_data(action, **kw):
         }
 
         trigger_run_once(data["sensor"], data["value"])
+
     elif action == "add":
         moisture_sensor_data[data["sensor"]] = {}
+
+    elif action == "rename":
+        for k, v in moisture_sensor_settings.items():
+            if re.match(r"sensor\d+", k) and v == data["old_sensor"]:
+                moisture_sensor_settings[k] = data["sensor"]
+        moisture_sensor_data[data["sensor"]] = moisture_sensor_data[data["old_sensor"]]
+        del moisture_sensor_data[data["old_sensor"]]
+
+    elif action == "delete":
+        for k, v in moisture_sensor_settings.items():
+            if re.match(r"sensor\d+", k) and v == data["sensor"]:
+                moisture_sensor_settings[k] = ""
+        del moisture_sensor_data[data["sensor"]]
     else:
         print(f"notify_moisture_sensor_data unknown action {action} {data}")
 

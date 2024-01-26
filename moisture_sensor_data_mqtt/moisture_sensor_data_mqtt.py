@@ -273,7 +273,7 @@ class save_settings(ProtectedPage):
                 if old_sensor != "":
                     # Case: Delete sensor
                     stop_mqtt_reader(old_sensor)
-                    msd_signal.send("delete", data={"sensor": f'{"old_sensor"}'})
+                    msd_signal.send("delete", data={"sensor": f"{old_sensor}"})
                     if os.path.isfile(old_file):
                         # missing_ok=True
                         os.remove(old_file)
@@ -288,7 +288,10 @@ class save_settings(ProtectedPage):
                     # Case: Rename sensor
                     stop_mqtt_reader(old_sensor)
                     create_mqtt_reader(new_setting)
-                    # TODO msd_signal.send("rename", data={...}
+                    msd_signal.send(
+                        "rename",
+                        data={"sensor": f"{new_sensor}", "old_sensor": f"{old_sensor}"},
+                    )
                     if os.path.isfile(old_file) and not os.path.isfile(new_file):
                         os.rename(old_file, new_file)
 

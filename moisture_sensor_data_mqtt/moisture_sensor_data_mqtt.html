@@ -48,6 +48,10 @@ table, th, td {
                   <div>$_(u'path')</div>
                 </th>
                 <th class="columnName">
+                  <div>$_(u'Reading')</div>
+                  <div>$_(u'Limit')</div>
+                </th>
+                <th class="columnName">
                   <div>$_(u'Driest')</div>
                   <div>$_(u'value')</div>
                 </th>
@@ -86,6 +90,11 @@ table, th, td {
               <td>
                 <input type="text" size="20" maxlength="50" id="path${sid}" name="path${sid}"
                        value="${setting[u"path"] if u"path" in setting else u""}">
+              </td>
+              <td>
+                <input type="text" size="3" maxlength="3" id="limit${sid}" name="limit${sid}"
+                       value="${setting[u"limit"] if u"limit"  in setting else u""}"
+                       onkeypress="if ( isNaN(String.fromCharCode(event.keyCode) )) return false;"> mins
               </td>
               <td>
                 <input type="text" size="4" maxlength="4" id="driest${sid}" name="driest${sid}"

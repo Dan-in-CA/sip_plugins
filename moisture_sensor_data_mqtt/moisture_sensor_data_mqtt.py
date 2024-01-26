@@ -33,6 +33,7 @@ urls.extend([
 gv.plugin_menu.append([_("Moisture Sensor Data MQTT"), "/moisture_sensor_data_mqtt"])
 
 settings = {}
+last_reading = {}
 mqtt_readers = {}
 SENSOR_DATA_PATH = "./data/moisture_sensor_data"
 ATTRIBUTES = [
@@ -40,6 +41,7 @@ ATTRIBUTES = [
     "sensor",
     "topic",
     "path",
+    "limit",
     "driest",
     "wettest",
     "enable",
@@ -124,16 +126,25 @@ def mqtt_reader(client, msg):
                 print("mqtt_reader found invalid jmespath expression: ", path, e)
                 return
 
-        reading, driest, wettest = validate_int_list(
-            [raw_reading, setting["driest"], setting["wettest"]]
+        reading, limit, driest, wettest = validate_int_list(
+            [raw_reading, setting["limit"], setting["driest"], setting["wettest"]]
         )
 
         if reading is None:
             print(f"mqtt_reader did not find integer: {raw_reading}")
             return
 
+        print(last_reading)
         if driest is None or wettest is None:
             return
+
+        ts = datetime.datetime.fromtimestamp(gv.now)
+        if limit is not None and sensor in last_reading:
+            if last_reading[sensor] + datetime.timedelta(minutes=limit) > ts:
+                return
+
+        last_reading[sensor] = ts
+        ts_fmt = datetime.datetime.fromtimestamp(gv.now).strftime("%Y-%m-%d %H:%M:%S")
 
         #
         # Convert reading to %
@@ -144,17 +155,15 @@ def mqtt_reader(client, msg):
             reading = (driest - reading) / (driest - wettest) * 100
         reading = round(reading)
 
-        ts = datetime.datetime.fromtimestamp(gv.now).strftime("%Y-%m-%d %H:%M:%S")
-
         # Send msd signal
         msd_signal.send(
-            "reading", data={"sensor": sensor, "timestamp": ts, "value": reading}
+            "reading", data={"sensor": sensor, "timestamp": ts_fmt, "value": reading}
         )
 
         # TODO Error handling
         if os.path.isfile(sensor_file):
             with open(sensor_file, "a") as f:
-                f.write(f"{ts},{reading}\n")
+                f.write(f"{ts_fmt},{reading}\n")
 
 
 def create_mqtt_readerx(setting):

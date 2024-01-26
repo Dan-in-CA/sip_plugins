@@ -18,6 +18,7 @@ This plugin requires the MQTT plugin to be installed.
 | Sensor (required)| The internal name of the sensor.|
 | MQTT topic (required)| The MQTT topic that the sensor sends its data to.|
 | Reading path (optional)| The JSON path of the reading value if required. See below |
+| Reading limit (optional)| Limit the processing of readings to one per entered time period |
 | Driest value (required)| The raw driest value the sensor can send. |
 | Wettest value (required)| The raw wettest vale the sensor can send. |
 | Retention period(optional)| The amount of time readings will be saved. Not implemented yet.|
@@ -36,8 +37,8 @@ When sensor reading value is published as a JSON message as opposed to
 a simple value specify the JSON path of the reading value using a
 [jmespath expression](https://jmespath.org/tutorial.html).
 
-For example if the message is {"value1", "57", "battery": 27}, then
-the reading path would need to be set to value1.
+For example if the message is {"reading", "57", "battery": 27}, then
+the Reading path would need to be set to "reading" (without the double quotes).
 
 ## Driest / wettest value
 

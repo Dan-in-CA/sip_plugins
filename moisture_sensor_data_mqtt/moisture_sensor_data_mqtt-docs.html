@@ -47,6 +47,10 @@ Moisture Sensor Control plugin.</p>
   <td style="text-align:left;">The JSON path of the reading value if required. See below</td>
 </tr>
 <tr>
+  <td style="text-align:left;">Reading limit (optional)</td>
+  <td style="text-align:left;">Limit the processing of readings to one per entered time period</td>
+</tr>
+<tr>
   <td style="text-align:left;">Driest value (required)</td>
   <td style="text-align:left;">The raw driest value the sensor can send.</td>
 </tr>
@@ -75,8 +79,8 @@ field.</p>
 a simple value specify the JSON path of the reading value using a
 <a href="https://jmespath.org/tutorial.html">jmespath expression</a>.</p>
 
-<p>For example if the message is {"value1", "57", "battery": 27}, then
-the reading path would need to be set to value1.</p>
+<p>For example if the message is {"reading", "57", "battery": 27}, then
+the Reading path would need to be set to "reading" (without the double quotes).</p>
 
 <h2>Driest / wettest value</h2>
 

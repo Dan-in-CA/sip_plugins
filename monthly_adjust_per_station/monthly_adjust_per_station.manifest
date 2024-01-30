@@ -1,0 +1,9 @@
+A bare bones plugin designed to be used as a starting point for writing plugins.
+
+##### List all plugin files below preceded by a blank line [file_name.ext path] relative to SIP directory #####
+
+monthly_adjust_per_station.py plugins
+monthly_adjust_per_station.html templates
+monthly_adjust_per_station-docs.html static/docs/plugins
+monthly_adjust_per_station.json data (generated)
+monthly_adjust_per_station.manifest plugins/manifests

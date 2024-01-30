@@ -1,0 +1,93 @@
+$def with(settings)
+
+$var title: $_('Monthly Adjust per Station')
+$var page: monthly_adjust_per_station
+<script>
+    // Initialize behaviors
+    jQuery(document).ready(function(){
+
+        jQuery("#cSubmit").click(function() {
+            jQuery("#pluginForm").submit();
+        });
+        jQuery("button#cCancel").click(function(){
+            window.location="/";
+        });
+
+        jQuery("button#docButton").click(function(){
+            window.open("static/docs/plugins/monthly_adjust_per_station-docs.html", "_blank");
+        });
+
+        function pretty() {
+            alert("ready");
+            jQuery("table#st_mon tr").each(function(rowIndex) {
+                $$(this).find("td").each(function(cellIndex) {
+                    console.log("Row " + rowIndex + ", cell " + cellIndex + ": " + $$(this).find("input[type=number]").val());
+                });
+            }); }
+        // pretty();
+    });
+</script>
+
+<style>
+table, th, td {
+  border: 1px solid lightgray;
+  border-collapse: collapse;
+  padding: 5px;
+}
+
+input[type='number']{
+    width: 2.8em;
+}
+</style>
+
+<div id="plugin">
+  <div class="title">Monthly Adjust per Station
+    <button class="execute" id="docButton" type="button" >$_('Help')</button>
+  </div>
+
+
+  <form id="pluginForm" action="/monthly_adjust_per_station-save" method="get">
+    <p>
+      Default adjustment:
+      <input type="number" min="0" id="default" name="default"
+           value="${settings[u"default"] if u"default" in settings and settings[u"default"] != u"" else u"100"}"
+           onkeypress="if (isNaN(String.fromCharCode(event.keyCode))) return false;"> %
+    </p>
+    </br>
+
+    <table id="st_mon" class="st_mon" class="optionList">
+      <tr>
+        <th class="columnName">
+          <div>$_(u'Station')</div>
+        </th>
+        $for heading in ['Jan', 'Feb', 'Mar', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']:
+          <th class="columnName">
+            <div>$heading</div>
+          </th>
+
+      </tr>
+      $#{settings}
+      $for bid in range(0,gv.sd['nbrd']):
+        $for s in range(0,8):
+          $ sid = (bid * 8) + s;
+          $ s_sid = str(sid);
+          <tr>
+            <td class="stationNumber">${gv.snames[sid]}</td>
+            $for mon in range(1,13):
+            $ s_mon = str(mon)
+            <td
+              bgcolor="${settings[u"c_st_mon_" + s_sid + u"_" + s_mon] if u"c_st_mon_" + s_sid + u"_" + s_mon in settings else u""}">
+              <input type="number" min="0" id="st_mon_${sid}_${mon}" name="st_mon_${sid}_${mon}"
+                     value="${settings[u"st_mon_" + s_sid + u"_" + s_mon] if u"st_mon_" + s_sid + u"_" + s_mon in settings else u""}"
+                     onkeypress="if (isNaN(String.fromCharCode(event.keyCode))) return false;"> %
+            </td>
+          </tr>
+    </table>
+
+    </form>
+
+<div class="controls">
+    <button id="cSubmit" class="submit"><b>$_('Submit')</b></button>
+    <button id="cCancel" class="cancel danger">$_('Cancel')</button>
+</div>
+</div>

@@ -3,133 +3,148 @@ $def with(settings)
 $var title: $_('SIP Moisture Sensor Control')
 $var page: moisture_sensor_control
 <script>
-    // Initialize behaviors
-    jQuery(document).ready(function(){
+  // Initialize behaviors
+  jQuery(document).ready(function(){
 
-        jQuery("#cSubmit").click(function() {
-            jQuery("#pluginForm").submit();
-        });
-        jQuery("button#cCancel").click(function(){
-            window.location="/";
-        });
+      jQuery("#cSubmit").click(function() {
+          jQuery("#pluginForm").submit();
+      });
+      jQuery("button#cCancel").click(function(){
+          window.location="/";
+      });
 
-        jQuery("button#docButton").click(function(){
-            window.open("static/docs/plugins/moisture_sensor_control-docs.html", "_blank");
-        });
-    });
+      jQuery("button#docButton").click(function(){
+          window.open("static/docs/plugins/moisture_sensor_control-docs.html", "_blank");
+      });
+  });
 </script>
 
 <style>
-table, th, td {
-  border: 1px solid lightgray;
-  border-collapse: collapse;
-  padding: 5px;
-}
+  td, input[type="checkbox"]  {
+      text-align: center;
+      vertical-align: middle;
+  }
+
+  td, input[type="number"]  {
+      white-space: nowrap;
+  }
+
+  table, th, td {
+      border: 1px solid lightgray;
+      border-collapse: collapse;
+      padding: 5px;
+  }
+
+  input[type='number']{
+      width: 2.77em;
+  }
+
 </style>
 
 <div id="plugin">
   <div class="title">Moisture Sensor Control
     <button class="execute" id="docButton" type="button" >$_('Help')</button>
-    </div>
+  </div>
+  </br>
 
-    <form id="pluginForm" action="/moisture_sensor_control-save" method="get">
-      <table class="optionList">
-        <tr>
-          <th rowspan="2">
-          </th>
-          <th rowspan="2" class="columnName">
-            <div>$_(u'Sensor')</div>
-          </th>
-          <th colspan="3" >
-            <div>$_(u'Decrease moisture')</div>
-          </th>
-          <th colspan="4">
-            <div>$_(u'Increase moisture')</div>
-          </th>
-        </tr>
-        <tr>
-          <!-- Decrease -->
-          <th class="columnName">
-            <div>$_(u'Enable')</div>
-          </th>
-          <th class="columnName">
-            <div>$_(u'Threshold')</div>
-          </th>
-          <th class="columnName">
-            <div>$_(u'Stale Reading')</div>
-          </th>
-          <!-- Increase -->
-          <th class="columnName">
-            <div>$_(u'Enable')</div>
-          </th>
-          <th class="columnName">
-            <div>$_(u'Threshold')</div>
-          </th>
-          <th class="columnName">
-            <div>$_(u'Duration')</div>
-          </th>
-          <th class="columnName">
-            <div>$_(u'Pause')</div>
-          </th>
-        </tr>
-          $#{settings}
-          $for bid in range(0,gv.sd['nbrd']):
-            $for s in range(0,8):
-              $ sid = (bid * 8) + s;
-              $ s_sid = str(sid);
-              <tr>
-                <td class="stationNumber">${gv.snames[sid]}</td>
-                <td>
-                  <select id="sensor${sid}" name="sensor${sid}">
-                    <option value="None">-- Select sensor --</option>
-                    $for sensor in settings["sensors"]:
-                      $if u"sensor" + s_sid in settings and sensor == settings[u"sensor" + s_sid]:
-                        <option value="${sensor}" selected="selected">${sensor}</option>
-                      $else:
-                        <option value="${sensor}">${sensor}</option>
-                  </select>
-                </td>
-                <!-- Decrease -->
-                <td>
-                  <input type="checkbox" id="enable${sid}" name="enable${sid}"
-                         ${"checked" if "enable" + s_sid in settings else ""}>
-                </td>
-                <td>
-                  <input type="number" min="0" max="100" id="threshold${sid}" name="threshold${sid}"
-                         value="${settings[u"threshold" + s_sid] if u"threshold" + s_sid in settings else u""}"
-                         onkeypress="if (isNaN(String.fromCharCode(event.keyCode))) return false;"> %
-                </td>
-                <td>
-                  <input type="number" min="1" max="9999" id="stale${sid}" name="stale${sid}"
-                         value="${settings[u"stale" + s_sid] if u"stale" + s_sid in settings else u""}"
-                         onkeypress="if (isNaN(String.fromCharCode(event.keyCode))) return false;"> mins
-                </td>
-                <!-- Increase -->
-                <td>
-                  <input type="checkbox" id="i_enable${sid}" name="i_enable${sid}"
-                         ${"checked" if "i_enable" + s_sid in settings else ""}>
-                </td>
-                <td>
-                  <input type="number" min="0" max="100" id="i_threshold${sid}" name="i_threshold${sid}"
-                         value="${settings[u"i_threshold" + s_sid] if u"i_threshold" + s_sid in settings else u""}"
-                         onkeypress="if (isNaN(String.fromCharCode(event.keyCode))) return false;"> %
-                </td>
-                <td>
-                  <input type="number" min="0" max="999" id="i_mins${sid}" name="i_mins${sid}"
-                         value="${settings[u"i_mins" + s_sid] if u"i_mins" + s_sid in settings else u""}"
-                         onkeypress="if (isNaN(String.fromCharCode(event.keyCode))) return false;"> :
-                  <input type="number" min="0" max="60" id="i_secs${sid}" name="i_secs${sid}"
-                         value="${settings[u"i_secs" + s_sid] if u"i_secs" + s_sid in settings else u""}"
-                         onkeypress="if (isNaN(String.fromCharCode(event.keyCode))) return false;"> (mm:ss)
-                </td>
-                <td>
-                  <input type="number" min="1" max="9999" id="i_pause${sid}" name="i_pause${sid}"
-                         value="${settings[u"i_pause" + s_sid] if u"i_pause" + s_sid in settings else u""}"
-                         onkeypress="if (isNaN(String.fromCharCode(event.keyCode))) return false;"> mins
-                </td>
-              </tr>
-      </table>
-    </form>
+  <form id="pluginForm" action="/moisture_sensor_control-save" method="get">
+    <table class="optionList">
+      <tr>
+        <th rowspan="2">
+        </th>
+        <th rowspan="2" class="columnName">
+          <div>$_(u'Sensor')</div>
+        </th>
+        <th colspan="3" >
+          <div>$_(u'Decrease moisture')</div>
+        </th>
+        <th colspan="4">
+          <div>$_(u'Increase moisture')</div>
+        </th>
+      </tr>
+      <tr>
+        <!-- Decrease -->
+        <th class="columnName">
+          <div>$_(u'Enable')</div>
+        </th>
+        <th class="columnName">
+          <div>$_(u'Threshold')</div>
+        </th>
+        <th class="columnName">
+          <div>$_(u'Stale Reading')</div>
+        </th>
+        <!-- Increase -->
+        <th class="columnName">
+          <div>$_(u'Enable')</div>
+        </th>
+        <th class="columnName">
+          <div>$_(u'Threshold')</div>
+        </th>
+        <th class="columnName">
+          <div>$_(u'Duration')</div>
+        </th>
+        <th class="columnName">
+          <div>$_(u'Pause')</div>
+        </th>
+      </tr>
+      $#{settings}
+      $for bid in range(0,gv.sd['nbrd']):
+        $for s in range(0,8):
+          $ sid = (bid * 8) + s;
+          $ s_sid = str(sid);
+          <tr>
+            <td class="stationNumber">${gv.snames[sid]}</td>
+            <td>
+              <select id="sensor${sid}" name="sensor${sid}">
+                <option value="None">-- Select sensor --</option>
+                $for sensor in settings["sensors"]:
+                  $if u"sensor" + s_sid in settings and sensor == settings[u"sensor" + s_sid]:
+                    <option value="${sensor}" selected="selected">${sensor}</option>
+                  $else:
+                    <option value="${sensor}">${sensor}</option>
+              </select>
+            </td>
+            <!-- Decrease -->
+            <td>
+              <input type="checkbox" id="enable${sid}" name="enable${sid}"
+                     ${"checked" if "enable" + s_sid in settings else ""}>
+            </td>
+            <td>
+              <input type="number" min="0" max="100" id="threshold${sid}" name="threshold${sid}"
+                     value="${settings[u"threshold" + s_sid] if u"threshold" + s_sid in settings else u""}"
+                     onkeypress="if (isNaN(String.fromCharCode(event.keyCode))) return false;"> %
+            </td>
+            <td>
+              <input type="number" min="1" max="9999" id="stale${sid}" name="stale${sid}"
+                     value="${settings[u"stale" + s_sid] if u"stale" + s_sid in settings else u""}"
+                     onkeypress="if (isNaN(String.fromCharCode(event.keyCode))) return false;"> mins
+            </td>
+            <!-- Increase -->
+            <td>
+              <input type="checkbox" id="i_enable${sid}" name="i_enable${sid}"
+                     ${"checked" if "i_enable" + s_sid in settings else ""}>
+            </td>
+            <td>
+              <input type="number" min="0" max="100" id="i_threshold${sid}" name="i_threshold${sid}"
+                     value="${settings[u"i_threshold" + s_sid] if u"i_threshold" + s_sid in settings else u""}"
+                     onkeypress="if (isNaN(String.fromCharCode(event.keyCode))) return false;"> %
+            </td>
+            <td>
+              <input type="number" min="0" max="999" id="i_mins${sid}" name="i_mins${sid}"
+                     value="${settings[u"i_mins" + s_sid] if u"i_mins" + s_sid in settings else u""}"
+                     onkeypress="if (isNaN(String.fromCharCode(event.keyCode))) return false;"> :
+              <input type="number" min="0" max="60" id="i_secs${sid}" name="i_secs${sid}"
+                     value="${settings[u"i_secs" + s_sid] if u"i_secs" + s_sid in settings else u""}"
+                     onkeypress="if (isNaN(String.fromCharCode(event.keyCode))) return false;"> (mm:ss)
+            </td>
+            <td>
+              <input type="number" min="1" max="9999" id="i_pause${sid}" name="i_pause${sid}"
+                     value="${settings[u"i_pause" + s_sid] if u"i_pause" + s_sid in settings else u""}"
+                     onkeypress="if (isNaN(String.fromCharCode(event.keyCode))) return false;"> mins
+            </td>
+          </tr>
+    </table>
+  </form>
 </br>
 
 <div class="controls">

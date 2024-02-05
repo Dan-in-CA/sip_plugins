@@ -5,21 +5,29 @@
 <html>
 <head>
   <meta http-equiv="content-type" content="text/html; charset="utf-8">
-  <title>Monthlu Adjust per Station Docs</TITLE>
+  <title>Monthly Adjust per Station Docs</TITLE>
 </head>
 <body lang="en-us" bgcolor="#ffffff" dir="LTR" style="border: none; padding: 0in">
 <h1>Monthly Adjust per Station Plugin</h1>
 
 <p>Alter the amount of water the station delivers by adjusting the
-watering time.</p>
+watering time. This plugin allows a more fine grained level of control
+than the water level setting on the home page.</p>
 
-<p>Values can be entered per station per month to indicate
+<p>The plugin will only have an effect on schedules started by programs
+triggered automatically and will ignore schedules started with RUN
+NOW.</p>
+
+<p>Adjustment levels can be entered per station per month to indicate
 the % adjustment to be applied to the watering time.</p>
 
-<p>If no value is entered for the station/month the value set in the
-"Default Adjustment" is used.</p>
-
-<p>If the "Default Adjustment" is not set then
+<p>If no value is entered for the station/month the value set in
+"Default Adjustment" is used. If the "Default Adjustment" is not set then
 the plugin will take no action for the station/month.</p>
+
+<p>Limitations:
+- The plugin does not currently respect the option "Ignore Plugin
+  adjustments", mainly because I do not understand how to implement
+  the validation.</p>
 </body>
 </html>

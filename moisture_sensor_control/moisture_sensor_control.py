@@ -38,6 +38,7 @@ station_last_run = {}
 
 def validate_int(int_list):
     validated_list = []
+
     for index in range(len(int_list)):
         try:
             validated_list.append(int(int_list[index]))
@@ -146,9 +147,9 @@ def notify_station_completed(station, **kw):
     """Capture the last station run end time. Required for the pause
     feature.
     """
-    for station_index in range(0, len(gv.rs)):
-        if gv.rs[station_index][0] != 0:
-            station_last_run[station_index] = gv.rs[station_index][1]
+
+    station_index = station - 1
+    station_last_run[station_index] = gv.rs[station_index][1]
 
 
 completed_signal = signal("station_completed")
@@ -159,53 +160,61 @@ def notify_stations_scheduled(station, **kw):
     """Suppress a schedule from running if the station has an active
     (enabled) moisture sensor assigned and the current moisture
     reading from the sensor is above the threshold value."""
+    print(f"MSC notify_stations_scheduled {station}")
+    print(gv.rs)
 
-    for station_index in range(0, len(gv.rs)):
-        if gv.rs[station_index][0] != 0:
-            sensor_key = f"sensor{station_index}"
-            enable_key = f"enable{station_index}"
-            threshold_key = f"threshold{station_index}"
-            stale_key = f"stale{station_index}"
+    if gv.rn:
+        # Skip RUN NOW schedules
+        return
 
-            # If no sensor has been configured for the station or the
-            # sensor has not be enabled take not action
-            if (sensor_key not in moisture_sensor_settings) or (
-                enable_key not in moisture_sensor_settings
-            ):
-                continue
+    station_index = station - 1
 
-            sensor = moisture_sensor_settings[sensor_key]
-            threshold, stale = validate_int(
-                [
-                    moisture_sensor_settings[threshold_key],
-                    moisture_sensor_settings[stale_key],
-                ]
-            )
+    # TODO honor "Ignore Plugin adjustments"
 
-            if sensor == "" or threshold is None:
-                # Required fields not present silently skip station
-                continue
+    sensor_key = f"sensor{station_index}"
+    enable_key = f"enable{station_index}"
+    threshold_key = f"threshold{station_index}"
+    stale_key = f"stale{station_index}"
 
-            if "value" not in moisture_sensor_data[sensor]:
-                # Sensor has not sent any values yet
-                continue
+    # If no sensor has been configured for the station or the
+    # sensor has not be enabled take no action
+    if (sensor_key not in moisture_sensor_settings) or (
+        enable_key not in moisture_sensor_settings
+    ):
+        return
 
-            value = moisture_sensor_data[sensor]["value"]
-            if value > threshold:
-                # Check for stale value
-                ts = moisture_sensor_data[sensor]["timestamp"]
-                ts = datetime.datetime.strptime(ts, "%Y-%m-%d %H:%M:%S")
+    sensor = moisture_sensor_settings[sensor_key]
+    threshold, stale = validate_int(
+        [
+            moisture_sensor_settings[threshold_key],
+            moisture_sensor_settings[stale_key],
+        ]
+    )
 
-                if stale is not None and ts + datetime.timedelta(
-                    minutes=stale
-                ) < datetime.datetime.fromtimestamp(gv.now):
-                    continue
+    if sensor == "" or threshold is None:
+        # Required fields not present silently skip station
+        return
 
-                # Suppress schedule
-                gv.rs[station_index] = [0, 0, 0, 0]
+    if "value" not in moisture_sensor_data[sensor]:
+        # Sensor has not sent any values yet
+        return
+
+    value = moisture_sensor_data[sensor]["value"]
+    if value > threshold:
+        # Check for stale value
+        ts = moisture_sensor_data[sensor]["timestamp"]
+        ts = datetime.datetime.strptime(ts, "%Y-%m-%d %H:%M:%S")
+
+        if stale is not None and ts + datetime.timedelta(
+            minutes=stale
+        ) < datetime.datetime.fromtimestamp(gv.now):
+            return
+
+        # Suppress schedule
+        gv.rs[station_index] = [0, 0, 0, 0]
 
 
-scheduled_signal = signal("stations_scheduled")
+scheduled_signal = signal("station_scheduled")
 scheduled_signal.connect(notify_stations_scheduled)
 
 
@@ -252,8 +261,6 @@ class get_settings(ProtectedPage):
     """
 
     def GET(self):
-        # load_moisture_sensor_settings()
-
         moisture_sensor_settings["sensors"] = list(moisture_sensor_data.keys())
 
         # open settings page

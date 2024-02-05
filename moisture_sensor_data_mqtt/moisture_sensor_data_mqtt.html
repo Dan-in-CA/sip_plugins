@@ -41,104 +41,103 @@ $var page: moisture_sensor_data_mqtt
 </style>
 
 <div id="plugin">
-    <div class="title">Moisture Sensor Data MQTT
+  <div class="title">Moisture Sensor Data MQTT
     <button class="execute" id="docButton" type="button" >$_('Help')</button>
-    </div>
-    </br>
+  </div>
+  </br>
 
-    <form id="pluginForm" action="/moisture_sensor_data_mqtt-save" method="get">
+  <form id="pluginForm" action="/moisture_sensor_data_mqtt-save" method="get">
+    <table class="optionList">
+      <tr>
+        <th class="columnName">
+          <div>$_(u'Enable')</div>
+        </th>
+        <th>Sensor</th>
+        <th class="columnName">
+          <div>$_(u'MQTT')</div>
+          <div>$_(u'topic')</div>
+        </th>
+        <th class="columnName">
+          <div>$_(u'Reading')</div>
+          <div>$_(u'path')</div>
+        </th>
+        <th class="columnName">
+          <div>$_(u'Driest')</div>
+          <div>$_(u'value')</div>
+        </th>
+        <th class="columnName">
+          <div>$_(u'Wettest')</div>
+          <div>$_(u'value')</div>
+        </th>
+        <th class="columnName">
+          <div>$_(u'Current')</div>
+          <div>$_(u'reading')</div>
+        </th>
+        <th class="columnName">
+          <div>$_(u'Reading')</div>
+          <div>$_(u'Limit')</div>
+        </th>
+        <th class="columnName">
+          <div>$_(u'Retention')</div>
+          <div>$_(u'period')</div>
+        </th>
+      </tr>
+      $#{settings}
+      $# Temporarily add key for empty table row
+      $ settings['.'] = {}
+      $ sid = 0
+      $ sensors = list(settings.keys())
+      $ sensors.sort()
+      $for sensor in sensors:
+      $ setting = settings[sensor]
+      <tr>
+        <td>
+          <input type="checkbox" id="enable${sid}" name="enable${sid}"
+                 ${"checked" if "enable" in setting else ""}>
+        </td>
+        <td>
+          <input type="hidden" size="20" maxlength="50" id="o_sensors${sid}" name="o_sensor${sid}"
+                 value="${setting[u"sensor"] if u"sensor" in setting else u""}">
+          <input type="text" size="20" maxlength="50" id="sensors${sid}" name="sensor${sid}"
+                 value="${setting[u"sensor"] if u"sensor" in setting else u""}">
+        </td>
+        <td>
+          <input type="text" size="20" maxlength="50" id="topic${sid}" name="topic${sid}"
+                 value="${setting[u"topic"] if u"topic" in setting else u""}">
+        </td>
+        <td>
+          <input type="text" size="20" maxlength="50" id="path${sid}" name="path${sid}"
+                 value="${setting[u"path"] if u"path" in setting else u""}">
+        </td>
+        <td>
+          <input type="text" size="4" maxlength="4" id="driest${sid}" name="driest${sid}"
+                 value="${setting[u"driest"] if u"driest" in setting else u""}"> %
+        </td>
+        <td>
+          <input type="text" size="4" maxlength="4" id="wettest${sid}" name="wettest${sid}"
+                 value="${setting[u"wettest"] if u"wettest" in setting else u""}"> %
+        </td>
+        <td>
+          <input type="text" size="3" id="current${sid}" name="current${sid}" readonly
+                 value="${setting[u"current"] if u"current"  in setting else u""}"> %
+        </td>
+        <td>
+          <input type="text" size="3" maxlength="3" id="limit${sid}" name="limit${sid}"
+                 value="${setting[u"limit"] if u"limit"  in setting else u""}"
+                 onkeypress="if ( isNaN(String.fromCharCode(event.keyCode) )) return false;"> mins
+        </td>
+        <td>
+          <input type="text" size="3" maxlength="3" id="retention${sid}" name="retention${sid}"
+                 value="${setting[u"retention"] if u"retention"  in setting else u""}"
+                 onkeypress="if ( isNaN(String.fromCharCode(event.keyCode) )) return false;"> days
+        </td>
 
-        <table class="optionList">
-            <tr>
-                <th class="columnName">
-                  <div>$_(u'Enable')</div>
-                </th>
-                <th>Sensor</th>
-                <th class="columnName">
-                  <div>$_(u'MQTT')</div>
-                  <div>$_(u'topic')</div>
-                </th>
-                <th class="columnName">
-                  <div>$_(u'Reading')</div>
-                  <div>$_(u'path')</div>
-                </th>
-                <th class="columnName">
-                  <div>$_(u'Current')</div>
-                  <div>$_(u'reading')</div>
-                </th>
-                <th class="columnName">
-                  <div>$_(u'Reading')</div>
-                  <div>$_(u'Limit')</div>
-                </th>
-                <th class="columnName">
-                  <div>$_(u'Driest')</div>
-                  <div>$_(u'value')</div>
-                </th>
-                <th class="columnName">
-                  <div>$_(u'Wettest')</div>
-                  <div>$_(u'value')</div>
-                </th>
-                <th class="columnName">
-                  <div>$_(u'Retention')</div>
-                  <div>$_(u'period')</div>
-                </th>
-            </tr>
-            $#{settings}
-            $# Temporarily add key for empty table row
-            $ settings['.'] = {}
-            $ sid = 0
-            $ sensors = list(settings.keys())
-            $ sensors.sort()
-            $for sensor in sensors:
-            $ setting = settings[sensor]
-            <tr>
-              <td>
-                <input type="checkbox" id="enable${sid}" name="enable${sid}"
-                       ${"checked" if "enable" in setting else ""}>
-              </td>
-              <td>
-                <input type="hidden" size="20" maxlength="50" id="o_sensors${sid}" name="o_sensor${sid}"
-                       value="${setting[u"sensor"] if u"sensor" in setting else u""}">
-                <input type="text" size="20" maxlength="50" id="sensors${sid}" name="sensor${sid}"
-                       value="${setting[u"sensor"] if u"sensor" in setting else u""}">
-              </td>
-              <td>
-                <input type="text" size="20" maxlength="50" id="topic${sid}" name="topic${sid}"
-                       value="${setting[u"topic"] if u"topic" in setting else u""}">
-              </td>
-              <td>
-                <input type="text" size="20" maxlength="50" id="path${sid}" name="path${sid}"
-                       value="${setting[u"path"] if u"path" in setting else u""}">
-              </td>
-              <td>
-                <input type="text" size="3" id="current${sid}" name="current${sid}" readonly
-                       value="${setting[u"current"] if u"current"  in setting else u""}"> %
-              </td>
-              <td>
-                <input type="text" size="3" maxlength="3" id="limit${sid}" name="limit${sid}"
-                       value="${setting[u"limit"] if u"limit"  in setting else u""}"
-                       onkeypress="if ( isNaN(String.fromCharCode(event.keyCode) )) return false;"> mins
-              </td>
-              <td>
-                <input type="text" size="4" maxlength="4" id="driest${sid}" name="driest${sid}"
-                       value="${setting[u"driest"] if u"driest" in setting else u""}"> %
-              </td>
-              <td>
-                <input type="text" size="4" maxlength="4" id="wettest${sid}" name="wettest${sid}"
-                       value="${setting[u"wettest"] if u"wettest" in setting else u""}"> %
-              </td>
-              <td>
-                <input type="text" size="3" maxlength="3" id="retention${sid}" name="retention${sid}"
-                       value="${setting[u"retention"] if u"retention"  in setting else u""}"
-                       onkeypress="if ( isNaN(String.fromCharCode(event.keyCode) )) return false;"> days
-              </td>
-
-            </tr>
-            $ sid += 1
-        </table>
-        $# Remove temporary key
-        $ del settings['.']
-    </form>
+      </tr>
+      $ sid += 1
+    </table>
+    $# Remove temporary key
+    $ del settings['.']
+  </form>
 
 </br>
 <div class="controls">

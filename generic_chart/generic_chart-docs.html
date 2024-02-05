@@ -42,9 +42,8 @@ Sensor Data MQTT plugin).</p>
 <h3>Decrease moisture</h3>
 
 <p>The decrease moisture feature of the plugin is triggered when a
-program is automatically scheduled to run on a station (RUN NOW
-schedules are ignored) and depending on the configuration will
-suppress the schedule.</p>
+program is scheduled to run on a station and depending on the
+configuration will suppress the schedule.</p>
 
 <table>
 <thead>
@@ -110,22 +109,11 @@ would stop all other programs on all stations.</p>
 
 <p>If a required attribute is not set the plugin will quietly skip the station.</p>
 
-<h3>Limitations</h3>
-
-<p>The plugin does not currently respect the option "Ignore Plugin
-adjustments", mainly because I do not understand how to implement
-the validation.</p>
-
 <h2>For developers</h2>
 
-<p>On initialisation the plugin will list all the files in
-./data/moisture_sensor_data and use the file names to initialse a
-list of available sensors. The last entry of each file will be read
-and used as the last sensor reading value. Sensors and readings can be
-add by signaling the plugin.</p>
+<p>On initialisation the plugin will list all the files in ./data/moisture_sensor_data and use the file names to initialse a list of available sensors. The last entry of each file will be read and used as the last sensor reading value. Sensors and readings can be add by signaling the plugin.</p>
 
-<p>This plugin listens for the signal "moisture_sensor_data" with the
-following values:</p>
+<p>This plugin listens for the signal "moisture_sensor_data" with the following values:</p>
 
 <table>
 <thead>
@@ -142,14 +130,6 @@ following values:</p>
 <tr>
   <td style="text-align:left;">add</td>
   <td style="text-align:left;">{"sensor": "sensor name"}</td>
-</tr>
-<tr>
-  <td style="text-align:left;">delete</td>
-  <td style="text-align:left;">{"sensor": "sensor name"}</td>
-</tr>
-<tr>
-  <td style="text-align:left;">rename</td>
-  <td style="text-align:left;">{"sensor": "new name", "old_sensor": "old name"}</td>
 </tr>
 </tbody>
 </table>

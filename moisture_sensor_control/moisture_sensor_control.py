@@ -202,8 +202,8 @@ def notify_stations_scheduled(station, **kw):
     value = moisture_sensor_data[sensor]["value"]
     if value > threshold:
         # Check for stale value
-        ts = moisture_sensor_data[sensor]["timestamp"]
-        ts = datetime.datetime.strptime(ts, "%Y-%m-%d %H:%M:%S")
+        ts_secs = moisture_sensor_data[sensor]["timestamp"]
+        ts = datetime.datetime.fromtimestamp(ts_secs)
 
         if stale is not None and ts + datetime.timedelta(
             minutes=stale
@@ -228,31 +228,15 @@ def load_moisture_sensor_settings():
         ) as f:  # Read settings from json file if it exists
             moisture_sensor_settings = json.load(f)
 
-    except IOError:  # If file does not exist return empty value
+    except IOError:
+        # If file does not exist return empty value
         moisture_sensor_settings = {}
 
+    # Initialise list of sensors from file names
     if os.path.isdir("./data/moisture_sensor_data"):
         files = os.listdir("./data/moisture_sensor_data")
         for file in files:
-            sensor = file
-
-            # Get last entry in sensor data file, this could get slow
-            # for large files. See solution based on seek
-            # https://stackoverflow.com/questions/46258499/how-to-read-the-last-line-of-a-file-in-python
-            with open(f"./data/moisture_sensor_data/{sensor}") as f:
-                for sensor_data in f:
-                    pass
-
-                current_reading = sensor_data.rstrip().split(",")
-
-                if current_reading[0] == "Timestamp":
-                    # Not data in file yet
-                    moisture_sensor_data[sensor] = {}
-                else:
-                    moisture_sensor_data[sensor] = {
-                        "timestamp": current_reading[0],
-                        "value": int(current_reading[1]),
-                    }
+            moisture_sensor_data[file] = {}
 
 
 class get_settings(ProtectedPage):

@@ -20,17 +20,32 @@ $var page: moisture_sensor_data_mqtt
 </script>
 
 <style>
-table, th, td {
-  border: 1px solid lightgray;
-  border-collapse: collapse;
-  padding: 5px;
-}
+  td, input[type="checkbox"]  {
+      text-align: center;
+      vertical-align: middle;
+  }
+
+  td, input[type="number"]  {
+      white-space: nowrap;
+  }
+
+  table, th, td {
+      border: 1px solid lightgray;
+      border-collapse: collapse;
+      padding: 5px;
+  }
+
+  input[type='number']{
+      width: 2.77em;
+  }
 </style>
 
 <div id="plugin">
     <div class="title">Moisture Sensor Data MQTT
     <button class="execute" id="docButton" type="button" >$_('Help')</button>
     </div>
+    </br>
+
     <form id="pluginForm" action="/moisture_sensor_data_mqtt-save" method="get">
 
         <table class="optionList">
@@ -46,6 +61,10 @@ table, th, td {
                 <th class="columnName">
                   <div>$_(u'Reading')</div>
                   <div>$_(u'path')</div>
+                </th>
+                <th class="columnName">
+                  <div>$_(u'Current')</div>
+                  <div>$_(u'reading')</div>
                 </th>
                 <th class="columnName">
                   <div>$_(u'Reading')</div>
@@ -90,6 +109,10 @@ table, th, td {
               <td>
                 <input type="text" size="20" maxlength="50" id="path${sid}" name="path${sid}"
                        value="${setting[u"path"] if u"path" in setting else u""}">
+              </td>
+              <td>
+                <input type="text" size="3" id="current${sid}" name="current${sid}" readonly
+                       value="${setting[u"current"] if u"current"  in setting else u""}"> %
               </td>
               <td>
                 <input type="text" size="3" maxlength="3" id="limit${sid}" name="limit${sid}"

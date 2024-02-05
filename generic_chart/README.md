@@ -29,9 +29,8 @@ Sensor Data MQTT plugin).
 ### Decrease moisture
 
 The decrease moisture feature of the plugin is triggered when a
-program is automatically scheduled to run on a station (RUN NOW
-schedules are ignored) and depending on the configuration will
-suppress the schedule.
+program is scheduled to run on a station and depending on the
+configuration will suppress the schedule.
 
 |Field |Description|
 | :--- | :--- |
@@ -65,20 +64,17 @@ The plugin does not currently respect the option "Ignore Plugin
 adjustments", mainly because I do not understand how to implement
 the validation.
 
+The plugin currently affects both "Run Now" and automatically
+triggered program schedules. Ideally it should only affect the
+later.
+
 ## For developers
 
-On initialisation the plugin will list all the files in
-./data/moisture\_sensor_data and use the file names to initialse a
-list of available sensors. The last entry of each file will be read
-and used as the last sensor reading value. Sensors and readings can be
-add by signaling the plugin.
+On initialisation the plugin will list all the files in ./data/moisture\_sensor_data and use the file names to initialse a list of available sensors. The last entry of each file will be read and used as the last sensor reading value. Sensors and readings can be add by signaling the plugin.
 
-This plugin listens for the signal "moisture\_sensor_data" with the
-following values:
+This plugin listens for the signal "moisture\_sensor_data" with the following values:
 
-|Name | Message (data) |
+|Name |Message (data)|
 | :--- | :--- |
-|reading | {"timestamp": "Timestamp object", "value": "Integer in the range 0 - 100"} |
-|add | {"sensor": "sensor name"} |
-|delete | {"sensor": "sensor name"} |
-|rename | {"sensor": "new name", "old_sensor": "old name"} |
+|reading| {"timestamp": "Timestamp object", "value": "Integer in the range 0 - 100"}
+|add | {"sensor": "sensor name"}

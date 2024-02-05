@@ -61,25 +61,9 @@ def validate_int_list(int_list):
 
 
 def create_sensor_data_file(new_file):
+    """Use x and y as headings for the graph plugin"""
     with open(new_file, "w") as f:
-        f.write("Timestamp,Reading\n")
-
-
-def mqtt_readerx(setting, stop_flag):
-    sensor = setting["sensor"]
-    sensor_file = f"{SENSOR_DATA_PATH}/{sensor}"
-
-    while not stop_flag.is_set():
-        if os.path.isfile(sensor_file):
-            with open(sensor_file, "a") as f:
-                ts = datetime.datetime.now()
-                ts.strftime("%Y-%m-%d %H:%M:%S")
-                f.write(f"{ts},{setting}\n")
-
-        else:
-            print(f"File does not exist {sensor_file}")
-
-        sleep(int(setting["poll"]) * 60)
+        f.write("x,y\n")
 
 
 def mqtt_reader(client, msg):
@@ -92,6 +76,7 @@ def mqtt_reader(client, msg):
     stores it in the senors' data file.
 
     """
+    global settings
 
     # Get sensor from topic
     sensor = [
@@ -123,8 +108,14 @@ def mqtt_reader(client, msg):
                 print("mqtt_reader found invalid jmespath expression: ", path, e)
                 return
 
-        reading, limit, driest, wettest = validate_int_list(
-            [raw_reading, setting["limit"], setting["driest"], setting["wettest"]]
+        reading, limit, driest, wettest, retention = validate_int_list(
+            [
+                raw_reading,
+                setting["limit"],
+                setting["driest"],
+                setting["wettest"],
+                setting["retention"],
+            ]
         )
 
         if reading is None:
@@ -134,13 +125,13 @@ def mqtt_reader(client, msg):
         if driest is None or wettest is None:
             return
 
-        ts = datetime.datetime.fromtimestamp(gv.now)
+        ts_secs = gv.now
+        ts = datetime.datetime.fromtimestamp(ts_secs)
         if limit is not None and sensor in last_reading:
             if last_reading[sensor] + datetime.timedelta(minutes=limit) > ts:
                 return
 
         last_reading[sensor] = ts
-        ts_fmt = datetime.datetime.fromtimestamp(gv.now).strftime("%Y-%m-%d %H:%M:%S")
 
         #
         # Convert reading to %
@@ -151,35 +142,24 @@ def mqtt_reader(client, msg):
             reading = (driest - reading) / (driest - wettest) * 100
         reading = round(reading)
 
+        # Store reading for display purposes
+        settings[sensor]["current"] = reading
+
         # Send msd signal
         msd_signal.send(
-            "reading", data={"sensor": sensor, "timestamp": ts_fmt, "value": reading}
+            "reading", data={"sensor": sensor, "timestamp": ts_secs, "value": reading}
         )
 
-        # TODO Error handling
-        if os.path.isfile(sensor_file):
+        print(f"reading {reading}")
+        # Save reading data for graph plugin if retention specified
+        if retention is not None and os.path.isfile(sensor_file):
             with open(sensor_file, "a") as f:
-                f.write(f"{ts_fmt},{reading}\n")
-
-
-def create_mqtt_readerx(setting):
-    stop_flag = Event()
-    reader = Thread(target=mqtt_reader, args=(setting, stop_flag))
-    reader.daemon = True
-    reader.start()
-
-    mqtt_readers[setting["sensor"]] = {"reader": reader, "stop_flag": stop_flag}
+                f.write(f"{ts_secs},{reading}\n")
 
 
 def create_mqtt_reader(setting):
     if ("enable" in setting) and ("topic" in setting):
         mqtt.subscribe(setting["topic"], mqtt_reader, qos=0)
-
-
-def stop_mqtt_readerx(sensor):
-    if sensor in mqtt_readers:
-        stop_flag = mqtt_readers[sensor]["stop_flag"]
-        stop_flag.set()
 
 
 def stop_mqtt_reader(setting):
@@ -193,8 +173,9 @@ def load_moisture_data_mqtt_settings():
     try:
         with open("./data/moisture_sensor_data_mqtt.json", "r") as f:
             settings = json.load(f)
-            # If file does not exist return empty value
+
     except IOError:
+        # If file does not exist return empty value
         settings = {}
 
 
@@ -218,11 +199,6 @@ class get_settings(ProtectedPage):
     """
 
     def GET(self):
-        load_moisture_data_mqtt_settings()
-
-        # Add empty place holder for new sensor
-        # settings["."] = {}
-
         # open settings page
         return template_render.moisture_sensor_data_mqtt(settings)
 

@@ -14,16 +14,17 @@ This plugin requires the MQTT plugin to be installed.
 
 |Field |Description|
 | :--- | :--- |
-| Enable | Enable or disable receiving data for the sensor.|
-| Sensor (required)| The internal name of the sensor.|
-| MQTT topic (required)| The MQTT topic that the sensor sends its data to.|
-| Reading path (optional)| The JSON path of the reading value if required. See below |
-| Reading limit (optional)| Limit the processing of readings to one per entered time period |
-| Driest value (required)| The raw driest value the sensor can send. |
-| Wettest value (required)| The raw wettest vale the sensor can send. |
-| Retention period(optional)| The amount of time readings will be saved. Not implemented yet.|
+| Enable | Enable or disable receiving data for the sensor. |
+| Sensor (required) | The internal name of the sensor. |
+| MQTT topic (required) | The MQTT topic that the sensor sends its data to. |
+| Reading path (optional) | The JSON path of the reading value if required. See below. |
+| Current reading (display only) | The last reading from the sensor. |
+| Reading limit (optional) | Limit the processing of readings to one per entered time period. |
+| Driest value (required) | The raw driest value the sensor can send. |
+| Wettest value (required) | The raw wettest vale the sensor can send. |
+| Retention period(optional) | The amount of time readings will be saved for the graph plugin. |
 
-If a required attribute is not set the plugin will quietly skip sensor.
+If a required attribute is not set the plugin will quietly skip the sensor.
 
 ## Sensor
 
@@ -33,7 +34,7 @@ field.
 
 ## Reading path
 
-When sensor reading value is published as a JSON message as opposed to
+When the sensor reading value is published as a JSON message as opposed to
 a simple value specify the JSON path of the reading value using a
 [jmespath expression](https://jmespath.org/tutorial.html).
 

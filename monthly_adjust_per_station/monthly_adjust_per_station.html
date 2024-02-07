@@ -59,7 +59,7 @@ $var page: monthly_adjust_per_station
     <p>
       Default adjustment:
       <input type="number" min="0" id="default" name="default"
-             value="${settings[u"default"] if u"default" in settings and settings[u"default"] != u"" else u"100"}"
+             value="${settings[u"default"] if u"default" in settings and settings[u"default"] != u"" else u""}"
              onkeypress="if (isNaN(String.fromCharCode(event.keyCode))) return false;"> %
     </p>
     </br>

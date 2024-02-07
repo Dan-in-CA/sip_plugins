@@ -11,11 +11,9 @@ NOW.
 Adjustment levels can be entered per station per month to indicate
 the % adjustment to be applied to the watering time.
 
-If no value is entered for the station/month the value set in
-"Default Adjustment" is used. If the "Default Adjustment" is not set then
-the plugin will take no action for the station/month.
+If no value is entered for the station/month the value set in "Default
+Adjustment" is used. If the "Default Adjustment" is not set then the
+plugin will take no action for the station/month.
 
 Limitations:
-- The plugin does not currently respect the option "Ignore Plugin
-  adjustments", mainly because I do not understand how to implement
-  the validation.
+- The plugin does not currently respect the option "Ignore Plugin adjustments".

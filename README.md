@@ -60,7 +60,7 @@ monthly_adj
 Adjust irrigation time each month.
 Requires SIP version 4.1.7 or later.
 
-monthly_adj_per_station
+monthly_adjust_per_station
 ----------
 Adjusts irrigation time per station per month. Allows a more fine grained control than
 montly_adjust and the water level setting on the home page.

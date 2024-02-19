@@ -1,0 +1,10 @@
+A bare bones plugin designed to be used as a starting point for writing plugins.
+
+##### List all plugin files below preceded by a blank line [file_name.ext path] relative to SIP directory #####
+
+simple_chart.py plugins
+simple_chart.html templates
+simple_chart_config.html templates
+simple_chart-docs.html static/docs/plugins
+simple_chart.json data (generated)
+simple_chart.manifest plugins/manifests

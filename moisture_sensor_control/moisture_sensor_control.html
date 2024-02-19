@@ -135,7 +135,7 @@ $var page: moisture_sensor_control
                      onkeypress="if (isNaN(String.fromCharCode(event.keyCode))) return false;"> :
               <input type="number" min="0" max="60" id="i_secs${sid}" name="i_secs${sid}"
                      value="${settings[u"i_secs" + s_sid] if u"i_secs" + s_sid in settings else u""}"
-                     onkeypress="if (isNaN(String.fromCharCode(event.keyCode))) return false;"> (mm:ss)
+                     onkeypress="if (isNaN(String.fromCharCode(event.keyCode))) return false;"> mm:ss
             </td>
             <td>
               <input type="number" min="1" max="9999" id="i_pause${sid}" name="i_pause${sid}"

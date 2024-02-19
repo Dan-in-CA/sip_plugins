@@ -1,0 +1,59 @@
+$def with(settings)
+
+$var title: $_(u'SIP Simple Chart Configuration')
+$var page: simple_chart_config
+<script>
+  // Initialize behaviors
+  jQuery(document).ready(function(){
+      jQuery("#cSubmit").click(function() {
+          jQuery("#pluginForm").submit();
+      });
+
+      jQuery("button#cCharts").click(function(){
+          window.location="/simple_chart";
+      });
+
+      jQuery("button#cCancel").click(function(){
+          window.location="/";
+      });
+
+      jQuery("button#docButton").click(function(){
+          window.open("static/docs/plugins/simple_chart-docs.html", "_blank");
+      });
+  });
+</script>
+
+<style>
+  input[type="checkbox"]  {
+      accent-color: green;
+  }
+</style>
+
+
+<div id="plugin">
+  <div class="title">Simple Chart Configuration
+    <button class="execute" id="docButton" type="button" >$_('Help')</button>
+  </div>
+  <form id="pluginForm" action="/simple_chart-save" method="get">
+
+    $for chart in settings:
+      $ rows = (settings[chart]['options']).count('\r\n')
+      <p>
+        <input type="checkbox" id="${chart}_enabled" name="${chart}_enabled"
+               ${"checked" if "enabled" in settings[chart] else ""}>
+        ${chart}
+      </p>
+      </br>
+      <div>
+        <textarea id="${chart}_options" name="${chart}_options" rows="${20 if rows > 20 else rows}" style="width: 99%">${settings[chart]["options"]}</textarea>
+      </div>
+      </br>
+
+  </form>
+  </br>
+  <div class="controls">
+    <button id="cSubmit" class="submit"><b>$_('Submit')</b></button>
+    <button id="cCharts" class="execute">$_('Charts')</button>
+    <button id="cCancel" class="cancel danger">$_('Cancel')</button>
+  </div>
+</div>

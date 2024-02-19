@@ -34,6 +34,8 @@ gv.plugin_menu.append([("Moisture Sensor Control"), "/moisture_sensor_control"])
 moisture_sensor_settings = {}
 moisture_sensor_data = {}
 station_last_run = {}
+DATA_DIR_PATH = "./static/data/moisture_sensor_data"
+CONFIG_FILE_PATH = "./data/moisture_sensor_control.json"
 
 
 def validate_int(int_list):
@@ -224,7 +226,7 @@ def load_moisture_sensor_settings():
 
     try:
         with open(
-            "./data/moisture_sensor_control.json", "r"
+            CONFIG_FILE_PATH, "r"
         ) as f:  # Read settings from json file if it exists
             moisture_sensor_settings = json.load(f)
 
@@ -232,9 +234,11 @@ def load_moisture_sensor_settings():
         # If file does not exist return empty value
         moisture_sensor_settings = {}
 
-    # Initialise list of sensors from file names
-    if os.path.isdir("./data/moisture_sensor_data"):
-        files = os.listdir("./data/moisture_sensor_data")
+    # Initialise list of sensors from file names. Ideally this should
+    # be via a signal but the order in which plugins are loaded might
+    # affect this.
+    if os.path.isdir(DATA_DIR_PATH):
+        files = os.listdir(DATA_DIR_PATH)
         for file in files:
             moisture_sensor_data[file] = {}
 
@@ -266,7 +270,7 @@ class save_settings(ProtectedPage):
 
         moisture_sensor_settings = qdict
 
-        with open("./data/moisture_sensor_control.json", "w") as f:
+        with open(CONFIG_FILE_PATH, "w") as f:
             json.dump(qdict, f)
 
         # Redisplay the plugin page

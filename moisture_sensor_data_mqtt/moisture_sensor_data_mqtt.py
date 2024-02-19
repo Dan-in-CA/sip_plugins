@@ -35,7 +35,8 @@ gv.plugin_menu.append([_("Moisture Sensor Data MQTT"), "/moisture_sensor_data_mq
 settings = {}
 last_reading = {}
 mqtt_readers = {}
-SENSOR_DATA_PATH = "./data/moisture_sensor_data"
+SENSOR_DATA_PATH = "./static/data/moisture_sensor_data"
+CONFIG_FILE_PATH = "./data/moisture_sensor_data_mqtt.json"
 ATTRIBUTES = [
     "o_sensor",
     "sensor",
@@ -63,7 +64,7 @@ def validate_int_list(int_list):
 def create_sensor_data_file(new_file):
     """Use x and y as headings for the graph plugin"""
     with open(new_file, "w") as f:
-        f.write("x,y\n")
+        f.write("timestamp,value\n")
 
 
 def mqtt_reader(client, msg):
@@ -171,7 +172,7 @@ def load_moisture_data_mqtt_settings():
     global settings
 
     try:
-        with open("./data/moisture_sensor_data_mqtt.json", "r") as f:
+        with open(CONFIG_FILE_PATH, "r") as f:
             settings = json.load(f)
 
     except IOError:
@@ -181,7 +182,7 @@ def load_moisture_data_mqtt_settings():
 
 def moisture_sensor_data_init():
     if not os.path.isdir(SENSOR_DATA_PATH):
-        os.mkdir(SENSOR_DATA_PATH)
+        os.makedirs(SENSOR_DATA_PATH, exist_ok=True)
 
     load_moisture_data_mqtt_settings()
 
@@ -283,7 +284,7 @@ class save_settings(ProtectedPage):
             index += 1
 
         settings = new_settings
-        with open("./data/moisture_sensor_data_mqtt.json", "w") as f:
+        with open(CONFIG_FILE_PATH, "w") as f:
             json.dump(settings, f)
 
         # Redisplay the plugin page

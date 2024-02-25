@@ -76,7 +76,7 @@ $var page: moisture_sensor_data_mqtt
         </th>
         <th class="columnName">
           <div>$_(u'Reading')</div>
-          <div>$_(u'Limit')</div>
+          <div>$_(u'Interval')</div>
         </th>
         <th class="columnName">
           <div>$_(u'Retention')</div>
@@ -123,8 +123,8 @@ $var page: moisture_sensor_data_mqtt
                  value="${setting[u"current"] if u"current"  in setting else u""}"> %
         </td>
         <td>
-          <input type="text" size="3" maxlength="3" id="limit${sid}" name="limit${sid}"
-                 value="${setting[u"limit"] if u"limit"  in setting else u""}"
+          <input type="text" size="3" maxlength="3" id="interval${sid}" name="interval${sid}"
+                 value="${setting[u"interval"] if u"interval"  in setting else u""}"
                  onkeypress="if ( isNaN(String.fromCharCode(event.keyCode) )) return false;"> mins
         </td>
         <td>

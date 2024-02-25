@@ -25,7 +25,6 @@ from plugins import mqtt
 urls.extend([
     u"/moisture_sensor_data_mqtt", u"plugins.moisture_sensor_data_mqtt.get_settings",
     u"/moisture_sensor_data_mqtt-save", u"plugins.moisture_sensor_data_mqtt.save_settings"
-
     ])
 # fmt: on
 
@@ -42,7 +41,7 @@ ATTRIBUTES = [
     "sensor",
     "topic",
     "path",
-    "limit",
+    "interval",
     "driest",
     "wettest",
     "enable",
@@ -51,6 +50,10 @@ ATTRIBUTES = [
 
 
 def validate_int_list(int_list):
+    """Validates a list of possible integers and either returns each valid
+    integer or None as a tuple
+
+    """
     validated_list = []
     for index in range(len(int_list)):
         try:
@@ -81,14 +84,16 @@ def mqtt_reader(client, msg):
 
     # Get sensor from topic
     sensor = [
-        k for k, v in settings.items() if "topic" in v and v["topic"] == msg.topic
+        k
+        for k, v in settings["sensors"].items()
+        if "topic" in v and v["topic"] == msg.topic
     ]
 
     if len(sensor) > 0:
         # Could be that one topic is mapped to multiple sensors.
         # For now just take the first one.
         sensor = sensor[0]
-        setting = settings[sensor]
+        setting = settings["sensors"][sensor]
         sensor_file = f"{SENSOR_DATA_PATH}/{sensor}"
 
         #
@@ -109,10 +114,10 @@ def mqtt_reader(client, msg):
                 print("mqtt_reader found invalid jmespath expression: ", path, e)
                 return
 
-        reading, limit, driest, wettest, retention = validate_int_list(
+        reading, interval, driest, wettest, retention = validate_int_list(
             [
                 raw_reading,
-                setting["limit"],
+                setting["interval"],
                 setting["driest"],
                 setting["wettest"],
                 setting["retention"],
@@ -128,8 +133,8 @@ def mqtt_reader(client, msg):
 
         ts_secs = gv.now
         ts = datetime.datetime.fromtimestamp(ts_secs)
-        if limit is not None and sensor in last_reading:
-            if last_reading[sensor] + datetime.timedelta(minutes=limit) > ts:
+        if interval is not None and sensor in last_reading:
+            if last_reading[sensor] + datetime.timedelta(minutes=interval) > ts:
                 return
 
         last_reading[sensor] = ts
@@ -144,7 +149,7 @@ def mqtt_reader(client, msg):
         reading = round(reading)
 
         # Store reading for display purposes
-        settings[sensor]["current"] = reading
+        settings["sesnors"][sensor]["current"] = reading
 
         # Send msd signal
         msd_signal.send(
@@ -168,6 +173,48 @@ def stop_mqtt_reader(setting):
         mqtt.unsubscribe(settting["topic"])
 
 
+def truncate_data_files(neme, **kw):
+    """Remove readings from data files that are past the retention
+    period. Only process files once a week to save disk IO. Store that
+    last truncate timestamp as the new_day signal is also sent on
+    startup.
+    """
+    last_truncate = settings["last_truncate"]
+
+    # Only perform truncation once a week to limit IO?
+    if last_truncate + (86400 * 7) < gv.now:
+        return
+
+    settings["last_truncate"] = gv.now
+    with open(CONFIG_FILE_PATH, "w") as f:
+        json.dump(settings, f)
+
+    for sensor in settings["sensors"].keys():
+        sensor_file = f"{SENSOR_DATA_PATH}/{sensor}"
+
+        if os.path.isfile(sensor_file):
+            sensor_file_tmp = f"/tmp/{sensor}.tmp"
+            # Convert days to seconds
+            retention = settings["sensors"][sensor]["retention"] * 86400
+
+            with open("sensor_file", "r") as input:
+                with open(sensor_file_tmp, "w") as output:
+                    # Copy headers straight to output
+                    output.write(input.readline())
+
+                    for line in input:
+                        fields = line.split(",")
+                        if fields[0] + retention > gv.now:
+                            output.write(line)
+
+            try:
+                # Best option as new sensor data my be being written to file
+                os.replace(sensor_file_tmp, sensor_file)
+            except OSError as e:
+                print(f"Cannot replace {sensor_file}", e)
+                os.remove(sensor_file_tmp)
+
+
 def load_moisture_data_mqtt_settings():
     global settings
 
@@ -176,8 +223,11 @@ def load_moisture_data_mqtt_settings():
             settings = json.load(f)
 
     except IOError:
-        # If file does not exist return empty value
-        settings = {}
+        # If file does not exist return default value
+        settings = {
+            "sensors": {},
+            "last_truncate": gv.now,
+        }
 
 
 def moisture_sensor_data_init():
@@ -186,12 +236,12 @@ def moisture_sensor_data_init():
 
     load_moisture_data_mqtt_settings()
 
-    for sensor in settings.keys():
+    for sensor in settings["sensors"].keys():
         sensor_file = f"{SENSOR_DATA_PATH}/{sensor}"
         if not os.path.isfile(sensor_file):
             create_sensor_data_file(sensor_file)
 
-        create_mqtt_reader(settings[sensor])
+        create_mqtt_reader(settings["sensors"][sensor])
 
 
 class get_settings(ProtectedPage):
@@ -201,7 +251,7 @@ class get_settings(ProtectedPage):
 
     def GET(self):
         # open settings page
-        return template_render.moisture_sensor_data_mqtt(settings)
+        return template_render.moisture_sensor_data_mqtt(settings["sensors"])
 
 
 class save_settings(ProtectedPage):
@@ -235,7 +285,7 @@ class save_settings(ProtectedPage):
                 old_setting = {}
                 old_file = ""
             else:
-                old_setting = settings[old_sensor]
+                old_setting = settings["sensors"][old_sensor]
                 old_file = f"{SENSOR_DATA_PATH}/{old_sensor}"
 
             new_sensor = qdict[f"sensor{index}"]
@@ -283,7 +333,7 @@ class save_settings(ProtectedPage):
 
             index += 1
 
-        settings = new_settings
+        settings["sensors"] = new_settings
         with open(CONFIG_FILE_PATH, "w") as f:
             json.dump(settings, f)
 
@@ -293,5 +343,8 @@ class save_settings(ProtectedPage):
 
 msd_signal = signal("moisture_sensor_data")
 
-#  Run when plugin is loaded
+new_day_signal = signal("new_day")
+new_day_signal.connect(truncate_data_files)
+
+# Run when plugin is loaded
 moisture_sensor_data_init()

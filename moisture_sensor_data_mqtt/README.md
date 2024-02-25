@@ -21,8 +21,8 @@ This plugin requires the MQTT plugin to be installed.
 | Driest value (required) | The raw driest value the sensor can send. |
 | Wettest value (required) | The raw wettest vale the sensor can send. |
 | Current reading (display only) | The last reading from the sensor. |
-| Reading limit (optional) | Limit the processing of readings to one per entered time period. |
-| Retention period(optional) | The amount of time readings will be saved for the graph plugin. |
+| Reading interval (optional) | Processing one reading after every interval dropping others. Default process all readings. |
+| Retention period(optional) | The amount of time readings will be collected for the graph plugin. Default suppress collection. |
 
 If a required attribute is not set the plugin will quietly skip the sensor.
 

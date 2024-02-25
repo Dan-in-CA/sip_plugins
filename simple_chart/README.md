@@ -1,80 +1,71 @@
-# Moisture Control Plugin
+# Simple Chart Plugin
 
 ## Introduction
 
-The Moisture Sensor Control plugin can be configure to either
+The Simple Chart plugin displays line charts using data and
+configuration options provided by other plugins such as the Moisture
+Sensor Data MQTT plugin.
 
-- decrease the moisture level of plants by suppressing a schedule (program).
-- increase the moisture level of plants by triggering a run once program.
-
-The logic is base on the moisture reading captured by moisture sensors
-and is applied on the station level.
-
-The plugin only evaluates moisture sensor data but does not itself
-capture the data so it requires that a moisture sensor data plugin be enable that
-does so, for example the Moisture Sensor Data MQTT plugin.
+The plugin also provides the ability to customise the chart display
+option.
 
 ## Dependencies
 
-This plugin requires a moisture sensor data plugin to be installed, for example the Moisture Sensor Data MQTT plugin.
+This plugin requires at least one other plugin, such as the Moisture
+Sensor Data MQTT, that provides the data to be displayed.
 
 ## For users
 
-### Sensor
-Select the moisture sensor that will be used to control the
-station. The sensors must be configured a moisture sensor data plugin
-that is used to capture the moisture sensor data (e.g. Moisture
-Sensor Data MQTT plugin).
+### Display chart
 
-### Decrease moisture
+Displays one or more configured charts. The initial chart window show
+data for the current week (Mo - So) and allows scrolling this window
+backwards or forwards a week at a time.
 
-The decrease moisture feature of the plugin is triggered when a
-program is scheduled to run on a station and depending on the
-configuration will suppress the schedule.
+### Configure chart
 
-|Field |Description|
-| :--- | :--- |
-|Enable | Enable or disable the plugin's control of the station.|
-|Threshold (required) | Schedules will be suppressed so long as the last available sensor reading is above this value (0 - 100%).|
-|Stale reading (optional) | To protect against broken sensors the plugin will only interpret sensor reading younger than the configured number of minutes.|
+Displays the configuration options for all the available line charts.
 
-If a required attribute is not set the plugin will quietly skip the station.
+Chart display can be enabled or disabled using the checkbox next to
+the chart name.
 
-### Increase moisture
+You may change the line chart display options to your hearts content
+and in the process possibly break the chart display in the process. To
+revert to the original display options clear the text box. If you
+discover a better display format please feel free to share.
 
-The increase moisture feature of the plugin is triggered when a
-new sensor reading is received and depending on the
-configuration will trigger a run once program.
+The plugin uses the following libraries to display the charts:
 
-|Field |Description|
-| :--- | :--- |
-|Enable| Enable or disable the plugin's control of the station.|
-|Threshold (required)| A run once program will be started if the sensor reading is below the configured value (0 - 100%).|
-|Duration (required)| The duration of the run once program.|
-|Pause (optional)| The duration between repeated run of the run once program in order to give moisture sensors time to adjust.|
-
-The increase moisture feature is only really useful in concurrent
-station mode as in serial mode the triggering of a run once program
-would stop all other programs on all stations.
-
-If a required attribute is not set the plugin will quietly skip the station.
-
-### Limitations
-The plugin does not currently respect the option "Ignore Plugin
-adjustments", mainly because I do not understand how to implement
-the validation.
-
-The plugin currently affects both "Run Now" and automatically
-triggered program schedules. Ideally it should only affect the
-later.
+- [chart.js](https://www.chartjs.org/docs/latest/)
+  - [Line charts](https://www.chartjs.org/docs/latest/charts/line.html)
+- [luxon](https://moment.github.io/luxon/#/?id=luxon)
+  - [formatting](https://moment.github.io/luxon/#/formatting)
 
 ## For developers
 
-On initialisation the plugin will list all the files in ./data/moisture\_sensor_data and use the file names to initialse a list of available sensors. The last entry of each file will be read and used as the last sensor reading value. Sensors and readings can be add by signaling the plugin.
+The Simple Chart plugin requires the chart data and the chart
+configuration in order to display a chart.
 
-This plugin listens for the signal "moisture\_sensor_data" with the following values:
+The chart data should be store in the ./static/data folder. Each file
+will be displayed as a time series. The chart data is loaded using
+[d3.js](https://d3js.org/). As d3 loads the data values as strings a
+utility function is called to convert the values to integers if
+possible. This only works for top level dictionary values.
 
-|Name |Message (data)|
-| :--- | :--- |
-|reading| {"timestamp": "Timestamp object", "value": "Integer in the range 0 - 100"}
-|add | {"sensor": "sensor name"}
+The chart configurations should be installed under the
+./data/simple_chart folder. Each chart configuration consists of the
+following dictionary:
+
+- data (string): path to the chart data ./static/data/...
+  - if this points to a directory then the chart will consist on multiple series, one for each data file
+- options (string): The JavaScript options for the chart. Will be templated directly into the chart function as is.
+
+Limitations:
+
+- Currently only line charts are supported
+- x-axis is time based
+
+## Version information
+
+- v0.0.1
+  - initial version

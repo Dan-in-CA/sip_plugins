@@ -4,7 +4,7 @@
 <!doctype html>
 <html>
 <head>
-  <meta http-equiv="content-type" content="text/html; charset="utf-8">
+  <meta http-equiv="content-type" content="text/html"; charset="utf-8">
   <title>Moisture Sensor Control Docs</TITLE>
 </head>
 <body lang="en-us" bgcolor="#ffffff" dir="LTR" style="border: none; padding: 0in">
@@ -39,9 +39,9 @@ station. The sensors must be configured a moisture sensor data plugin
 that is used to capture the moisture sensor data (e.g. Moisture
 Sensor Data MQTT plugin).</p>
 
-<h3>Decrease moisture</h3>
+<h3>Suppress schedule</h3>
 
-<p>The decrease moisture feature of the plugin is triggered when a
+<p>The suppress schedule feature of the plugin is triggered when a
 program is automatically scheduled to run on a station (RUN NOW
 schedules are ignored) and depending on the configuration will
 suppress the schedule.</p>
@@ -71,9 +71,9 @@ suppress the schedule.</p>
 
 <p>If a required attribute is not set the plugin will quietly skip the station.</p>
 
-<h3>Increase moisture</h3>
+<h3>Trigger schedule</h3>
 
-<p>The increase moisture feature of the plugin is triggered when a
+<p>The trigger schedule feature of the plugin is triggered when a
 new sensor reading is received and depending on the
 configuration will trigger a run once program.</p>
 
@@ -153,5 +153,14 @@ following values:</p>
 </tr>
 </tbody>
 </table>
+
+<h2>Version information</h2>
+
+<ul>
+<li>v0.0.1
+<ul>
+<li>initial version</li>
+</ul></li>
+</ul>
 </body>
 </html>

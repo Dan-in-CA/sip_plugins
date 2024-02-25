@@ -26,9 +26,9 @@ station. The sensors must be configured a moisture sensor data plugin
 that is used to capture the moisture sensor data (e.g. Moisture
 Sensor Data MQTT plugin).
 
-### Decrease moisture
+### Suppress schedule
 
-The decrease moisture feature of the plugin is triggered when a
+The suppress schedule feature of the plugin is triggered when a
 program is automatically scheduled to run on a station (RUN NOW
 schedules are ignored) and depending on the configuration will
 suppress the schedule.
@@ -41,9 +41,9 @@ suppress the schedule.
 
 If a required attribute is not set the plugin will quietly skip the station.
 
-### Increase moisture
+### Trigger schedule
 
-The increase moisture feature of the plugin is triggered when a
+The trigger schedule feature of the plugin is triggered when a
 new sensor reading is received and depending on the
 configuration will trigger a run once program.
 
@@ -82,3 +82,9 @@ following values:
 |add | {"sensor": "sensor name"} |
 |delete | {"sensor": "sensor name"} |
 |rename | {"sensor": "new name", "old_sensor": "old name"} |
+
+
+## Version information
+
+- v0.0.1
+  - initial version

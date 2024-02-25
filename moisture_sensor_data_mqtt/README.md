@@ -45,3 +45,8 @@ the Reading path would need to be set to "reading" (without the double quotes).
 
 The plugin will convert the raw sensor reading values to a percentage
 value (0 - 100%) using the configured driest and wettest values.
+
+## Version information
+
+- v0.0.1
+  - initial version

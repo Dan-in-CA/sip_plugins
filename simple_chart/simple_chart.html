@@ -29,7 +29,31 @@ $var page: simple_chart
       return conv
   }
 
+  function scrollChart(chart, direction) {
+      const WEEK = (86400 * 7 * 1000);
+      if (direction == "cur") {
+          const cur = new Date();
+          let day = cur.getDay();
 
+          // adjust when day is Sunday
+          let date_mon = cur.getDate() - day + (day == 0 ? -6 : 1);
+          cur.setDate(date_mon);
+          cur.setHours(0, 0, 0, 0);
+
+          chart.options.scales.x.min = cur.getTime();
+          chart.options.scales.x.max = cur.getTime() + WEEK
+
+      } else if (direction == "prev") {
+          chart.options.scales.x.max = chart.options.scales.x.min
+          chart.options.scales.x.min = chart.options.scales.x.min - WEEK
+
+      } else if (direction == "next") {
+          chart.options.scales.x.min = chart.options.scales.x.max
+          chart.options.scales.x.max = chart.options.scales.x.max + WEEK
+      }
+
+      chart.update();
+  }
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
@@ -47,9 +71,16 @@ $var page: simple_chart
 
     $for chart in settings:
       $if "enabled" in settings[chart]:
+        </br>
+        </br>
+        <div style="text-align: center">
+          <button id="pPrev" onclick="scrollChart(chart_${loop.index}, 'prev');">&lt;&lt; Prev</button>
+          <button id="pCur" onclick="scrollChart(chart_${loop.index}, 'cur');">Current</button>
+          <button id="pNext" onclick="scrollChart(chart_${loop.index}, 'next');">Next &gt;&gt;</button>
+        </div>
         <canvas id="chart_${loop.index}"></canvas>
-
         <script>
+          var chart_${loop.index}
           var files = $:settings[chart]["data"]
           var promises_${loop.index} = []
           for (i in files) {
@@ -59,7 +90,9 @@ $var page: simple_chart
           Promise.all(
               promises_${loop.index}
           ).then(function(csv_data){
-              chart_${loop.index}(csv_data)
+              chart_${loop.index} = chart_${loop.index}(csv_data);
+              scrollChart(chart_${loop.index}, 'cur')
+
           }).catch(function(err){
               console.log(err)
           })
@@ -80,9 +113,9 @@ $var page: simple_chart
                   },
                   options: $:settings[chart]["options"],
               })
+              return chart
           }
         </script>
-
 
   </br>
   <div class="controls">

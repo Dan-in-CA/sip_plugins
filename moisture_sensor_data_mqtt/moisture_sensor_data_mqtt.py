@@ -64,7 +64,7 @@ def validate_int_list(int_list):
 def create_sensor_data_file(new_file):
     """Use x and y as headings for the graph plugin"""
     with open(new_file, "w") as f:
-        f.write("timestamp,value\n")
+        f.write("x,y\n")
 
 
 def mqtt_reader(client, msg):

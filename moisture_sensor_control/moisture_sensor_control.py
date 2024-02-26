@@ -162,8 +162,6 @@ def notify_stations_scheduled(station, **kw):
     """Suppress a schedule from running if the station has an active
     (enabled) moisture sensor assigned and the current moisture
     reading from the sensor is above the threshold value."""
-    print(f"MSC notify_stations_scheduled {station}")
-    print(gv.rs)
 
     if gv.rn:
         # Skip RUN NOW schedules

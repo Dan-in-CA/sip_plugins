@@ -52,7 +52,6 @@ def load_settings():
 
     filenames = os.listdir(CONFIG_DIR_PATH)
     for filename in filenames:
-        print(filename)
         try:
             with open(os.path.join(CONFIG_DIR_PATH, filename), "r") as f:
                 chart_defaults = json.load(f)
@@ -129,7 +128,7 @@ class save_settings(ProtectedPage):
 
         # Dictionary of values returned as query string from settings page.
         qdict = web.input()
-        print(qdict)
+
         del_list = []
         for chart in settings.keys():
             settings[chart]["options"] = qdict[f"{chart}_options"]
@@ -145,8 +144,6 @@ class save_settings(ProtectedPage):
                 settings[chart]["enabled"] = ""
             else:
                 settings[chart].pop("enabled", "")
-
-        print(settings)
 
         for chart in del_list:
             del settings[chart]

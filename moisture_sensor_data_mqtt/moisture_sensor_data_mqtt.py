@@ -156,11 +156,11 @@ def mqtt_reader(client, msg):
             "reading", data={"sensor": sensor, "timestamp": ts_secs, "value": reading}
         )
 
-        print(f"reading {reading}")
-        # Save reading data for graph plugin if retention specified
+        # Save reading data for graph plugin if retention specified.
+        # Note the timestamp is in milliseconds!
         if retention is not None and os.path.isfile(sensor_file):
             with open(sensor_file, "a") as f:
-                f.write(f"{ts_secs},{reading}\n")
+                f.write(f"{ts_secs * 1000},{reading}\n")
 
 
 def create_mqtt_reader(setting):
@@ -182,29 +182,34 @@ def truncate_data_files(neme, **kw):
     last_truncate = settings["last_truncate"]
 
     # Only perform truncation once a week to limit IO?
-    if last_truncate + (86400 * 7) < gv.now:
+    if last_truncate + (86400 * 7) > gv.now:
         return
 
-    settings["last_truncate"] = gv.now
+    settings["last_truncate"] = int(gv.now)
     with open(CONFIG_FILE_PATH, "w") as f:
         json.dump(settings, f)
 
     for sensor in settings["sensors"].keys():
         sensor_file = f"{SENSOR_DATA_PATH}/{sensor}"
+        sensor_file_tmp = f"/tmp/{sensor}.tmp"
 
         if os.path.isfile(sensor_file):
-            sensor_file_tmp = f"/tmp/{sensor}.tmp"
-            # Convert days to seconds
-            retention = settings["sensors"][sensor]["retention"] * 86400
+            (retention,) = validate_int_list([settings["sensors"][sensor]["retention"]])
+            if retention is None:
+                retention = 0
 
-            with open("sensor_file", "r") as input:
+            # Convert days/seconds to miliseconds
+            retention = retention * 86400 * 1000
+            now = int(gv.now) * 1000
+
+            with open(sensor_file, "r") as input:
                 with open(sensor_file_tmp, "w") as output:
                     # Copy headers straight to output
                     output.write(input.readline())
 
                     for line in input:
                         fields = line.split(",")
-                        if fields[0] + retention > gv.now:
+                        if int(fields[0]) + retention > now:
                             output.write(line)
 
             try:

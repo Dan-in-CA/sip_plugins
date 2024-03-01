@@ -97,14 +97,14 @@ $var page: simple_chart
           Promise.all(
               promises_${loop.index}
           ).then(function(csv_data){
-              chart_${loop.index} = chart_${loop.index}(csv_data);
+              chart_${loop.index} = makeChart_${loop.index}(csv_data);
               scrollChart(chart_${loop.index}, 'cur')
 
           }).catch(function(err){
               console.log(err)
           })
 
-          function chart_${loop.index}(csv_data) {
+          function makeChart_${loop.index}(csv_data) {
               var datasets = []
               for (i in files) {
                   // Remove extension and path
@@ -115,12 +115,11 @@ $var page: simple_chart
 
               var chart = new Chart("chart_${loop.index}", {
                   type: "line",
-                  data: {
-                      datasets: datasets,
-                  },
-                  options: $:settings[chart]["options"],
-              })
-              return chart
+              });
+              chart.data.datasets = datasets;
+              chart.options = $:settings[chart]["options"];
+              chart.update();
+              return chart;
           }
         </script>
 

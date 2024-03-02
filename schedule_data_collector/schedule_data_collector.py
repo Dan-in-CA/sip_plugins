@@ -24,7 +24,7 @@ import os
 # gv.plugin_menu.append([_("Schedule Data Collector"), "/schedule_data_collector"])
 
 settings = {}
-SCHEDULE_DATA_PATH = "./static/data/schedule_data"
+SCHEDULE_DATA_PATH = "./static/data/schedule_data_collector"
 CONFIG_FILE_PATH = "./data/schedule_data_collector.json"
 # 60 days, in seconds
 RETENTION = 86400 * 60

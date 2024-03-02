@@ -5,19 +5,16 @@
 import json  # for working with data file
 
 # local module imports
-from blinker import signal
 import gv  # Get access to SIP's settings
 from sip import template_render  # Needed for working with web.py templates
 from urls import urls  # Get access to SIP's URLs
 import web  # web.py framework
 from webpages import ProtectedPage  # Needed for security
-from webpages import showInFooter  # Enable plugin to display readings in UI footer
-from webpages import showOnTimeline  # Enable plugin to display station data on timeline
 
-from helpers import run_once
-import datetime
 import os
 import re
+import glob
+
 
 # Add new URLs to access classes in this plugin.
 # fmt: off
@@ -39,8 +36,6 @@ CONFIG_DIR_PATH = "./data/simple_chart"
 
 def load_settings():
     global settings
-
-    settings = {}
 
     try:
         # Read settings from json file if it exists
@@ -67,24 +62,30 @@ def load_settings():
                 settings[chart_name]["enabled"] = ""
                 settings[chart_name]["options"] = chart_defaults["options"]
 
-            settings[chart_name]["data"] = chart_defaults["data"]
+            settings[chart_name]["window"] = chart_defaults.get("window", "week")
 
             # print(settings)
             settings[chart_name]["data"] = []
-            if os.path.isdir(chart_defaults["data"]):
-                filenames = os.listdir(chart_defaults["data"])
-                for filename in filenames:
-                    settings[chart_name]["data"].append(
-                        f"{chart_defaults['data']}/{filename}"
-                    )
-            else:
-                settings[chart_name]["data"] = chart_defaults["data"]
+            for data_path in chart_defaults["data"]:
+                if os.path.isdir(data_path):
+                    filenames = os.listdir(data_path)
+                    for filename in filenames:
+                        settings[chart_name]["data"].append(
+                            os.path.join(data_path, filename)
+                        )
+                elif os.path.isfile(data_path):
+                    settings[chart_name]["data"].append(data_path)
+                else:
+                    filenames = glob.glob(data_path)
+                    for filename in filenames:
+                        settings[chart_name]["data"].append(filename)
+
+            settings[chart_name]["data"].sort()
 
         except IOError as Exception:
             print(Exception)
             # If files do not exist go with what we have
             pass
-    # print(settings)
 
 
 class display_charts(ProtectedPage):
@@ -149,7 +150,7 @@ class save_settings(ProtectedPage):
             del settings[chart]
 
         with open(CONFIG_FILE_PATH, "w") as f:
-            json.dump(settings, f)
+            f.write(json.dumps(settings, indent=2))
 
         # Redisplay the plugin page
         raise web.seeother("/simple_chart")

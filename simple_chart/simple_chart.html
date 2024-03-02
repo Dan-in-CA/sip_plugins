@@ -29,27 +29,32 @@ $var page: simple_chart
       return conv
   }
 
-  function scrollChart(chart, direction) {
-      const WEEK = (86400 * 7 * 1000);
-      if (direction == "cur") {
+  function scrollChart(chart, c_window, c_direction) {
+      let offset = (86400 * 1000);
+      if (c_window == "week") {
+          offset = (86400 * 1000 * 7);
+      }
+
+      if (c_direction == "cur") {
           const cur = new Date();
           let day = cur.getDay();
+          if (c_window == "week") {
+              // adjust when day is Sunday
+              let date_mon = cur.getDate() - day + (day == 0 ? -6 : 1);
+              cur.setDate(date_mon);
+          }
 
-          // adjust when day is Sunday
-          let date_mon = cur.getDate() - day + (day == 0 ? -6 : 1);
-          cur.setDate(date_mon);
           cur.setHours(0, 0, 0, 0);
-
           chart.options.scales.x.min = cur.getTime();
-          chart.options.scales.x.max = cur.getTime() + WEEK
+          chart.options.scales.x.max = cur.getTime() + offset
 
-      } else if (direction == "prev") {
+      } else if (c_direction == "prev") {
           chart.options.scales.x.max = chart.options.scales.x.min
-          chart.options.scales.x.min = chart.options.scales.x.min - WEEK
+          chart.options.scales.x.min = chart.options.scales.x.min - offset
 
-      } else if (direction == "next") {
+      } else if (c_direction == "next") {
           chart.options.scales.x.min = chart.options.scales.x.max
-          chart.options.scales.x.max = chart.options.scales.x.max + WEEK
+          chart.options.scales.x.max = chart.options.scales.x.max + offset
       }
 
       chart.update();
@@ -78,27 +83,27 @@ $var page: simple_chart
 
     $for chart in settings:
       $if "enabled" in settings[chart]:
+        $ window = settings[chart]["window"]
         </br>
         </br>
         <div style="text-align: center">
-          <button id="pPrev" onclick="scrollChart(chart_${loop.index}, 'prev');">&lt;&lt; Prev</button>
-          <button id="pCur" onclick="scrollChart(chart_${loop.index}, 'cur');">Current</button>
-          <button id="pNext" onclick="scrollChart(chart_${loop.index}, 'next');">Next &gt;&gt;</button>
+          <button id="pPrev" onclick="scrollChart(chart_${loop.index}, '$window', 'prev');">&lt;&lt; Prev</button>
+          <button id="pCur"  onclick="scrollChart(chart_${loop.index}, '$window', 'cur');">Current</button>
+          <button id="pNext" onclick="scrollChart(chart_${loop.index}, '$window', 'next');">Next &gt;&gt;</button>
         </div>
         <canvas id="chart_${loop.index}"></canvas>
         <script>
           var chart_${loop.index}
-          var files = $:settings[chart]["data"]
+          var files_${loop.index} = $:settings[chart]["data"]
           var promises_${loop.index} = []
-          for (i in files) {
-              promises_${loop.index}.push(d3.csv(files[i], function(d) {return convertStrToInt(d)}))
+          for (i in files_${loop.index}) {
+              promises_${loop.index}.push(d3.csv(files_${loop.index}[i], function(d) {return convertStrToInt(d)}))
           }
 
           Promise.all(
               promises_${loop.index}
           ).then(function(csv_data){
               chart_${loop.index} = makeChart_${loop.index}(csv_data);
-              scrollChart(chart_${loop.index}, 'cur')
 
           }).catch(function(err){
               console.log(err)
@@ -106,19 +111,22 @@ $var page: simple_chart
 
           function makeChart_${loop.index}(csv_data) {
               var datasets = []
-              for (i in files) {
+              for (i in files_${loop.index}) {
                   // Remove extension and path
-                  label = files[i].replace(/\.[^/.]+$$/, "");
+                  label = files_${loop.index}[i].replace(/\.[^/.]+$$/, "");
                   label = label.split("/").pop()
                   datasets.push({ data: csv_data[i], label: label});
               }
 
               var chart = new Chart("chart_${loop.index}", {
                   type: "line",
+                  data: {
+                      datasets: datasets
+                  }
               });
-              chart.data.datasets = datasets;
-              chart.options = $:settings[chart]["options"];
+              $:settings[chart]["options"]
               chart.update();
+              scrollChart(chart, '$window', 'cur')
               return chart;
           }
         </script>

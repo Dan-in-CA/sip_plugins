@@ -269,7 +269,7 @@ class save_settings(ProtectedPage):
         moisture_sensor_settings = qdict
 
         with open(CONFIG_FILE_PATH, "w") as f:
-            json.dump(qdict, f)
+            f.write(json.dumps(qdict, indent=2))
 
         # Redisplay the plugin page
         raise web.seeother("/moisture_sensor_control")

@@ -45,7 +45,7 @@ $var page: simple_chart_config
       </p>
       </br>
       <div>
-        <textarea id="${chart}_options" name="${chart}_options" rows="${20 if rows > 20 else rows}" style="width: 99%">${settings[chart]["options"]}</textarea>
+        <textarea id="${chart}_options" name="${chart}_options" rows="${20 if rows >= 20 else (rows + 1)}" style="width: 99%">${settings[chart]["options"]}</textarea>
       </div>
       </br>
 

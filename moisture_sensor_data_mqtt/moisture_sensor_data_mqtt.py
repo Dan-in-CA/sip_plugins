@@ -340,7 +340,7 @@ class save_settings(ProtectedPage):
 
         settings["sensors"] = new_settings
         with open(CONFIG_FILE_PATH, "w") as f:
-            json.dump(settings, f)
+            f.write(json.dumps(settings, indent=2))
 
         # Redisplay the plugin page
         raise web.seeother("/moisture_sensor_data_mqtt")

@@ -73,11 +73,14 @@ possible. This only works for top level dictionary values.</p>
 following dictionary:</p>
 
 <ul>
-<li>data (string): path to the chart data ./static/data/...
+<li>data (list): path to the chart data ./static/data/...
 <ul>
-<li>if this points to a directory then the chart will consist on multiple series, one for each data file</li>
+<li>Directory: The chart will consist on multiple series, one for each file in the directory</li>
+<li>File: The chart will consist series</li>
+<li>Glob: The chart will consist on multiple series, one for each file matching the glob</li>
 </ul></li>
 <li>options (string): The JavaScript options for the chart. Will be templated directly into the chart function as is.</li>
+<li>window (string): The portion of the data set to display at one time, either "day" or "week" (default)</li>
 </ul>
 
 <p>Limitations:</p>

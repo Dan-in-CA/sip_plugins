@@ -56,9 +56,12 @@ The chart configurations should be installed under the
 ./data/simple_chart folder. Each chart configuration consists of the
 following dictionary:
 
-- data (string): path to the chart data ./static/data/...
-  - if this points to a directory then the chart will consist on multiple series, one for each data file
+- data (list): path to the chart data ./static/data/...
+  - Directory: The chart will consist on multiple series, one for each file in the directory
+  - File: The chart will consist series
+  - Glob: The chart will consist on multiple series, one for each file matching the glob
 - options (string): The JavaScript options for the chart. Will be templated directly into the chart function as is.
+- window (string): The portion of the data set to display at one time, either "day" or "week" (default)
 
 Limitations:
 

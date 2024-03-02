@@ -8,7 +8,8 @@ Moisture Sensor Control plugin.
 
 ## Dependencies
 
-This plugin requires the MQTT plugin to be installed.
+This plugin requires the MQTT plugin and, optionally the Simple Chart
+plugin, to be installed.
 
 ## Configuring
 
@@ -45,6 +46,12 @@ the Reading path would need to be set to "reading" (without the double quotes).
 
 The plugin will convert the raw sensor reading values to a percentage
 value (0 - 100%) using the configured driest and wettest values.
+
+## Retention period
+
+If a value is entered the moisture sensor data readings will be made available for
+display by the Simple Chart plugin. Old readings are remove once a
+week.
 
 ## Version information
 

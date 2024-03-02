@@ -17,7 +17,6 @@ import gv  # Get access to SIP's settings
 # from webpages import ProtectedPage  # Needed for security
 
 import datetime
-import jmespath
 import os
 
 # Add this plugin to the PLUGINS menu ["Menu Name", "URL"], (Optional)
@@ -70,9 +69,10 @@ def log_stat(timestamp, value, station, period, stat):
 
 def accumulate_data_files():
     """Sum the discrete values for a day and save an accumulated
-    daily total. As I do not know if this functionality is required I
-    will leave it for the next version of the plugin
-    """
+    daily total.
+
+    As I do not know if this functionality is required I will leave it
+    for the next version of the plugin"""
 
     return
 
@@ -122,7 +122,7 @@ def truncate_data_files():
     """
 
     # Signal new_day is also sent a program start, but we only want to
-    # truncate once a week once a week to limit IO?
+    # truncate once a week to limit IO?
     if settings["last_truncate"] + (86400 * 7) > gv.now:
         return
 

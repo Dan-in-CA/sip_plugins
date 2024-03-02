@@ -18,7 +18,8 @@ Moisture Sensor Control plugin.</p>
 
 <h2>Dependencies</h2>
 
-<p>This plugin requires the MQTT plugin to be installed.</p>
+<p>This plugin requires the MQTT plugin and, optionally the Simple Chart
+plugin, to be installed.</p>
 
 <h2>Configuring</h2>
 
@@ -59,12 +60,12 @@ Moisture Sensor Control plugin.</p>
   <td style="text-align:left;">The last reading from the sensor.</td>
 </tr>
 <tr>
-  <td style="text-align:left;">Reading limit (optional)</td>
-  <td style="text-align:left;">Limit the processing of readings to one per entered time period.</td>
+  <td style="text-align:left;">Reading interval (optional)</td>
+  <td style="text-align:left;">Processing one reading after every interval dropping others. Default process all readings.</td>
 </tr>
 <tr>
   <td style="text-align:left;">Retention period(optional)</td>
-  <td style="text-align:left;">The amount of time readings will be saved for the graph plugin.</td>
+  <td style="text-align:left;">The amount of time readings will be collected for the graph plugin. Default suppress collection.</td>
 </tr>
 </tbody>
 </table>
@@ -90,6 +91,12 @@ the Reading path would need to be set to "reading" (without the double quotes).<
 
 <p>The plugin will convert the raw sensor reading values to a percentage
 value (0 - 100%) using the configured driest and wettest values.</p>
+
+<h2>Retention period</h2>
+
+<p>If a value is entered the moisture sensor data readings will be made available for
+display by the Simple Chart plugin. Old readings are remove once a
+week.</p>
 
 <h2>Version information</h2>
 

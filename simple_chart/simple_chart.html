@@ -29,10 +29,15 @@ $var page: simple_chart
       return conv
   }
 
-  function scrollChart(chart, c_window, c_direction) {
+  function scrollChart(chart, index, c_direction) {
       let offset = (86400 * 1000);
+      let c_window = document.getElementById("window_" + index).value;
+
       if (c_window == "week") {
           offset = (86400 * 1000 * 7);
+          chart.options.scales.x.time.unit = "day";
+      } else {
+          chart.options.scales.x.time.unit = "hour";
       }
 
       if (c_direction == "cur") {
@@ -86,12 +91,20 @@ $var page: simple_chart
         $ window = settings[chart]["window"]
         </br>
         </br>
-        <div style="text-align: center">
-          <button id="pPrev" onclick="scrollChart(chart_${loop.index}, '$window', 'prev');">&lt;&lt; Prev</button>
-          <button id="pCur"  onclick="scrollChart(chart_${loop.index}, '$window', 'cur');">Current</button>
-          <button id="pNext" onclick="scrollChart(chart_${loop.index}, '$window', 'next');">Next &gt;&gt;</button>
+        <div style="float: left">
+          <select id="window_${loop.index}" name="window_${loop.index}" onchange="scrollChart(chart_${loop.index}, '${loop.index}', 'cur');">
+            <option value="day" ${"selected" if settings[chart]["window"] == "day" else ""}>day</option>
+            <option value="week" ${"selected" if settings[chart]["window"] == "week" else ""}>week</option>
+          </select>
         </div>
+        <div style="text-align: center">
+          <button id="pPrev" onclick="scrollChart(chart_${loop.index}, '${loop.index}', 'prev');">&lt;&lt; Prev</button>
+          <button id="pCur"  onclick="scrollChart(chart_${loop.index}, '${loop.index}', 'cur');">Current</button>
+          <button id="pNext" onclick="scrollChart(chart_${loop.index}, '${loop.index}', 'next');">Next &gt;&gt;</button>
+        </div>
+
         <canvas id="chart_${loop.index}"></canvas>
+
         <script>
           var chart_${loop.index}
           var files_${loop.index} = $:settings[chart]["data"]
@@ -126,7 +139,7 @@ $var page: simple_chart
               });
               $:settings[chart]["options"]
               chart.update();
-              scrollChart(chart, '$window', 'cur')
+              scrollChart(chart, '${loop.index}', 'cur')
               return chart;
           }
         </script>

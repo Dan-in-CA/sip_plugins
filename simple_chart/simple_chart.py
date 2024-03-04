@@ -37,6 +37,9 @@ CONFIG_DIR_PATH = "./data/simple_chart"
 def load_settings():
     global settings
 
+    if not os.path.isdir(CONFIG_DIR_PATH):
+        os.makedirs(CONFIG_DIR_PATH, exist_ok=True)
+
     try:
         # Read settings from json file if it exists
         with open(CONFIG_FILE_PATH, "r") as f:

@@ -206,7 +206,7 @@ def load_schedule_data_collector_settings():
 
     except IOError:
         # If file does not exist return default value
-        settings = {"stations": {}, "last_truncate": int(gv.now)}
+        settings = {"stations": {}, "last_truncate": 0}
 
 
 def schedule_data_collector_init():

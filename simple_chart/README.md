@@ -12,7 +12,8 @@ option.
 ## Dependencies
 
 This plugin requires at least one other plugin, such as the Moisture
-Sensor Data MQTT, that provides the data to be displayed.
+Sensor Data MQTT or Scheduled Data Collector plugins, that provides
+the data to be displayed.
 
 ## For users
 

@@ -7,7 +7,6 @@ simple_chart-docs.html static/docs/plugins
 simple_chart.json data (generated)
 simple_chart.manifest plugins/manifests
 chart.umd.min.js static/scripts
-chart.umd.min.js static/scripts
-scripts/d3.min.js static/scripts
+d3.min.js static/scripts
 luxon.min.js static/scripts
 chartjs-adapter-luxon.umd.min.js static/scripts

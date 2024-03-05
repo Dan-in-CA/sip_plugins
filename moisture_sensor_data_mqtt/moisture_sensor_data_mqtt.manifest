@@ -7,3 +7,4 @@ moisture_sensor_data_mqtt.html templates
 moisture_sensor_data_mqtt-docs.html static/docs/plugins
 moisture_sensor_data_mqtt.json data (generated)
 moisture_sensor_data_mqtt.manifest plugins/manifests
+moisture_sensor_data_chart.json data/simple_chart

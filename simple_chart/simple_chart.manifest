@@ -1,3 +1,9 @@
+Description: Display data that was gathered by other plugins as line charts.
+Copyright 2024
+Author:
+Email:
+License: GNU GPL 3.0
+
 ##### List all plugin files below preceded by a blank line [file_name.ext path] relative to SIP directory #####
 
 simple_chart.py plugins

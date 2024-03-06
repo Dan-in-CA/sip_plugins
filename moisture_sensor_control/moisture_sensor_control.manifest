@@ -1,4 +1,8 @@
-A bare bones plugin designed to be used as a starting point for writing plugins.
+Description: Suppress or trigger schedules based on moisture sensor readings
+Copyright 2024
+Author:
+Email:
+License: GNU GPL 3.0
 
 ##### List all plugin files below preceded by a blank line [file_name.ext path] relative to SIP directory #####
 

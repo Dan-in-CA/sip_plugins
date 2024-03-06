@@ -16,9 +16,15 @@ import web  # web.py framework
 from webpages import ProtectedPage  # Needed for security
 
 import datetime
-import jmespath
 import os
 from plugins import mqtt
+
+try:
+    import jmespath
+except ImportError:
+    print("Python module jmespath not present, trying to install")
+    os.system("python3 -m pip install jmespath")
+    import jmespath
 
 # Add new URLs to access classes in this plugin.
 # fmt: off

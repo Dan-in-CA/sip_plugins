@@ -9,5 +9,5 @@ License: GNU GPL 3.0
 schedule_data_collector.py plugins
 schedule_data_collector.json data (generated)
 schedule_data_collector.manifest plugins/manifests
-schedule_data_collector_chart_planned_actual.conf data/simple_chart
+schedule_data_collector_chart_planned_actual.json data/simple_chart
 schedule_data_collector_chart_diff.json data/simple_chart

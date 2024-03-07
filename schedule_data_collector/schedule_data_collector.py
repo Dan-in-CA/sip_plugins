@@ -3,9 +3,6 @@
 
 # standard library imports
 import json  # for working with data file
-from threading import Thread
-from threading import Event
-from time import sleep
 
 # local module imports
 from blinker import signal

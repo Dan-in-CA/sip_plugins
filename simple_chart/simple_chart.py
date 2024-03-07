@@ -54,41 +54,43 @@ def load_settings():
             with open(os.path.join(CONFIG_DIR_PATH, filename), "r") as f:
                 chart_defaults = json.load(f)
 
-            chart_name = os.path.splitext(filename)[0]
-
-            if chart_name in settings:
-                if settings[chart_name]["options"] == "":
-                    settings[chart_name]["options"] = chart_defaults["options"]
-            else:
-                settings[chart_name] = {}
-                settings[chart_name]["file"] = filename
-                settings[chart_name]["enabled"] = ""
-                settings[chart_name]["options"] = chart_defaults["options"]
-
-            settings[chart_name]["window"] = chart_defaults.get("window", "week")
-
-            # print(settings)
-            settings[chart_name]["data"] = []
-            for data_path in chart_defaults["data"]:
-                if os.path.isdir(data_path):
-                    filenames = os.listdir(data_path)
-                    for filename in filenames:
-                        settings[chart_name]["data"].append(
-                            os.path.join(data_path, filename)
-                        )
-                elif os.path.isfile(data_path):
-                    settings[chart_name]["data"].append(data_path)
-                else:
-                    filenames = glob.glob(data_path)
-                    for filename in filenames:
-                        settings[chart_name]["data"].append(filename)
-
-            settings[chart_name]["data"].sort()
-
         except IOError as Exception:
+            print(f"Failed to open {filename}")
             print(Exception)
-            # If files do not exist go with what we have
-            pass
+        except ValueError as Exception:
+            print(f"Failed to load {filename}")
+            print(Exception)
+
+        chart_name = os.path.splitext(filename)[0]
+
+        if chart_name in settings:
+            if settings[chart_name]["options"] == "":
+                settings[chart_name]["options"] = chart_defaults["options"]
+        else:
+            settings[chart_name] = {}
+            settings[chart_name]["file"] = filename
+            settings[chart_name]["enabled"] = ""
+            settings[chart_name]["options"] = chart_defaults["options"]
+
+        settings[chart_name]["window"] = chart_defaults.get("window", "week")
+
+        # print(settings)
+        settings[chart_name]["data"] = []
+        for data_path in chart_defaults["data"]:
+            if os.path.isdir(data_path):
+                conf_filenames = os.listdir(data_path)
+                for conf_filename in conf_filenames:
+                    settings[chart_name]["data"].append(
+                        os.path.join(data_path, conf_filename)
+                    )
+            elif os.path.isfile(data_path):
+                settings[chart_name]["data"].append(data_path)
+            else:
+                conf_filenames = glob.glob(data_path)
+                for conf_filename in conf_filenames:
+                    settings[chart_name]["data"].append(conf_filename)
+
+        settings[chart_name]["data"].sort()
 
 
 class display_charts(ProtectedPage):

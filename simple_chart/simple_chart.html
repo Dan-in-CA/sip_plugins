@@ -115,7 +115,7 @@ $var page: simple_chart
           var promises_${loop.index} = []
           for (i in files_${loop.index}) {
               // Add random parameter to prevent caching of data file
-              promises_${loop.index}.push(d3.csv(files_${loop.index}[i] + "?" + Date.now(), function(d) {return convertStrToInt(d)}))
+              promises_${loop.index}.push(d3.csv(files_${loop.index}[i] + "?t=" + Date.now(), function(d) {return convertStrToInt(d)}))
           }
 
           Promise.all(

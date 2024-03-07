@@ -11,6 +11,10 @@ Moisture Sensor Control plugin.
 This plugin requires the MQTT plugin and, optionally the Simple Chart
 plugin, to be installed.
 
+This plugin requires the python module jmespath which is not packaged
+with SIP. If the module is missing the plugin will try to install the
+module, this however requires that pip be installed on the system.
+
 ## Configuring
 
 |Field |Description|

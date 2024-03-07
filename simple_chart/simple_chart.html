@@ -114,7 +114,8 @@ $var page: simple_chart
           var files_${loop.index} = $:settings[chart]["data"]
           var promises_${loop.index} = []
           for (i in files_${loop.index}) {
-              promises_${loop.index}.push(d3.csv(files_${loop.index}[i], function(d) {return convertStrToInt(d)}))
+              // Add random parameter to prevent caching of data file
+              promises_${loop.index}.push(d3.csv(files_${loop.index}[i] + "?" + Date.now(), function(d) {return convertStrToInt(d)}))
           }
 
           Promise.all(

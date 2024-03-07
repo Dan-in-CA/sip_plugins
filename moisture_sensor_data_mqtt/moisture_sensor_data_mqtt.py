@@ -22,7 +22,7 @@ from plugins import mqtt
 try:
     import jmespath
 except ImportError:
-    print("Python module jmespath not present, trying to install")
+    print("Trying to install missing Python module jmespath")
     os.system("python3 -m pip install jmespath")
     import jmespath
 
@@ -155,7 +155,7 @@ def mqtt_reader(client, msg):
         reading = round(reading)
 
         # Store reading for display purposes
-        settings["sesnors"][sensor]["current"] = reading
+        settings["sensors"][sensor]["current"] = reading
 
         # Send msd signal
         msd_signal.send(

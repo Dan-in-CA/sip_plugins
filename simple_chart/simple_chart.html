@@ -5,6 +5,10 @@ $var page: simple_chart
 <script>
   // Initialize behaviors
   jQuery(document).ready(function(){
+      jQuery("button#cRefresh").click(function(){
+          window.location="/simple_chart";
+      });
+
       jQuery("button#cConfig").click(function(){
           window.location="/simple_chart_config";
       });
@@ -146,6 +150,7 @@ $var page: simple_chart
 
   </br>
   <div class="controls">
+    <button id="cRefresh">$_('Refresh')</button>
     <button id="cConfig" class="execute">$_('Config')</button>
     <button id="cCancel" class="cancel danger">$_('Cancel')</button>
   </div>

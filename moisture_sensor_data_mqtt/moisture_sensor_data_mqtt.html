@@ -20,13 +20,13 @@ $var page: moisture_sensor_data_mqtt
 </script>
 
 <style>
-  td, input[type="checkbox"]  {
+  td, input[type="checkbox"] {
       text-align: center;
       vertical-align: middle;
       accent-color: green;
   }
 
-  td, input[type="number"]  {
+  td, input[type="number"] {
       white-space: nowrap;
   }
 
@@ -36,7 +36,7 @@ $var page: moisture_sensor_data_mqtt
       padding: 5px;
   }
 
-  input[type='number']{
+  input[type='number'] {
       width: 2.77em;
   }
 </style>
@@ -71,12 +71,12 @@ $var page: moisture_sensor_data_mqtt
           <div>$_(u'value')</div>
         </th>
         <th class="columnName">
-          <div>$_(u'Current')</div>
+          <div>$_(u'Last')</div>
           <div>$_(u'reading')</div>
         </th>
         <th class="columnName">
           <div>$_(u'Reading')</div>
-          <div>$_(u'Interval')</div>
+          <div>$_(u'interval')</div>
         </th>
         <th class="columnName">
           <div>$_(u'Retention')</div>
@@ -119,17 +119,18 @@ $var page: moisture_sensor_data_mqtt
                  value="${setting[u"wettest"] if u"wettest" in setting else u""}">
         </td>
         <td>
-          <input type="text" size="3" id="current${sid}" name="current${sid}" readonly
-                 value="${setting[u"current"] if u"current"  in setting else u""}"> %
+          <input type="text" size="3" id="reading_value${sid}" name="reading_value${sid}" readonly
+                 title="${setting[u"reading_ts"] if u"reading_ts" in setting else u""}"
+                 value="${setting[u"reading_value"] if u"reading_value" in setting else u""}"> %
         </td>
         <td>
           <input type="text" size="3" maxlength="3" id="interval${sid}" name="interval${sid}"
-                 value="${setting[u"interval"] if u"interval"  in setting else u""}"
+                 value="${setting[u"interval"] if u"interval" in setting else u""}"
                  onkeypress="if ( isNaN(String.fromCharCode(event.keyCode) )) return false;"> mins
         </td>
         <td>
           <input type="text" size="3" maxlength="3" id="retention${sid}" name="retention${sid}"
-                 value="${setting[u"retention"] if u"retention"  in setting else u""}"
+                 value="${setting[u"retention"] if u"retention" in setting else u""}"
                  onkeypress="if ( isNaN(String.fromCharCode(event.keyCode) )) return false;"> days
         </td>
 

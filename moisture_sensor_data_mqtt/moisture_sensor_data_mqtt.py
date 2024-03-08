@@ -40,14 +40,16 @@ mqtt_readers = {}
 SENSOR_DATA_PATH = "./static/data/moisture_sensor_data"
 CONFIG_FILE_PATH = "./data/moisture_sensor_data_mqtt.json"
 ATTRIBUTES = [
+    "enable",
     "o_sensor",
     "sensor",
     "topic",
     "path",
-    "interval",
     "driest",
     "wettest",
-    "enable",
+    # "reading_ts",
+    # "reading_value",
+    "interval",
     "retention",
 ]
 
@@ -137,10 +139,8 @@ def mqtt_reader(client, msg):
         ts_secs = gv.now
         ts = datetime.datetime.fromtimestamp(ts_secs)
         if interval is not None and sensor in last_reading:
-            if last_reading[sensor] + datetime.timedelta(minutes=interval) > ts:
+            if last_reading[sensor]["ts"] + datetime.timedelta(minutes=interval) > ts:
                 return
-
-        last_reading[sensor] = ts
 
         #
         # Convert reading to %
@@ -152,7 +152,8 @@ def mqtt_reader(client, msg):
         reading = round(reading)
 
         # Store reading for display purposes
-        settings["sensors"][sensor]["current"] = reading
+        # TODO save settings
+        last_reading[sensor] = {"ts": ts, "reading": reading}
 
         # Send msd signal
         msd_signal.send(
@@ -161,7 +162,7 @@ def mqtt_reader(client, msg):
 
         # Save reading data for graph plugin if retention specified.
         # Note the timestamp is in milliseconds!
-        if retention is not None and os.path.isfile(sensor_file):
+        if retention is not None and retention != 0 and os.path.isfile(sensor_file):
             with open(sensor_file, "a") as f:
                 f.write(f"{ts_secs * 1000},{reading}\n")
 
@@ -190,7 +191,7 @@ def truncate_data_files(neme, **kw):
 
     settings["last_truncate"] = int(gv.now)
     with open(CONFIG_FILE_PATH, "w") as f:
-        json.dump(settings, f)
+        f.write(json.dumps(settings, indent=2))
 
     for sensor in settings["sensors"].keys():
         sensor_file = f"{SENSOR_DATA_PATH}/{sensor}"
@@ -258,6 +259,12 @@ class get_settings(ProtectedPage):
     """
 
     def GET(self):
+        # Inject last reading as it is currently not saved
+        for sensor in last_reading.keys():
+            settings["sensors"][sensor]["reading_ts"] = last_reading[sensor]["ts"]
+            settings["sensors"][sensor]["reading_value"] = last_reading[sensor][
+                "reading"
+            ]
         # open settings page
         return template_render.moisture_sensor_data_mqtt(settings["sensors"])
 

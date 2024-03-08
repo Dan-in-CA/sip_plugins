@@ -11,8 +11,6 @@ from sip import template_render  # Needed for working with web.py templates
 from urls import urls  # Get access to SIP's URLs
 import web  # web.py framework
 from webpages import ProtectedPage  # Needed for security
-from webpages import showInFooter  # Enable plugin to display readings in UI footer
-from webpages import showOnTimeline  # Enable plugin to display station data on timeline
 
 from helpers import run_once
 import datetime
@@ -61,6 +59,8 @@ def trigger_run_once(sensor, value):
             # another one
             continue
 
+        settings = moisture_sensor_settings["settings"]
+
         mins_key = f"i_mins{station_index}"
         secs_key = f"i_secs{station_index}"
         enable_key = f"i_enable{station_index}"
@@ -69,17 +69,15 @@ def trigger_run_once(sensor, value):
 
         # If no threshold has been configured for the station or the
         # sensor has not been enabled take not action
-        if (threshold_key not in moisture_sensor_settings) or (
-            enable_key not in moisture_sensor_settings
-        ):
+        if (threshold_key not in settings) or (enable_key not in settings):
             continue
 
         threshold, mins, secs, pause = validate_int(
             [
-                moisture_sensor_settings[threshold_key],
-                moisture_sensor_settings[mins_key],
-                moisture_sensor_settings[secs_key],
-                moisture_sensor_settings[pause_key],
+                settings[threshold_key],
+                settings[mins_key],
+                settings[secs_key],
+                settings[pause_key],
             ]
         )
 
@@ -125,24 +123,20 @@ def notify_moisture_sensor_data(action, **kw):
         moisture_sensor_data[data["sensor"]] = {}
 
     elif action == "rename":
-        for k, v in moisture_sensor_settings.items():
+        for k, v in moisture_sensor_settings["settings"].items():
             if re.match(r"sensor\d+", k) and v == data["old_sensor"]:
-                moisture_sensor_settings[k] = data["sensor"]
+                moisture_sensor_settings["settings"][k] = data["sensor"]
         moisture_sensor_data[data["sensor"]] = moisture_sensor_data[data["old_sensor"]]
         del moisture_sensor_data[data["old_sensor"]]
 
     elif action == "delete":
-        for k, v in moisture_sensor_settings.items():
+        for k, v in moisture_sensor_settings["settings"].items():
             if re.match(r"sensor\d+", k) and v == data["sensor"]:
-                moisture_sensor_settings[k] = ""
+                moisture_sensor_settings["settings"][k] = ""
         del moisture_sensor_data[data["sensor"]]
 
     else:
         print(f"notify_moisture_sensor_data unknown action {action} {data}")
-
-
-msd_signal = signal("moisture_sensor_data")
-msd_signal.connect(notify_moisture_sensor_data)
 
 
 def notify_station_completed(station, **kw):
@@ -152,10 +146,6 @@ def notify_station_completed(station, **kw):
 
     station_index = station - 1
     station_last_run[station_index] = gv.rs[station_index][1]
-
-
-completed_signal = signal("station_completed")
-completed_signal.connect(notify_station_completed)
 
 
 def notify_stations_scheduled(station, **kw):
@@ -170,6 +160,9 @@ def notify_stations_scheduled(station, **kw):
     station_index = station - 1
 
     # TODO honor "Ignore Plugin adjustments"
+    print(moisture_sensor_settings)
+    print(station_index)
+    settings = moisture_sensor_settings["settings"]
 
     sensor_key = f"sensor{station_index}"
     enable_key = f"enable{station_index}"
@@ -178,16 +171,18 @@ def notify_stations_scheduled(station, **kw):
 
     # If no sensor has been configured for the station or the
     # sensor has not be enabled take no action
-    if (sensor_key not in moisture_sensor_settings) or (
-        enable_key not in moisture_sensor_settings
-    ):
+    if (sensor_key not in settings) or (enable_key not in settings):
         return
 
-    sensor = moisture_sensor_settings[sensor_key]
+    sensor = settings[sensor_key]
+
+    if sensor == "None":
+        return
+
     threshold, stale = validate_int(
         [
-            moisture_sensor_settings[threshold_key],
-            moisture_sensor_settings[stale_key],
+            settings[threshold_key],
+            settings[stale_key],
         ]
     )
 
@@ -214,10 +209,6 @@ def notify_stations_scheduled(station, **kw):
         gv.rs[station_index] = [0, 0, 0, 0]
 
 
-scheduled_signal = signal("station_scheduled")
-scheduled_signal.connect(notify_stations_scheduled)
-
-
 def load_moisture_sensor_settings():
     global moisture_sensor_settings
     global moisture_sensor_data
@@ -230,7 +221,7 @@ def load_moisture_sensor_settings():
 
     except IOError:
         # If file does not exist return empty value
-        moisture_sensor_settings = {}
+        moisture_sensor_settings = {"settings": {}}
 
     # Initialise list of sensors from file names. Ideally this should
     # be via a signal but the order in which plugins are loaded might
@@ -247,10 +238,12 @@ class get_settings(ProtectedPage):
     """
 
     def GET(self):
-        moisture_sensor_settings["sensors"] = list(moisture_sensor_data.keys())
+        settings = moisture_sensor_settings["settings"]
+
+        settings["sensors"] = list(moisture_sensor_data.keys())
 
         # open settings page
-        return template_render.moisture_sensor_control(moisture_sensor_settings)
+        return template_render.moisture_sensor_control(settings)
 
 
 class save_settings(ProtectedPage):
@@ -266,14 +259,23 @@ class save_settings(ProtectedPage):
         # Dictionary of values returned as query string from settings page.
         qdict = web.input()
 
-        moisture_sensor_settings = qdict
+        moisture_sensor_settings["settings"] = qdict
 
         with open(CONFIG_FILE_PATH, "w") as f:
-            f.write(json.dumps(qdict, indent=2))
+            f.write(json.dumps(moisture_sensor_settings, indent=2))
 
         # Redisplay the plugin page
         raise web.seeother("/moisture_sensor_control")
 
+
+completed_signal = signal("station_completed")
+completed_signal.connect(notify_station_completed)
+
+scheduled_signal = signal("station_scheduled")
+scheduled_signal.connect(notify_stations_scheduled)
+
+msd_signal = signal("moisture_sensor_data")
+msd_signal.connect(notify_moisture_sensor_data)
 
 #  Run when plugin is loaded
 load_moisture_sensor_settings()

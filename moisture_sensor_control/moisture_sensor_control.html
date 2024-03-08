@@ -117,7 +117,7 @@ $var page: moisture_sensor_control
             <td>
               <input type="number" min="1" max="9999" id="stale${sid}" name="stale${sid}"
                      value="${settings[u"stale" + s_sid] if u"stale" + s_sid in settings else u""}"
-                     onkeypress="if (isNaN(String.fromCharCode(event.keyCode))) return false;"> mins
+                     onkeypress="if (isNaN(String.fromCharCode(event.keyCode))) return false;"> min
             </td>
             <!-- Increase -->
             <td>
@@ -140,7 +140,7 @@ $var page: moisture_sensor_control
             <td>
               <input type="number" min="1" max="9999" id="i_pause${sid}" name="i_pause${sid}"
                      value="${settings[u"i_pause" + s_sid] if u"i_pause" + s_sid in settings else u""}"
-                     onkeypress="if (isNaN(String.fromCharCode(event.keyCode))) return false;"> mins
+                     onkeypress="if (isNaN(String.fromCharCode(event.keyCode))) return false;"> min
             </td>
           </tr>
     </table>

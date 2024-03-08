@@ -126,7 +126,7 @@ $var page: moisture_sensor_data_mqtt
         <td>
           <input type="text" size="3" maxlength="3" id="interval${sid}" name="interval${sid}"
                  value="${setting[u"interval"] if u"interval" in setting else u""}"
-                 onkeypress="if ( isNaN(String.fromCharCode(event.keyCode) )) return false;"> mins
+                 onkeypress="if ( isNaN(String.fromCharCode(event.keyCode) )) return false;"> min
         </td>
         <td>
           <input type="text" size="3" maxlength="3" id="retention${sid}" name="retention${sid}"

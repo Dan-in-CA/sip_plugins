@@ -9,12 +9,8 @@ $var page: simple_chart_config
           jQuery("#pluginForm").submit();
       });
 
-      jQuery("button#cCharts").click(function(){
-          window.location="/simple_chart";
-      });
-
       jQuery("button#cCancel").click(function(){
-          window.location="/";
+          window.location="/simple_chart";
       });
 
       jQuery("button#docButton").click(function(){
@@ -53,7 +49,6 @@ $var page: simple_chart_config
   </br>
   <div class="controls">
     <button id="cSubmit" class="submit"><b>$_('Submit')</b></button>
-    <button id="cCharts" class="execute">$_('Charts')</button>
     <button id="cCancel" class="cancel danger">$_('Cancel')</button>
   </div>
 </div>

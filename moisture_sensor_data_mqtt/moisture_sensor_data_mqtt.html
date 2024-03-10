@@ -1,0 +1,149 @@
+$def with(settings)
+
+$var title: $_('SIP Moisture Sensor Data MQTT')
+$var page: moisture_sensor_data_mqtt
+<script>
+    // Initialize behaviors
+    jQuery(document).ready(function(){
+
+        jQuery("#cSubmit").click(function() {
+            jQuery("#pluginForm").submit();
+        });
+        jQuery("button#cCancel").click(function(){
+            window.location="/";
+        });
+
+        jQuery("button#docButton").click(function(){
+            window.open("static/docs/plugins/moisture_sensor_data_mqtt-docs.html", "_blank");
+        });
+    });
+</script>
+
+<style>
+  td, input[type="checkbox"] {
+      text-align: center;
+      vertical-align: middle;
+      accent-color: green;
+  }
+
+  td, input[type="number"] {
+      white-space: nowrap;
+  }
+
+  table, th, td {
+      border: 1px solid lightgray;
+      border-collapse: collapse;
+      padding: 5px;
+  }
+
+  input[type='number'] {
+      width: 2.77em;
+  }
+</style>
+
+<div id="plugin">
+  <div class="title">Moisture Sensor Data MQTT
+    <button class="execute" id="docButton" type="button" >$_('Help')</button>
+  </div>
+  </br>
+
+  <form id="pluginForm" action="/moisture_sensor_data_mqtt-save" method="get">
+    <table class="optionList">
+      <tr>
+        <th class="columnName">
+          <div>$_(u'Enable')</div>
+        </th>
+        <th>Sensor</th>
+        <th class="columnName">
+          <div>$_(u'MQTT')</div>
+          <div>$_(u'topic')</div>
+        </th>
+        <th class="columnName">
+          <div>$_(u'Reading')</div>
+          <div>$_(u'path')</div>
+        </th>
+        <th class="columnName">
+          <div>$_(u'Driest')</div>
+          <div>$_(u'value')</div>
+        </th>
+        <th class="columnName">
+          <div>$_(u'Wettest')</div>
+          <div>$_(u'value')</div>
+        </th>
+        <th class="columnName">
+          <div>$_(u'Last')</div>
+          <div>$_(u'reading')</div>
+        </th>
+        <th class="columnName">
+          <div>$_(u'Reading')</div>
+          <div>$_(u'interval')</div>
+        </th>
+        <th class="columnName">
+          <div>$_(u'Retention')</div>
+          <div>$_(u'period')</div>
+        </th>
+      </tr>
+      $#{settings}
+      $# Temporarily add key for empty table row
+      $ settings['.'] = {}
+      $ sid = 0
+      $ sensors = list(settings.keys())
+      $ sensors.sort()
+      $for sensor in sensors:
+      $ setting = settings[sensor]
+      <tr>
+        <td>
+          <input type="checkbox" id="enable${sid}" name="enable${sid}"
+                 ${"checked" if "enable" in setting else ""}>
+        </td>
+        <td>
+          <input type="hidden" size="20" maxlength="50" id="o_sensors${sid}" name="o_sensor${sid}"
+                 value="${setting[u"sensor"] if u"sensor" in setting else u""}">
+          <input type="text" size="20" maxlength="50" id="sensors${sid}" name="sensor${sid}"
+                 value="${setting[u"sensor"] if u"sensor" in setting else u""}">
+        </td>
+        <td>
+          <input type="text" size="20" maxlength="50" id="topic${sid}" name="topic${sid}"
+                 value="${setting[u"topic"] if u"topic" in setting else u""}">
+        </td>
+        <td>
+          <input type="text" size="20" maxlength="50" id="path${sid}" name="path${sid}"
+                 value="${setting[u"path"] if u"path" in setting else u""}">
+        </td>
+        <td>
+          <input type="text" size="4" maxlength="4" id="driest${sid}" name="driest${sid}"
+                 value="${setting[u"driest"] if u"driest" in setting else u""}">
+        </td>
+        <td>
+          <input type="text" size="4" maxlength="4" id="wettest${sid}" name="wettest${sid}"
+                 value="${setting[u"wettest"] if u"wettest" in setting else u""}">
+        </td>
+        <td>
+          <input type="text" size="3" id="reading_value${sid}" name="reading_value${sid}" readonly
+                 title="${setting[u"reading_ts"] if u"reading_ts" in setting else u""}"
+                 value="${setting[u"reading_value"] if u"reading_value" in setting else u""}"> %
+        </td>
+        <td>
+          <input type="text" size="3" maxlength="3" id="interval${sid}" name="interval${sid}"
+                 value="${setting[u"interval"] if u"interval" in setting else u""}"
+                 onkeypress="if ( isNaN(String.fromCharCode(event.keyCode) )) return false;"> min
+        </td>
+        <td>
+          <input type="text" size="3" maxlength="3" id="retention${sid}" name="retention${sid}"
+                 value="${setting[u"retention"] if u"retention" in setting else u""}"
+                 onkeypress="if ( isNaN(String.fromCharCode(event.keyCode) )) return false;"> days
+        </td>
+
+      </tr>
+      $ sid += 1
+    </table>
+    $# Remove temporary key
+    $ del settings['.']
+  </form>
+
+</br>
+<div class="controls">
+    <button id="cSubmit" class="submit"><b>$_('Submit')</b></button>
+    <button id="cCancel" class="cancel danger">$_('Cancel')</button>
+</div>
+</div>

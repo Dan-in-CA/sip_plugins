@@ -1,0 +1,14 @@
+Description: Gather moisture sensor readings via MQTT
+Copyright 2024
+Author:
+Email:
+License: GNU GPL 3.0
+
+##### List all plugin files below preceded by a blank line [file_name.ext path] relative to SIP directory #####
+
+moisture_sensor_data_mqtt.py plugins
+moisture_sensor_data_mqtt.html templates
+moisture_sensor_data_mqtt-docs.html static/docs/plugins
+moisture_sensor_data_mqtt.json data (generated)
+moisture_sensor_data_mqtt.manifest plugins/manifests
+moisture_sensor_data_chart.json data/simple_chart

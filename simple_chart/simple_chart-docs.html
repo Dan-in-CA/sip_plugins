@@ -1,0 +1,103 @@
+<!DOCTYPE HTML>
+<!-- Auto genwerated using markdown2 README.md --extras tables > simple_chart-docs.html -->
+<html>
+<!doctype html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html"; charset="utf-8">
+  <title>Simple Chart Docs</TITLE>
+</head>
+<body lang="en-us" bgcolor="#ffffff" dir="LTR" style="border: none; padding: 0in">
+<h1>Simple Chart Plugin</h1>
+
+<h2>Introduction</h2>
+
+<p>The Simple Chart plugin displays line charts using data and
+configuration options provided by other plugins such as the Moisture
+Sensor Data MQTT plugin.</p>
+
+<p>The plugin also provides the ability to customise the chart display
+option.</p>
+
+<h2>Dependencies</h2>
+
+<p>This plugin requires at least one other plugin, such as the Moisture
+Sensor Data MQTT or Scheduled Data Collector plugins, that provides
+the data to be displayed.</p>
+
+<h2>For users</h2>
+
+<h3>Display chart</h3>
+
+<p>Displays one or more configured charts. The initial chart window show
+data for the current week (Mo - So) and allows scrolling this window
+backwards or forwards a week at a time.</p>
+
+<h3>Configure chart</h3>
+
+<p>Displays the configuration options for all the available line charts.</p>
+
+<p>Chart display can be enabled or disabled using the checkbox next to
+the chart name.</p>
+
+<p>You may change the line chart display options to your hearts content
+and in the process possibly break the chart display in the process. To
+revert to the original display options clear the text box. If you
+discover a better display format please feel free to share.</p>
+
+<p>The plugin uses the following libraries to display the charts:</p>
+
+<ul>
+<li><a href="https://www.chartjs.org/docs/latest/">chart.js</a>
+<ul>
+<li><a href="https://www.chartjs.org/docs/latest/charts/line.html">Line charts</a></li>
+</ul></li>
+<li><a href="https://moment.github.io/luxon/#/?id=luxon">luxon</a>
+<ul>
+<li><a href="https://moment.github.io/luxon/#/formatting">formatting</a></li>
+</ul></li>
+</ul>
+
+<h2>For developers</h2>
+
+<p>The Simple Chart plugin requires the chart data and the chart
+configuration in order to display a chart.</p>
+
+<p>The chart data should be store in the ./static/data folder. Each file
+will be displayed as a time series. The chart data is loaded using
+<a href="https://d3js.org/">d3.js</a>. As d3 loads the data values as strings a
+utility function is called to convert the values to integers if
+possible. This only works for top level dictionary values.</p>
+
+<p>The chart configurations should be installed under the
+./data/simple_chart folder. Each chart configuration consists of the
+following dictionary:</p>
+
+<ul>
+<li>data (list): path to the chart data ./static/data/...
+<ul>
+<li>Directory: The chart will consist on multiple series, one for each file in the directory</li>
+<li>File: The chart will consist series</li>
+<li>Glob: The chart will consist on multiple series, one for each file matching the glob</li>
+</ul></li>
+<li>options (string): The JavaScript options for the chart. Will be templated directly into the chart function as is.</li>
+<li>window (string): The portion of the data set to display at one time, either "day" or "week" (default)</li>
+</ul>
+
+<p>Limitations:</p>
+
+<ul>
+<li>Currently only line charts are supported</li>
+<li>x-axis is time based</li>
+</ul>
+
+<h2>Version information</h2>
+
+<ul>
+<li>v0.0.1
+<ul>
+<li>initial version</li>
+</ul></li>
+</ul>
+</body>
+</html>

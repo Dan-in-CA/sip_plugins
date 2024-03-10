@@ -55,6 +55,18 @@ lcd_adj
 ----------
 Uses I2C for LCD 16x2 char data display
 
+moisture_sensor_control
+----------
+Suppress or trigger schedules based on moisture sensors readings.
+Requires a plugin that supplies moisture sensor readings, for example
+the moisture_sensor_data_mqtt plugin.
+
+moisture_sensor_data_mqtt
+----------
+Gathers data provided by moisture sensors via MQTT. Makes the data
+available to the moisture_sensor_control plugin and the simple_chart
+plugin. Requires the mqtt plugin.
+
 monthly_adj
 ----------
 Adjust irrigation time each month.
@@ -148,6 +160,16 @@ Supports up to 16 relays. Requires SIP 3.2.43 or later.
 relay_board
 ----------
 A plugin for using relay boards to control sprinkler valves, etc
+
+schedule_data_collector
+----------
+Gathers data provided by schedules (start time, duration) and makes the data
+available to the simple_chart plugin.
+
+simple_chart
+----------
+Displays line charts base on data provided by other plugins such as the
+schedule_data_collector plugin or the moisture_sensor_data_mqtt plugin.
 
 sip_email
 ----------

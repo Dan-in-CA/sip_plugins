@@ -1,0 +1,158 @@
+$def with(settings)
+
+$var title: $_('SIP Simple Chart')
+$var page: simple_chart
+<script>
+  // Initialize behaviors
+  jQuery(document).ready(function(){
+      jQuery("button#cRefresh").click(function(){
+          window.location="/simple_chart";
+      });
+
+      jQuery("button#cConfig").click(function(){
+          window.location="/simple_chart_config";
+      });
+
+      jQuery("button#cHome").click(function(){
+          window.location="/";
+      });
+
+      jQuery("button#docButton").click(function(){
+          window.open("static/docs/plugins/simple_chart-docs.html", "_blank");
+      });
+  });
+
+  function convertStrToInt(d) {
+      var conv = {}
+      for (const [key, value] of Object.entries(d)) {
+          conv[key] = +value;
+          if (isNaN(conv[key])) {
+              conv[key] = value;
+          }
+      }
+      return conv
+  }
+
+  function scrollChart(chart, index, c_direction) {
+      let offset = (86400 * 1000);
+      let c_window = document.getElementById("window_" + index).value;
+
+      if (c_window == "week") {
+          offset = (86400 * 1000 * 7);
+          chart.options.scales.x.time.unit = "day";
+      } else {
+          chart.options.scales.x.time.unit = "hour";
+      }
+
+      if (c_direction == "cur") {
+          const cur = new Date();
+          let day = cur.getDay();
+          if (c_window == "week") {
+              // adjust when day is Sunday
+              let date_mon = cur.getDate() - day + (day == 0 ? -6 : 1);
+              cur.setDate(date_mon);
+          }
+
+          cur.setHours(0, 0, 0, 0);
+          chart.options.scales.x.min = cur.getTime();
+          chart.options.scales.x.max = cur.getTime() + offset
+
+      } else if (c_direction == "prev") {
+          chart.options.scales.x.max = chart.options.scales.x.min
+          chart.options.scales.x.min = chart.options.scales.x.min - offset
+
+      } else if (c_direction == "next") {
+          chart.options.scales.x.min = chart.options.scales.x.max
+          chart.options.scales.x.max = chart.options.scales.x.max + offset
+      }
+
+      chart.update();
+  }
+</script>
+
+<!--
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7.8.5/dist/d3.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.3.1/dist/chartjs-adapter-luxon.umd.min.js"></script>
+-->
+<script src="static/scripts/chart.umd.min.js"></script>
+<script src="static/scripts/d3.min.js"></script>
+
+<script src="static/scripts/luxon.min.js"></script>
+<script src="static/scripts/chartjs-adapter-luxon.umd.min.js"></script>
+
+<div id="plugin">
+  <div class="title">Simple Chart
+    <button class="execute" id="docButton" type="button" >$_('Help')</button>
+  </div>
+  $#{settings}
+
+
+    $for chart in settings:
+      $if "enabled" in settings[chart]:
+        $ window = settings[chart]["window"]
+        </br>
+        </br>
+        <div style="float: left">
+          <select id="window_${loop.index}" name="window_${loop.index}" onchange="scrollChart(chart_${loop.index}, '${loop.index}', 'cur');">
+            <option value="day" ${"selected" if settings[chart]["window"] == "day" else ""}>day</option>
+            <option value="week" ${"selected" if settings[chart]["window"] == "week" else ""}>week</option>
+          </select>
+        </div>
+        <div style="text-align: center">
+          <button id="pPrev" onclick="scrollChart(chart_${loop.index}, '${loop.index}', 'prev');">&lt;&lt; Prev</button>
+          <button id="pCur"  onclick="scrollChart(chart_${loop.index}, '${loop.index}', 'cur');">Current</button>
+          <button id="pNext" onclick="scrollChart(chart_${loop.index}, '${loop.index}', 'next');">Next &gt;&gt;</button>
+        </div>
+
+        <canvas id="chart_${loop.index}"></canvas>
+
+        <script>
+          var chart_${loop.index}
+          var files_${loop.index} = $:settings[chart]["data"]
+          var promises_${loop.index} = []
+          for (i in files_${loop.index}) {
+              // Add random parameter to prevent caching of data file
+              promises_${loop.index}.push(d3.csv(files_${loop.index}[i] + "?t=" + Date.now(), function(d) {return convertStrToInt(d)}))
+          }
+
+          Promise.all(
+              promises_${loop.index}
+          ).then(function(csv_data){
+              chart_${loop.index} = makeChart_${loop.index}(csv_data);
+
+          }).catch(function(err){
+              console.log(err)
+          })
+
+          function makeChart_${loop.index}(csv_data) {
+              var datasets = []
+              for (i in files_${loop.index}) {
+                  // Remove extension and path
+                  label = files_${loop.index}[i].replace(/\.[^/.]+$$/, "");
+                  label = label.split("/").pop()
+                  datasets.push({ data: csv_data[i], label: label});
+              }
+
+              var chart = new Chart("chart_${loop.index}", {
+                  type: "line",
+                  data: {
+                      datasets: datasets
+                  }
+              });
+              $:settings[chart]["options"]
+              chart.update();
+              scrollChart(chart, '${loop.index}', 'cur')
+              return chart;
+          }
+        </script>
+
+  </br>
+  <div class="controls">
+    <button id="cRefresh" class="submit"><b>$_('Refresh')</b></button>
+    <button id="cConfig" class="execute">$_('Config')</button>
+    <button id="cHome" class="execute">$_('Home')</button>
+  </div>
+</div>

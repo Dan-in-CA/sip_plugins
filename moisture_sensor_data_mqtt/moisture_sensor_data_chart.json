@@ -1,0 +1,4 @@
+{
+    "data": ["static/data/moisture_sensor_data"],
+    "options": "chart.options = {\r\n  scales: {\r\n    x: {\r\n      type: \"time\",\r\n      time: {\r\n        unit: \"day\",\r\n        displayFormats: {\r\n          hour: 'LLL dd T',\r\n          day: 'LLL dd T'\r\n        }\r\n      }\r\n    }\r\n  },\r\n  parsing: false,\r\n  spanGaps: true,\r\n  elements: {\r\n    point: {\r\n      radius: 0\r\n    }\r\n  },\r\n  responsive: true,\r\n  plugins: {\r\n    legend: {\r\n      position: \"bottom\",\r\n    },\r\n    title: {\r\n      display: true,\r\n      text: \"Moisture Sensor Readings\"\r\n    }\r\n  }\r\n};"
+}

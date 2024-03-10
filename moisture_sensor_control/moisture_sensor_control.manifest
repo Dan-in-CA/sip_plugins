@@ -1,0 +1,13 @@
+Description: Suppress or trigger schedules based on moisture sensor readings
+Copyright 2024
+Author:
+Email:
+License: GNU GPL 3.0
+
+##### List all plugin files below preceded by a blank line [file_name.ext path] relative to SIP directory #####
+
+moisture_sensor_control.py plugins
+moisture_sensor_control.html templates
+moisture_sensor_control-docs.html static/docs/plugins
+moisture_sensor_control.json data (generated)
+moisture_sensor_control.manifest plugins/manifests

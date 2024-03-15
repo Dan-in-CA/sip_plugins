@@ -59,5 +59,8 @@ week.
 
 ## Version information
 
+- v0.0.2
+  - Fixed check for valid topic before creating MQTT reader
+  - Fixed setting updated check
 - v0.0.1
   - initial version

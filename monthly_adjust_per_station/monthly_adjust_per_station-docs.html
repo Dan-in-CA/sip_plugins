@@ -4,19 +4,23 @@
 <!doctype html>
 <html>
 <head>
-  <meta http-equiv="content-type" content="text/html; charset="utf-8">
+  <meta http-equiv="content-type" content="text/html"; charset="utf-8">
   <title>Monthly Adjust per Station Docs</TITLE>
 </head>
 <body lang="en-us" bgcolor="#ffffff" dir="LTR" style="border: none; padding: 0in">
 <h1>Monthly Adjust per Station Plugin</h1>
 
+<h2>Introduction</h2>
+
 <p>Alter the amount of water the station delivers by adjusting the
 watering time. This plugin allows a more fine grained level of control
 than the water level setting on the home page.</p>
 
+<h2>Configuration</h2>
+
 <p>The plugin will only have an effect on schedules started by programs
-triggered automatically and will ignore schedules started with RUN
-NOW.</p>
+triggered automatically and will ignore schedules/programs started with RUN
+NOW or RUN ONCE.</p>
 
 <p>Adjustment levels can be entered per station per month to indicate
 the % adjustment to be applied to the watering time.</p>
@@ -25,7 +29,21 @@ the % adjustment to be applied to the watering time.</p>
 Adjustment" is used. If the "Default Adjustment" is not set then the
 plugin will take no action for the station/month.</p>
 
-<p>Limitations:
-- The plugin does not currently respect the option "Ignore Plugin adjustments".</p>
+<h2>Limitations</h2>
+
+<p>The plugin does not currently respect the option "Ignore Plugin adjustments".</p>
+
+<h2>Version information</h2>
+
+<ul>
+<li>v0.0.2
+<ul>
+<li>Ignore RUN ONCE programs</li>
+</ul></li>
+<li>v0.0.1
+<ul>
+<li>initial version</li>
+</ul></li>
+</ul>
 </body>
 </html>

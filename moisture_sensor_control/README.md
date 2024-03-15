@@ -2,35 +2,37 @@
 
 ## Introduction
 
-The Moisture Sensor Control plugin can be configure to either
+The Moisture Sensor Control plugin can be configured to either
 
-- decrease the moisture level of plants by suppressing a schedule (program).
-- increase the moisture level of plants by triggering a run once program.
+- decrease the watering time for plants by suppressing a schedule (program).
+- increase the watering time for plants by triggering a RUN ONCE program.
 
-The logic is base on the moisture reading captured by moisture sensors
+The logic is base on the moisture readings captured by moisture sensors
 and is applied on the station level.
 
-The plugin only evaluates moisture sensor data but does not itself
-capture the data so it requires that a moisture sensor data plugin be enable that
-does so, for example the Moisture Sensor Data MQTT plugin.
+The plugin only evaluates moisture sensor readings but does not itself
+capture the data, so it requires that a moisture sensor data plugin be
+installed and configured that does so, for example the Moisture Sensor
+Data MQTT plugin.
 
 ## Dependencies
 
-This plugin requires a moisture sensor data plugin to be installed, for example the Moisture Sensor Data MQTT plugin.
+This plugin requires a moisture sensor data plugin to be installed and
+configured, for example the Moisture Sensor Data MQTT plugin.
 
 ## For users
 
 ### Sensor
 Select the moisture sensor that will be used to control the
-station. The sensors must be configured a moisture sensor data plugin
-that is used to capture the moisture sensor data (e.g. Moisture
+station. The sensors must be configured in a moisture sensor data
+plugin that is used to capture the moisture sensor data (e.g. Moisture
 Sensor Data MQTT plugin).
 
 ### Suppress schedule
 
 The suppress schedule feature of the plugin is triggered when a
-program is automatically scheduled to run on a station (RUN NOW
-schedules are ignored) and depending on the configuration will
+program is automatically scheduled to run on a station (RUN ONCE and
+RUN NOW schedules are ignored) and depending on the configuration will
 suppress the schedule.
 
 |Field |Description|
@@ -45,22 +47,26 @@ If a required attribute is not set the plugin will quietly skip the station.
 
 The trigger schedule feature of the plugin is triggered when a
 new sensor reading is received and depending on the
-configuration will trigger a run once program.
+configuration will trigger a RUN ONCE program.
 
 |Field |Description|
 | :--- | :--- |
 |Enable| Enable or disable the plugin's control of the station.|
-|Threshold (required)| A run once program will be started if the sensor reading is below the configured value (0 - 100%).|
-|Duration (required)| The duration of the run once program.|
-|Pause (optional)| The duration between repeated run of the run once program in order to give moisture sensors time to adjust.|
+|Threshold (required)| A RUN ONCE program will be started if the sensor reading is below the configured value (0 - 100%).|
+|Duration (required)| The duration of the RUN ONCE program.|
+|Pause (optional)| The duration between repeated run of the RUN ONCE program in order to give moisture sensors time to adjust.|
 
 The increase moisture feature is only really useful in concurrent
-station mode as in serial mode the triggering of a run once program
+station mode as in serial mode the triggering of a RUN ONCE program
 would stop all other programs on all stations.
 
 If a required attribute is not set the plugin will quietly skip the station.
 
 ### Limitations
+
+The plugin does not currently store the last reading values so after a
+restart it will be inactive until readings are received.
+
 The plugin does not currently respect the option "Ignore Plugin
 adjustments", mainly because I do not understand how to implement
 the validation.
@@ -69,9 +75,8 @@ the validation.
 
 On initialisation the plugin will list all the files in
 ./data/moisture\_sensor_data and use the file names to initialse a
-list of available sensors. The last entry of each file will be read
-and used as the last sensor reading value. Sensors and readings can be
-add by signaling the plugin.
+list of available sensors. Sensors and readings can be add by
+signaling the plugin.
 
 This plugin listens for the signal "moisture\_sensor_data" with the
 following values:
@@ -86,5 +91,8 @@ following values:
 
 ## Version information
 
+- v0.0.2
+  - Ignore RUN ONCE programs
+  - Improved documentation
 - v0.0.1
   - initial version

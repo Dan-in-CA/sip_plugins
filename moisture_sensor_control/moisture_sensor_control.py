@@ -153,15 +153,13 @@ def notify_stations_scheduled(station, **kw):
     (enabled) moisture sensor assigned and the current moisture
     reading from the sensor is above the threshold value."""
 
-    if gv.rn:
-        # Skip RUN NOW schedules
-        return
-
     station_index = station - 1
 
+    if gv.rn or gv.rs[station_index][3] == 98:
+        # Skip RUN NOW and RUN ONCE programs
+        return
+
     # TODO honor "Ignore Plugin adjustments"
-    print(moisture_sensor_settings)
-    print(station_index)
     settings = moisture_sensor_settings["settings"]
 
     sensor_key = f"sensor{station_index}"

@@ -34,7 +34,6 @@ except IOError:
 urls.extend(
     [
         u"/rb", u"plugins.relay_board.settings",
-        u"/rbj", u"plugins.relay_board.settings_json",
         u"/rbu", u"plugins.relay_board.update",
     ]
 )
@@ -186,15 +185,6 @@ class settings(ProtectedPage):
         with open(u"./data/relay_board.json", u"r") as f:  # Read the settings from file
             params = json.load(f)
         return template_render.relay_board(params)
-
-
-class settings_json(ProtectedPage):
-    """Returns plugin settings in JSON format"""
-
-    def GET(self):
-        web.header(u"Access-Control-Allow-Origin", u"*")
-        web.header(u"Content-Type", u"application/json")
-        return json.dumps(params)
 
 
 class update(ProtectedPage):

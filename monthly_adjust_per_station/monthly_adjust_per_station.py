@@ -64,8 +64,8 @@ def notify_station_scheduled(station, **kw):
 
     # TODO honor "Ignore Plugin adjustments"
 
-    if gv.rn:
-        # Skip RUN NOW schedules
+    if gv.rn or gv.rs[station_index][3] == 98:
+        # Skip RUN NOW and RUN ONCE programs
         return
 
     st_enable_key = f"enable_{station_index}"

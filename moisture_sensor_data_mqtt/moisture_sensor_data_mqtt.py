@@ -168,7 +168,7 @@ def mqtt_reader(client, msg):
 
 
 def create_mqtt_reader(setting):
-    if ("enable" in setting) and ("topic" in setting):
+    if ("enable" in setting) and ("topic" in setting) and (setting["topic"] != ""):
         mqtt.subscribe(setting["topic"], mqtt_reader, qos=0)
 
 
@@ -283,7 +283,7 @@ class save_settings(ProtectedPage):
             if f"{attribute}{index}" in qdict:
                 new_setting[f"{attribute}"] = qdict[f"{attribute}{index}"]
 
-        updated = old_setting == new_setting
+        updated = old_setting != new_setting
 
         return updated, new_setting
 
@@ -338,6 +338,7 @@ class save_settings(ProtectedPage):
 
             else:
                 if updated:
+                    print("updated")
                     # Case: Attributes updated
                     stop_mqtt_reader(old_sensor)
                     create_mqtt_reader(new_setting)

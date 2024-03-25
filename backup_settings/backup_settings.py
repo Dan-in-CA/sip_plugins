@@ -33,20 +33,23 @@ class download(ProtectedPage):
             data = {
                 '__restorePoint' : restorePoint,
             }
-            
+
             dataFiles = Path('./data')
             for filename in list(dataFiles.glob('**/*.json')):
                 filename = str(filename)[5:] # convert path to the filename string by stripping off "data/"
                 with open(
                     u"./data/" + filename, u"r"
                 ) as f:
+                    print("Backing up " + filename)
                     if (filename != "log.json"):
-                        data[filename[:-5]] = json.load(f) # strip off the ".json" for the key name
+                        try:
+                            data[filename[:-5]] = json.load(f) # strip off the ".json" for the key name
+                        except ValueError as e:
+                            print(f"Failed to backup {filename} {e}")
                     else:
                         data["log"] = read_log()
-                    print("Backing up " + filename)
 
-            web.header('Content-Type','text/json')       
+            web.header('Content-Type','text/json')
             web.header('Content-disposition', 'attachment; filename=SIP-backup-%s-%s.json'%(gv.sd['name'].replace(" ", "_"),restorePoint))
             return json.dumps(data)  # return data as json txt file
         except IOError:  # If file does not exist return empty value
@@ -62,29 +65,29 @@ class backup(ProtectedPage):
             upload = web.input(myfile={})
             data = json.loads(upload['myfile'].file.read())
             # break the master data into individual components corresponding to files
-            
+
             for d in data:
                 if d == "__restorePoint":
                     restorePoint = data["__restorePoint"]
                 elif d == "log":
+                    print("Restoring log.json")
                     log = data["log"]
                     lines = []
                     for r in log:
                         lines.append(json.dumps(r) + "\n")
                         with open("./data/log.json", "w", encoding="utf-8") as f:
                             f.writelines(lines)
-                    print("Restored log.json")
                 else:
+                    print("Restoring " + d + ".json")
                     with open(u"./data/" + d + ".json", u"w") as f:
                         json.dump(data[d], f, indent=4, sort_keys=True)
-                    print("Restored " + d + ".json")
 
             raise web.seeother('/backup?success=true&restorePoint=' + restorePoint)
         except IOError:
             raise web.seeother('/backup?success=false')
-       
-    
+
+
     def GET(self):
         user_data = web.input(success="unknown", restorePoint="")
-        status = {"success" : user_data.success, "restorePoint" : user_data.restorePoint }  # report the status 
+        status = {"success" : user_data.success, "restorePoint" : user_data.restorePoint }  # report the status
         return template_render.backup_settings(status)  # open backup/restore page

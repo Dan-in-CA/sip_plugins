@@ -340,7 +340,6 @@ class save_settings(ProtectedPage):
 
             else:
                 if updated:
-                    print("updated")
                     # Case: Attributes updated
                     stop_mqtt_reader(old_sensor)
                     create_mqtt_reader(new_setting)

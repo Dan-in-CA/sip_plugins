@@ -59,6 +59,8 @@ week.
 
 ## Version information
 
+- v0.0.3
+  - Fixed issue with sensor rename and last_reading
 - v0.0.2
   - Fixed check for valid topic before creating MQTT reader
   - Fixed setting updated check

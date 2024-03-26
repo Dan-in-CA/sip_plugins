@@ -335,10 +335,11 @@ class save_settings(ProtectedPage):
                     )
                     if os.path.isfile(old_file) and not os.path.isfile(new_file):
                         os.rename(old_file, new_file)
+                    if old_sensor in last_reading:
+                        last_reading[new_sensor] = last_reading.pop(old_sensor)
 
             else:
                 if updated:
-                    print("updated")
                     # Case: Attributes updated
                     stop_mqtt_reader(old_sensor)
                     create_mqtt_reader(new_setting)

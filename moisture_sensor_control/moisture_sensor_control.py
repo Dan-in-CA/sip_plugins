@@ -48,6 +48,11 @@ def validate_int(int_list):
     return tuple(validated_list)
 
 
+def settings_save():
+    with open(CONFIG_FILE_PATH, "w") as f:
+        f.write(json.dumps(moisture_sensor_settings, indent=2))
+
+
 def trigger_run_once(sensor, value):
     """Processes a new reading. Checks if all the required fields are
     set, checks to see if the pause and threshold values apply and if
@@ -128,12 +133,14 @@ def notify_moisture_sensor_data(action, **kw):
                 moisture_sensor_settings["settings"][k] = data["sensor"]
         moisture_sensor_data[data["sensor"]] = moisture_sensor_data[data["old_sensor"]]
         del moisture_sensor_data[data["old_sensor"]]
+        settings_save()
 
     elif action == "delete":
         for k, v in moisture_sensor_settings["settings"].items():
             if re.match(r"sensor\d+", k) and v == data["sensor"]:
                 moisture_sensor_settings["settings"][k] = ""
         del moisture_sensor_data[data["sensor"]]
+        settings_save()
 
     else:
         print(f"notify_moisture_sensor_data unknown action {action} {data}")
@@ -259,8 +266,7 @@ class save_settings(ProtectedPage):
 
         moisture_sensor_settings["settings"] = qdict
 
-        with open(CONFIG_FILE_PATH, "w") as f:
-            f.write(json.dumps(moisture_sensor_settings, indent=2))
+        settings_save()
 
         # Redisplay the plugin page
         raise web.seeother("/moisture_sensor_control")

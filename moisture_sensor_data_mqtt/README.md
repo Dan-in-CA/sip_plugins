@@ -59,6 +59,8 @@ week.
 
 ## Version information
 
+- v0.0.4
+  - Fix datetime serialization issue
 - v0.0.3
   - Fixed issue with sensor rename and last_reading
 - v0.0.2

@@ -13,6 +13,7 @@ import web  # web.py framework
 from webpages import ProtectedPage  # Needed for security
 
 import datetime
+import copy
 import os
 from plugins import mqtt
 
@@ -152,7 +153,6 @@ def mqtt_reader(client, msg):
         reading = round(reading)
 
         # Store reading for display purposes
-        # TODO save settings
         last_reading[sensor] = {"ts": ts, "reading": reading}
 
         # Send msd signal
@@ -259,14 +259,16 @@ class get_settings(ProtectedPage):
     """
 
     def GET(self):
-        # Inject last reading as it is currently not saved
+        # If we add this to settings we run into datetime
+        # serialization issues when dumping settings, hence the copy.
+        display_sensors = copy.deepcopy(settings["sensors"])
+
         for sensor in last_reading.keys():
-            settings["sensors"][sensor]["reading_ts"] = last_reading[sensor]["ts"]
-            settings["sensors"][sensor]["reading_value"] = last_reading[sensor][
-                "reading"
-            ]
+            display_sensors[sensor]["reading_ts"] = last_reading[sensor]["ts"]
+            display_sensors[sensor]["reading_value"] = last_reading[sensor]["reading"]
+
         # open settings page
-        return template_render.moisture_sensor_data_mqtt(settings["sensors"])
+        return template_render.moisture_sensor_data_mqtt(display_sensors)
 
 
 class save_settings(ProtectedPage):
@@ -291,6 +293,7 @@ class save_settings(ProtectedPage):
         global settings
 
         qdict = web.input()
+
         new_settings = {}
 
         index = 0

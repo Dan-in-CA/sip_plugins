@@ -90,7 +90,8 @@ def notify_station_scheduled(station, **kw):
                         station_settings["default"],
                     ]
                 )
-                if default is None or default == 100:
+
+                if default is None:
                     return
                 else:
                     adjustment = default
@@ -104,6 +105,10 @@ def notify_station_scheduled(station, **kw):
         duration = math.ceil(duration * adjustment / 100)
         gv.rs[station_index][1] = gv.rs[station_index][0] + duration
         gv.rs[station_index][2] = duration
+        if duration == 0:
+            gv.ps[station_index] = [0, 0]
+        else:
+            gv.ps[station_index][1] = duration
 
 
 scheduled_signal = signal("station_scheduled")

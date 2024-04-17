@@ -25,6 +25,8 @@ The plugin does not currently respect the option "Ignore Plugin adjustments".
 
 ## Version information
 
+- v0.0.3
+  - Fix UI hanging schedules issue
 - v0.0.2
   - Ignore RUN ONCE programs
 - v0.0.1

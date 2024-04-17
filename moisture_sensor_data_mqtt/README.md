@@ -59,6 +59,8 @@ week.
 
 ## Version information
 
+- v0.0.5
+  - Fix issue with processing reading with float timestamp
 - v0.0.4
   - Fix datetime serialization issue
 - v0.0.3

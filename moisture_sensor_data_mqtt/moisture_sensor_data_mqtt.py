@@ -213,7 +213,7 @@ def truncate_data_files(neme, **kw):
 
                     for line in input:
                         fields = line.split(",")
-                        if int(fields[0]) + retention > now:
+                        if int(float(fields[0])) + retention > now:
                             output.write(line)
 
             try:

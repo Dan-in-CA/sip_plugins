@@ -319,6 +319,7 @@ class save_settings(ProtectedPage):
                     # Case: Delete sensor
                     stop_mqtt_reader(old_sensor)
                     msd_signal.send("delete", data={"sensor": f"{old_sensor}"})
+                    last_reading.pop(old_sensor, None)
                     if os.path.isfile(old_file):
                         # missing_ok=True
                         os.remove(old_file)

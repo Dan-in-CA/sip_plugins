@@ -66,6 +66,7 @@ def trigger_run_once(sensor, value):
 
         settings = moisture_sensor_settings["settings"]
 
+        sensor_key = f"sensor{station_index}"
         mins_key = f"i_mins{station_index}"
         secs_key = f"i_secs{station_index}"
         enable_key = f"i_enable{station_index}"
@@ -74,7 +75,11 @@ def trigger_run_once(sensor, value):
 
         # If no threshold has been configured for the station or the
         # sensor has not been enabled take not action
-        if (threshold_key not in settings) or (enable_key not in settings):
+        if (
+            (sensor_key not in settings)
+            or (settings[sensor_key] != sensor)
+            or (enable_key not in settings)
+        ):
             continue
 
         threshold, mins, secs, pause = validate_int(

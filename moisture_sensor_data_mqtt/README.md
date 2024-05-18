@@ -58,6 +58,7 @@ display by the Simple Chart plugin. Old readings are remove once a
 week.
 
 ## Version information
+
 - v0.0.6
   - Fix issue with deleting sensors with current reading
 - v0.0.5

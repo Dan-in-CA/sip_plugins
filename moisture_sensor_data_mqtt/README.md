@@ -59,6 +59,8 @@ week.
 
 ## Version information
 
+- v0.0.6
+  - Fix issue with deleting sensors with current reading
 - v0.0.5
   - Fix issue with processing reading with float timestamp
 - v0.0.4

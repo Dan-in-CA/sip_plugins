@@ -56,6 +56,7 @@ status = ""
 stn_sum = 0
 prog_name = ""
 p_num = 0
+Lt = time.localtime(gv.now)
 
 ################################################################################
 # Helper functions:                                                            #
@@ -146,42 +147,50 @@ def send_restart_notice():  # Notice 1
     
 def email_start_stop(name, **kw):  # Notice 2 and 3
     global stn_sum, prog_name
+    lt = time.localtime(gv.now)
     if ("2" in send_lst
         or "3" in send_lst
         ):         
         if (gv.pon  # program has started
             ):
             p_num = gv.pon
-            if p_num == 98:
-                prog_name = _(u"Run-once")
+            print("p_num: ", p_num)  # - test
+            print("len(gv.pd): ", len(gv.pd))  # - test
+            p_idx = p_num - 1
+            if (p_num <= len(gv.pd)
+                and gv.pd[p_idx]["name"]               
+                ):
+                prog_name = gv.pd[p_idx]["name"]
+                # print("program: ", prog_name)  # - test            
+            elif p_num == 98:
+                prog_name = _("Run-once")
             elif p_num == 99:
-                prog_name = _(u"Manual")
-            else:           
-                p_idx = p_num - 1
-                if gv.pd[p_idx]["name"]:
-                    prog_name = gv.pd[p_idx]["name"] 
-                    subject = f"SIP program {prog_name} started."
-                    message = f"The {prog_name} program started at {gv.nowt.tm_hour:02d}:{gv.nowt.tm_min:02d}.\n\n"
-                else:
-                    prog_name = ""
-                    subject = f"SIP program {p_num} started."
-                    message = f"Program {p_num} started at {gv.nowt.tm_hour:02d}:{gv.nowt.tm_min:02d}.\n\n"
-                message += "Scheduled in this program:\n"
-                for i, e in enumerate(gv.rs):
-                    if any(e):
-                        message += f"{gv.snames[i]} for {int(e[2]//60)}m {int(e[2] % 60)}s\n"
-                        stn_sum += 1
-                if "2" in send_lst:
-                    email(subject, message)
+                prog_name = _("Manual")
+            elif p_num == 100:
+                prog_name = _("Node-red")
+            if prog_name:
+                subject = f"SIP {prog_name} program started."
+                message = f"The {prog_name} program started at {lt.tm_hour:02d}:{lt.tm_min:02d}.\n\n"
+            else:
+                subject = f"SIP program {p_num} started."
+                message = f"Program {p_num} started at {lt.tm_hour:02d}:{lt.tm_min:02d}.\n\n"
+            message += "Scheduled in this program:\n"
+            for i, e in enumerate(gv.rs):
+                if any(e):
+                    message += f"{gv.snames[i]} for {int(e[2]//60)}m {int(e[2] % 60)}s\n"
+                    stn_sum += 1
+            if "2" in send_lst:
+                email(subject, message)
         elif (not gv.pon  # program has ended
               and "3" in send_lst
               ):          
             if prog_name:
-                subject = f"SIP program {prog_name} completed."
-                message = f"The {prog_name} program ended at {gv.nowt.tm_hour:02d}:{gv.nowt.tm_min:02d}.\n\n"
+                subject = f"SIP {prog_name} program completed."
+                message = f"The {prog_name} program ended at {lt.tm_hour:02d}:{lt.tm_min:02d}.\n\n"
+                prog_name = ""
             else:
                 subject = f"SIP program {gv.lrun[1]} completed."
-                message = f"Program {gv.lrun[1]} ended at {gv.nowt.tm_hour:02d}:{gv.nowt.tm_min:02d}.\n\n"
+                message = f"Program {gv.lrun[1]} ended at {lt.tm_hour:02d}:{lt.tm_min:02d}.\n\n"
             message += "Stations logged in this program:\n"
             message += "Date\t\tStartTime\tDuration\tStation\n"
             
@@ -194,6 +203,7 @@ def email_start_stop(name, **kw):  # Notice 2 and 3
                         i += 1
             except IOError:
                 pass
+                print("IOError opening log file")
             stn_sum = 0
             email(subject, message)
     

@@ -137,7 +137,7 @@ def mqtt_reader(client, msg):
         if driest is None or wettest is None:
             return
 
-        ts_secs = gv.now
+        ts_secs = int(gv.now)
         ts = datetime.datetime.fromtimestamp(ts_secs)
         if interval is not None and sensor in last_reading:
             if last_reading[sensor]["ts"] + datetime.timedelta(minutes=interval) > ts:
@@ -213,7 +213,8 @@ def truncate_data_files(neme, **kw):
 
                     for line in input:
                         fields = line.split(",")
-                        if int(fields[0]) + retention > now:
+                        # timestamp can be float or int
+                        if int(float(fields[0])) + retention > now:
                             output.write(line)
 
             try:
@@ -235,7 +236,7 @@ def load_moisture_data_mqtt_settings():
         # If file does not exist return default value
         settings = {
             "sensors": {},
-            "last_truncate": gv.now,
+            "last_truncate": int(gv.now),
         }
 
 
@@ -318,6 +319,7 @@ class save_settings(ProtectedPage):
                     # Case: Delete sensor
                     stop_mqtt_reader(old_sensor)
                     msd_signal.send("delete", data={"sensor": f"{old_sensor}"})
+                    last_reading.pop(old_sensor, None)
                     if os.path.isfile(old_file):
                         # missing_ok=True
                         os.remove(old_file)

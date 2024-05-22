@@ -91,6 +91,8 @@ following values:
 
 ## Version information
 
+- v0.0.4
+  - Fix issue with too many stations being triggered
 - v0.0.3
   - Fix renamed sensor not being saved
 - v0.0.2

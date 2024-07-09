@@ -169,6 +169,7 @@ class FlowWindow:
         self._flow_next_start_time = datetime.datetime.now() + datetime.timedelta(weeks=520)
         self._flow_rate_read_time = datetime.datetime.now()
         self.recorded_time = datetime.datetime.now()
+        self.seen_flow_once = False
 
     def load_valve_states(self):
         i = 0
@@ -261,12 +262,23 @@ class FlowWindow:
         current_time = datetime.datetime.now()
         delta = current_time - self.start_time
         duration = delta.total_seconds()
+        seen_flow_twice = False
 
-        if not self._flow_warning2_given and duration > 3 and not self.valve_open() and rate > 3:
+        if rate > 3:
+            if self.seen_flow_once:
+                seen_flow_twice = True
+            else:
+                self.seen_flow_once = True
+        else:
+            self.seen_flow_once = False
+
+        # Need to see flow in 2 consecutive calls to throw the warning.
+        # This is to filter out noise on the sensor line.
+        if not self._flow_warning2_given and duration > 3 and not self.valve_open() and seen_flow_twice:
             # Water is flowing but the valves show as off. Send error message.
             print("Flow error 2 encountered")
             self._execute_notification_2(rate)
-            self._flow_warning1_given = True
+            self._flow_warning2_given = True
 
         # Track and save valve flow rate if only a single valve is open
         if not self._flow_tracking_started:
@@ -291,7 +303,7 @@ class FlowWindow:
                 self._flow_warning1_given = True
 
             if self.ave_flow_rate > 0 and self.valve_open():
-                # Current flow rate is less than historical rate
+                # Water is flowing. Check flow rates against averages
                 self._check_notification_3a(rate)
                 self._check_notification_3b(rate)
 
@@ -315,12 +327,15 @@ class FlowWindow:
         if "1" in self.ls.sms_events:
             self._warning_notice.msg_sms = text
         if "1" in self.ls.voice_events:
-            self._warning_notice.msg_voice = text
+            self._warning_notice.msg_voice = text.replace("SIP","S.I.P.")
         self._warning_notice.send_notice()
 
     def _execute_notification_2(self, rate):
         # Water is flowing but the valves show as off.
-        flow_rate = round(rate * 3600 / self.ls.pulses_per_measure, 1)
+        if self.ls.pulses_per_measure > 0:
+            flow_rate = round(rate * 3600 / self.ls.pulses_per_measure, 1)
+        else:
+            flow_rate = 0
         text = "SIP {} reports unexpected irrigation flow".format(gv.sd["name"])
         self._warning_notice.subj_email = text
         text = "SIP {} flow plugin is reporting that all stations should be shut off, but a flow ".format(
@@ -332,12 +347,12 @@ class FlowWindow:
         if "2" in self.ls.sms_events:
             self._warning_notice.msg_sms = text
         if "2" in self.ls.voice_events:
-            self._warning_notice.msg_voice = text
+            self._warning_notice.msg_voice = text.replace("SIP","S.I.P.")
         self._warning_notice.send_notice()
 
     def _check_notification_3a(self, rate):
         # Current flow rate exceeds historical rate
-        flow_ratio = self.wndw_flow_rate / self.ave_flow_rate
+        flow_ratio = round(self.wndw_flow_rate,2) / round(self.ave_flow_rate,2)
         if "3" in self.ls.email_events and flow_ratio >= (
                 1 + self.ls.email_variance) and not self._flow_warning3a_email_given:
             # Flow rate is higher than prior runs
@@ -375,12 +390,12 @@ class FlowWindow:
             last_rate = round(self.ave_flow_rate / self.ls.pulses_per_measure, 2)
             text = "SIP {} flow plugin is reporting water flow above the last measured run rate" .format(gv.sd["name"])
             if len(self._open_valves) == 1:
-                text += "for the station ""{}"".".format(self._open_valves_names[0])
-                text += ". A rate of {:,.1f} {}/hr has been detected from the sensor. ".format(measured_rate,
+                text += " for the station ""{}"".".format(self._open_valves_names[0])
+                text += " A rate of {:,.1f} {}/hr has been detected from the sensor. ".format(measured_rate,
                                                                                              self.ls.volume_measure)
                 text += "This exceeds the last measured rate of {:,.1f} {}/hr ".format(last_rate,
                                                                                             self.ls.volume_measure)
-                text += "by {:,.1f}%.\n".format((1 - round(measured_rate / last_rate, 3)) * 100)
+                text += "by {:,.1f}%.\n".format((round(measured_rate / last_rate, 3) - 1) * 100)
             else:
                 text += ". A rate of {:,.1f} {}/hr has been detected from the sensor. ".format(measured_rate,
                                                                                                self.ls.volume_measure)
@@ -399,14 +414,14 @@ class FlowWindow:
             print("Flow error 3a (voice) encountered")
             measured_rate = round(self.wndw_flow_rate / self.ls.pulses_per_measure, 2)
             last_rate = round(self.ave_flow_rate / self.ls.pulses_per_measure, 2)
-            text = "SIP {} flow plugin is reporting water flow above the last measured run rate" .format(gv.sd["name"])
+            text = "S.I.P. {} flow plugin is reporting water flow above the last measured run rate" .format(gv.sd["name"])
             if len(self._open_valves) == 1:
-                text += "for the station ""{}"".".format(self._open_valves_names[0])
-                text += ". A rate of {:,.1f} {}/hr has been detected from the sensor. ".format(measured_rate,
+                text += " for the station ""{}"".".format(self._open_valves_names[0])
+                text += " A rate of {:,.1f} {}/hr has been detected from the sensor. ".format(measured_rate,
                                                                                              self.ls.volume_measure)
                 text += "This exceeds the last measured rate of {:,.1f} {}/hr ".format(last_rate,
                                                                                             self.ls.volume_measure)
-                text += "by {:,.1f}%.\n".format((1 - round(measured_rate / last_rate, 3)) * 100)
+                text += "by {:,.1f}%.\n".format((round(measured_rate / last_rate, 3) - 1) * 100)
             else:
                 text += ". A rate of {:,.1f} {}/hr has been detected from the sensor. ".format(measured_rate,
                                                                                                self.ls.volume_measure)
@@ -430,10 +445,10 @@ class FlowWindow:
             last_rate = round(self.ave_flow_rate / self.ls.pulses_per_measure, 1)
             text = "SIP {} reports irrigation flow less than expected".format(gv.sd["name"])
             self._warning_notice.subj_email = text
-            text = "SIP {} flow plugin is reporting water flow below the last measured run rate. ".format(gv.sd["name"])
+            text = "SIP {} flow plugin is reporting water flow below the last measured run rate".format(gv.sd["name"])
             if len(self._open_valves) == 1:
                 text += " for the station ""{}"".".format(self._open_valves_names[0])
-                text += "A rate of {:,.1f} {}/hr has been detected from the sensor. ".format(measured_rate,
+                text += " A rate of {:,.1f} {}/hr has been detected from the sensor. ".format(measured_rate,
                                                                                              self.ls.volume_measure)
                 text += "This is less than the last measured rate of {:,.1f} {}/hr (recorded on {:%-d %B %Y} at {:%H:%M:%S} ) "\
                     .format(last_rate, self.ls.volume_measure, self.recorded_time, self.recorded_time)
@@ -450,7 +465,6 @@ class FlowWindow:
             self._warning_notice.msg_email = text
             self._warning_notice.send_notice()
             self._flow_warning3b_email_given = True
-
         if "3" in self.ls.sms_events and self.wndw_flow_rate > 0 and flow_ratio <= (
                 1 - self.ls.sms_variance) and not self._flow_warning3b_sms_given:
             # Flow rate is slower than prior runs
@@ -460,7 +474,7 @@ class FlowWindow:
             text = "SIP {} flow plugin is reporting water flow below the last measured run rate".format(gv.sd["name"])
             if len(self._open_valves) == 1:
                 text += " for the station ""{}"".".format(self._open_valves_names[0])
-                text += ". A rate of {:,.1f} {}/hr has been detected from the sensor. ".format(measured_rate,
+                text += " A rate of {:,.1f} {}/hr has been detected from the sensor. ".format(measured_rate,
                                                                                              self.ls.volume_measure)
                 text += "This is less than the last measured rate of {:,.1f} {}/hr ".format(last_rate,
                                                                                             self.ls.volume_measure)
@@ -483,10 +497,10 @@ class FlowWindow:
             print("Flow error 3b (voice) encountered")
             measured_rate = round(self.wndw_flow_rate / self.ls.pulses_per_measure, 1)
             last_rate = round(self.ave_flow_rate / self.ls.pulses_per_measure, 1)
-            text = "SIP {} flow plugin is reporting water flow below the last measured run rate".format(gv.sd["name"])
+            text = "S.I.P. {} flow plugin is reporting water flow below the last measured run rate".format(gv.sd["name"])
             if len(self._open_valves) == 1:
                 text += " for the station ""{}"".".format(self._open_valves_names[0])
-                text += ". A rate of {:,.1f} {}/hr has been detected from the sensor. ".format(measured_rate,
+                text += " A rate of {:,.1f} {}/hr has been detected from the sensor. ".format(measured_rate,
                                                                                              self.ls.volume_measure)
                 text += "This is less than the last measured rate of {:,.1f} {}/hr ".format(last_rate,
                                                                                             self.ls.volume_measure)
@@ -512,7 +526,7 @@ class FlowWindow:
 
     def duration(self):
         delta = self.end_time - self._start_time
-        return int(delta.total_seconds())
+        return int(round(delta.total_seconds()))
 
     def write_log(self):
         """

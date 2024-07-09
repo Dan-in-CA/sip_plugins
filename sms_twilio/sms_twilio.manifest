@@ -1,0 +1,14 @@
+Description: Support messaging using Twilio.com service.
+Copyright 2024
+Author: Ian Harris
+Email: ianmarcharris@gmail.com
+License: GNU GPL 3.0
+revision: 1.0
+
+Requirements: Python 3.7
+
+##### List all plugin files below preceded by a blank line [file_name.ext path] relative to SIP directory #####
+
+sms_twilio.py plugins
+sms_twilio.html templates
+sms_twilio.json data (generated)

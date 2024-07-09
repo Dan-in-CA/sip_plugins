@@ -67,7 +67,7 @@ urls.extend([
     ])
 
 # Add this plugin to the PLUGINS menu ["Menu Name", "URL"], (Optional)
-gv.plugin_menu.append([_(u"Flow Plugin"), u"/flow-sp"])
+gv.plugin_menu.append([_(u"Flow"), u"/flow-sp"])
 
 
 def save_prior_settings():
@@ -193,8 +193,8 @@ class settings(ProtectedPage):
     """
     Load an html page for entering plugin settings.
     """ 
-    global master_sensor_addr
-    settings_b4 = {}
+    # global master_sensor_addr
+    # settings_b4 = {}
     def GET(self):
         
         try:

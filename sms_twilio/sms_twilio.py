@@ -86,6 +86,9 @@ def send_sms(name, **kwargs):
     Send message to SMS provider
     """
     print(u"SMS message request received from {}: {}".format(name, kwargs[u"msg"]))
+    if not SMS_ENABLED:
+        print("Twilio SMS Disabled")
+        return "Twilio SMS Disabled"
     if PAUSE_NOTIFICATIONS or sms_obj.pause_messaging:
         print(u"SMS message not sent as messages have been paused")
         return u"SMS message not sent as messages have been paused"
@@ -106,6 +109,9 @@ def send_voice(name, **kwargs):
     Send message to voice provider
     """
     print(u"Voice message request received from {}: {}".format(name, kwargs[u"msg"]))
+    if not SMS_ENABLED:
+        print("Twilio Voice Disabled")
+        return u"Twilio Voice Disabled"
     if PAUSE_NOTIFICATIONS or voice_obj.pause_messaging:
         print(u"Voice message not sent as messages have been paused")
         return u"Voice message not sent as messages have been paused"

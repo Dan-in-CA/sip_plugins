@@ -1,0 +1,10 @@
+A plugin to display an ongoing graph of system water pressure
+
+##### List all plugin files below preceded by a blank line [file_name.ext path] relative to SIP directory #####
+
+diurnal_display.py plugins
+diurnal_display.html templates
+diurnal_display.js static/scripts
+diurnal_display-docs.html static/docs/plugins
+diurnal_display.json data (generated)
+diurnal_display.manifest plugins/manifests

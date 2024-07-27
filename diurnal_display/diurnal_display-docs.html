@@ -1,0 +1,57 @@
+<!DOCTYPE HTML>
+<HTML>
+<HEAD>
+	<META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset="utf-8">
+	<TITLE>Diurnal Display Plug-in Docs</TITLE>
+	<META NAME="viewport" CONTENT="width=device-width, initial-scale=1.0">
+	<STYLE TYPE="text/css">
+	<!--
+		P { font-family: "Lucida Grande", "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", "Lucida Sans Unicode", "Helvetica", "Arial", sans-serif }
+		H2.cjk { font-family: "SimSun" }
+		H2.ctl { font-family: "Mangal" }
+		PRE.cjk { font-family: "NSimSun", monospace }
+		CODE.cjk { font-family: "NSimSun", monospace }
+	-->
+	</STYLE>
+</HEAD>
+<BODY LANG="en-US" BGCOLOR="#ffffff" DIR="LTR" STYLE="border: none; padding: 0in">
+<H1><A NAME="diurnal_display-plugin-documentation"></A>Diurnal Display Plug-in
+Documentation</H1>
+<H2 CLASS="western"><A NAME="about-the-diurnal_display-plugin"></A>About the
+Diurnal Display Plug-in</H2>
+<P>This plug-in is shades the home page schedule graph to illustrate sunrise and sunset times.
+It also serves as a test and illustration of the capabilities of plug-ins to augment the user interface
+in powerful ways. Note that this plug-in does not provide any new capabilities for defining programs
+relative to sunrise or sunset, it alters the presentation only.</P>
+
+<H2>Usage</H2>
+<P>This plug-in requires a library called "suncalc".  To install type the following into a terminal window:</P>
+<CODE>pip3 install suncalc</CODE>
+<P>This plug-in requires the new script injection capabilities introduced in late 2024, please ensure you are running
+    a current SIP version for this plug-in to work.</P>
+<P>The plug-in consists of the plug-in code (<CODE>plugins/diurnal_display.py</CODE>), the plug-in javascript insertion (<CODE>/scripts/static/diurnal_display.js</CODE>)
+    the plug-in settings page (<CODE>/templates/diurnal_display.html</CODE>), and this documentation (<CODE>/static/docs/plug-ins/diurnal_display-docs.html</CODE>,
+    as well as a manifest listing each of these files: (<CODE>/plugins/manifests/diurnal_display.manifest</CODE>).  A settings file is automatically created
+    at <CODE>/data/diurnal_display.json</CODE>.</P>
+<P>After installation or enablement of the plug-in, go to the Plugins menu and select the settings for the Diurnal Display Plug-in, which 
+    allow you to enter latitude and longitude coordinates for your location.</P>
+<P>The home page schedule graph will now shade night times (before sunrise, after sunset).</P>
+
+<H2>How the plug-in works</H2>
+<P>Besides installing the plug-in itself and handling the pages for setting the latitude and longitude parameters,
+    the plug-in provides an API at <CODE>/diurnal_display-data</CODE> which can be called from the UI.
+    The API accepts a "date" parameter with a day in "YYYY-MM-DD" format. For example <CODE>/diurnal_display-data?param=2024-08-01</CODE>.
+    Together with the latitude and longitude retrieved from the settings file, the plug-in invokes the library 
+    <b>suncalc</b> to calculate sunrise and sunset times.  Note that suncalc requires the date to be in UTC, as well as returning
+    the result in UTC, so some conversion into and out of local time is required.</P>
+<P>For convenience of the scripts, the sunrise and sunset times are converted into minutes of the day, with 0
+    representing midnight, 60 representing 1AM etc.  SIP uses minutes of the day in its programs and logs and thus this
+    is a convenient format for the schedule scripts to work with.</P>
+<P>At startup the plug-in also requests a javascript insertion, <B>diurnal_display.js</B>.  This file attaches an observer to
+    the schedule display (see proto plug-in for details) and runs a function <B>diurnal_display_update_scheulde</B>
+    every time the schedule is updated.  This function calls the plug-ins data api, and iterates through the schedule
+    table adding the correct background color to each row consistent with the sunrise/sunset times.  To limit the augmentation
+    to styling, this function adds a transparent background to each cell through CSS.  To enable partiall fills,
+    the CSS invokes an in-line SVG that can be dynamically altered to represent the sunrise/sunset line.</P>
+</BODY>
+</HTML>

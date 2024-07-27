@@ -4,15 +4,12 @@
     to a separate day.  Thus a UI change that needs to correlate with the currently displayed schedule can use this
     mechanism to insert updates every time the schedule does.
 */
-/* unescaped svg for background image:
-svg width="100" height="100" version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-    <rect x="0" y="0" w="100" h="100" stroke-width="0" fill="rgba(0,0,139,0.15)"/>
-</svg>
-*/
 function background_svg(left_edge, right_edge) {
-    if (left_edge != 0) {
-        console.log(left_edge + ":" + right_edge);
-    }
+    /* unescaped svg for background image:
+        <svg width="100" height="100" version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+            <rect x="0" y="0" w="100" h="100" stroke-width="0" fill="rgba(0,0,139,0.15)"/>
+        </svg>
+    */
     return "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect x='" + 
         left_edge + "' y='0' width='" + right_edge + 
         "' height='100' fill='rgba(0,0,139,.15)'/%3E%3C/svg%3E\")";
@@ -21,7 +18,6 @@ function background_svg(left_edge, right_edge) {
 function diurnal_display_update_schedule() {
     if ($('#displayScheduleDate').length > 0) {
         $.get( "/diurnal_display-data", {"date" : toXSDate(displayScheduleDate)}, function( diurnal_data ) {
-            // console.log(diurnal_data.sunrise + "," + diurnal_data.sunset);
             $(".stationSchedule .scheduleTick").each( function() {
                 var cellTime = parseInt($(this).attr("data")) * 60;
                 if (cellTime < diurnal_data.sunrise + 60) {

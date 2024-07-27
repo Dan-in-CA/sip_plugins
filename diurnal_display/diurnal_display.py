@@ -13,8 +13,6 @@ from sip import template_render  #  Needed for working with web.py templates
 from urls import urls  # Get access to SIP's URLs
 import web  # web.py framework
 from webpages import ProtectedPage  # Needed for security
-from webpages import showInFooter # Enable plugin to display readings in UI footer
-from webpages import showOnTimeline # Enable plugin to display station data on timeline
 from datetime import datetime, UTC
 from suncalc import get_times
 
@@ -30,44 +28,40 @@ urls.extend([
 # Add this plugin to the PLUGINS menu ["Menu Name", "URL"], (Optional)
 gv.plugin_menu.append([_(u"Diurnal Display Plugin"), u"/diurnal_display-sp"])
 
-# Add plugin-specific javascript that may be required for the plug-in to make arbitrary UI changes
-# This is advanced capability with lots of rope to hang yourself, for simple data display we recommend showInFooter or showInTimeline
+# Inject javascript to call our API for data and modify the display
 gv.plugin_scripts.append("diurnal_display.js")
 
-def empty_function():  # Only a place holder
-    """
-    Functions defined here can be called by classes
-    or run when the plugin is loaded. See comment at end.
-    """
-    pass
 
-#############################
-### Data display examples ###
+# Set a default location, roughly estimated to users time zone
+default_settings = {"lat" : 45, "lon" : -gv.tz_offset/3600*15 }
 
+# Package up data for access by javascript
 def plugin_data(params):
-    # Package up data for access by javascript
+    # load settings for lat/lon params
     try:
         with open(
             u"./data/diurnal_display.json", u"r"
         ) as f:  # Read settings from json file if it exists
             settings = json.load(f)
     except IOError:  # If file does not exist return empty value
-        settings = {"lon" : 0, "lat" : 0}  # Default settings
+        settings = default_settings
 
+    # load date param from url to establish date to test
     if hasattr(params,"date"):
         parts = params.date.split("-")
         date = datetime(int(parts[0]), int(parts[1]), int(parts[2]))
     else:
         date = datetime.now()
+    
+    # calculate the sunrise/sunset times
     lon = float(settings["lon"])
     lat = float(settings["lat"])
-    
     times = get_times(date.astimezone(UTC), lon, lat)
-    
     sunrise_time = times["sunrise"]
     sunset_time = times["sunset"]
     #print([sunrise_time, sunset_time])
     
+    # convert to minutes-since-midnight format to return
     sunrise_minutes = sunrise_time.hour * 60 + sunrise_time.minute - gv.tz_offset/60
     sunset_minutes = sunset_time.hour * 60 + sunset_time.minute - gv.tz_offset/60
     if (sunrise_minutes < 0):
@@ -90,9 +84,7 @@ class fetch_data(ProtectedPage):
         web.header("Content-Type", "application/json")
         return json.dumps(plugin_data(web.input()))
     
-
-# End data display examples
-
+## Handle settings
 class settings(ProtectedPage):
     """
     Load an html page for entering plugin settings.
@@ -105,7 +97,7 @@ class settings(ProtectedPage):
             ) as f:  # Read settings from json file if it exists
                 settings = json.load(f)
         except IOError:  # If file does not exist return empty value
-            settings = {"lon" : 0, "lat" : 0}  # Default settings
+            settings = default_settings
         return template_render.diurnal_display(settings)  # open settings page
 
 
@@ -125,7 +117,3 @@ class save_settings(ProtectedPage):
             json.dump(qdict, f)  # save to file
         raise web.seeother(u"/")  # Return user to home page.
 
-
-    
-#  Run when plugin is loaded
-empty_function()

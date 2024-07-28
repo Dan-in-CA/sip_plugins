@@ -35,6 +35,11 @@ combine_stations
 ----------
 Allows multiple stations to be run at the same time (concurrently) when SIP is in sequential mode.
 
+diurnal_display
+----------
+This plugin shades the home page schedule graph to illustrate sunrise and sunset times.  Provides a simple sample
+of a plugin that alters the SIP UI (capabilities available from SIP 5.1.70 onwards). 
+
 email_adj
 ----------
 Sends status email to google email account. **NOTE: This plugin runs under Python2x only**.

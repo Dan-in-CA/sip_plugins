@@ -1,3 +1,4 @@
+#! /bin/bash
 cp -f diurnal_display.py ../../SIP/plugins 
 cp -f diurnal_display.html ../../SIP/templates 
 cp -f diurnal_display.js ../../SIP/static/scripts

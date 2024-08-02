@@ -13,7 +13,7 @@ from sip import template_render  #  Needed for working with web.py templates
 from urls import urls  # Get access to SIP's URLs
 import web  # web.py framework
 from webpages import ProtectedPage  # Needed for security
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 from suncalc import get_times
 
 # Add new URLs to access classes in this plugin.
@@ -56,7 +56,7 @@ def plugin_data(params):
     # calculate the sunrise/sunset times
     lon = float(settings["lon"])
     lat = float(settings["lat"])
-    times = get_times(date.astimezone(UTC), lon, lat)
+    times = get_times(date.astimezone(timezone.utc), lon, lat)
     sunrise_time = times["sunrise"]
     sunset_time = times["sunset"]
     #print([sunrise_time, sunset_time])

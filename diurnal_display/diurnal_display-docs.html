@@ -24,8 +24,9 @@ It also serves as a test and illustration of the capabilities of plugins to augm
 in powerful ways. Note that this plugin does not provide any new capabilities for defining programs
 relative to sunrise or sunset, it alters the presentation only.</P>
 
-<H2>Usage</H2>
-<P>This plugin requires a library called "suncalc".  To install type the following into a terminal window:</P>
+<H2>Installation Note</H2>
+<P>This plugin requires a library called "suncalc".  This should install automatically on RPi and Linux environments.  However
+    it might not on Windows.  To install type the following into a terminal window:</P>
 <CODE>pip3 install suncalc</CODE>
 <P>This may raise an error "externally-managed-environment."  There are various ways to address this, but a simple solution
     is to break the external management, with these two lines, and then try the installation again:</P>
@@ -37,9 +38,11 @@ relative to sunrise or sunset, it alters the presentation only.</P>
     the plugin settings page (<CODE>/templates/diurnal_display.html</CODE>), and this documentation (<CODE>/static/docs/plugins/diurnal_display-docs.html</CODE>,
     as well as a manifest listing each of these files: (<CODE>/plugins/manifests/diurnal_display.manifest</CODE>).  A settings file is automatically created
     at <CODE>/data/diurnal_display.json</CODE>.</P>
+
+<H2>Usage</H2>
 <P>After installation or enablement of the plugin, go to the Plugins menu and select the settings for the Diurnal Display Plugin, which 
-    allow you to enter latitude and longitude coordinates for your location.</P>
-<P>The home page schedule graph will now shade night times (before sunrise, after sunset).</P>
+    allow you to enter precies latitude and longitude coordinates for your location.</P>
+<P>The home page schedule chart will now shade night times (before sunrise, after sunset).</P>
 
 <H2>How the plugin works</H2>
 <P>Besides installing the plugin itself and handling the pages for setting the latitude and longitude parameters,
@@ -52,10 +55,10 @@ relative to sunrise or sunset, it alters the presentation only.</P>
     representing midnight, 60 representing 1AM etc.  SIP uses minutes of the day in its programs and logs and thus this
     is a convenient format for the schedule scripts to work with.</P>
 <P>At startup the plugin also requests a javascript insertion, <B>diurnal_display.js</B>.  This file attaches an observer to
-    the schedule display (see proto plugin for details) and runs a function <B>diurnal_display_update_scheulde</B>
+    the schedule display (see proto plugin for details) and runs a function <B>diurnal_display_update_schedule</B>
     every time the schedule is updated.  This function calls the plugins data api, and iterates through the schedule
-    table adding the correct background color to each row consistent with the sunrise/sunset times.  To limit the augmentation
-    to styling, this function adds a transparent background to each cell through CSS.  To enable partiall fills,
-    the CSS invokes an in-line SVG that can be dynamically altered to represent the sunrise/sunset line.</P>
+    table adding a transparent background color to each row consistent with the sunrise/sunset times.  To enable cells with partiall fills,
+    the CSS invokes an in-line SVG for the background that can be dynamically computed to represent the sunrise/sunset line
+    within that hour.</P>
 </BODY>
 </HTML>

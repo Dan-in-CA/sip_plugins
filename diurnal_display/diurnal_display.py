@@ -14,7 +14,13 @@ from urls import urls  # Get access to SIP's URLs
 import web  # web.py framework
 from webpages import ProtectedPage  # Needed for security
 from datetime import datetime, timezone
-from suncalc import get_times
+import subprocess
+try:
+    from suncalc import get_times
+except ModuleNotFoundError:
+    command = "pip install suncalc"
+    subprocess.call(command.split())
+    from suncalc import get_times
 
 # Add new URLs to access classes in this plugin.
 # fmt: off

@@ -32,6 +32,7 @@ gv.plugin_scripts.append("pressure_monitor.js")
 # Add this plugin to the PLUGINS menu ["Menu Name", "URL"], (Optional)
 gv.plugin_menu.append([_(u"Pressure Monitor Plugin"), u"/pressure_monitor-sp"])
 
+default_settings = { "port" : "/dev/ttyUSB0", "url" : "" }
 def load_settings():
     # load settings from file
     try:
@@ -40,7 +41,7 @@ def load_settings():
         ) as f:  # Read settings from json file if it exists
             return json.load(f)
     except IOError:  # If file does not exist return default values
-        return { "port" : "/dev/ttyUSB0", "url" : "" }
+        return default_settings
     
 class display(ProtectedPage):
     """

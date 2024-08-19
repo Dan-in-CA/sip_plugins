@@ -1,0 +1,50 @@
+$def with(settings)
+
+$var title: $_('Jon\'s Pressure Monitor Plugin')
+$var page: pressure_monitor_plugin
+<script>
+    // Initialize behaviors
+    jQuery(document).ready(function(){
+
+        jQuery("#cSubmit").click(function() {
+            jQuery("#pluginForm").submit();
+        });
+        jQuery("button#cCancel").click(function(){
+            window.location="/";
+        });
+
+        jQuery("button#docButton").click(function(){
+            window.open("static/docs/plugins/pressure_monitor-docs.html", "_blank");
+        });
+
+    });
+</script>
+
+<div id="plugin">
+    <div class="title">Pressure Monitor Plugin
+        <button class="execute" id="docButton" type="button" >$_('Help')</button>
+    </div>
+
+    <form id="pluginForm" action="/pressure_monitor-save" method="get">
+
+        <p>$_('Pressure Monitor Settings')</p>
+        <table class="optionList">
+
+            <tr>
+                <td style='text-transform: none;'>$_('Port'):</td>
+                <td><input type="text" name="port" value="${settings['port'] if 'port' in settings else '' }"></td>
+            </tr>
+            <tr>
+                <td style='text-transform: none;'>$_('Remote URL'):</td>
+                <td><input type="text" name="url" value="${settings['url'] if 'url' in settings else ''}"></td>
+            </tr>
+
+        </table>
+
+    </form>
+
+<div class="controls">
+    <button id="cSubmit" class="submit"><b>$_('Submit')</b></button>
+    <button id="cCancel" class="cancel danger">$_('Cancel')</button>
+</div>
+</div>

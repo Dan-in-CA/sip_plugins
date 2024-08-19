@@ -1,0 +1,33 @@
+<!DOCTYPE HTML>
+<HTML>
+<HEAD>
+	<META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset="utf-8">
+	<TITLE>Pressure Monitor Plug-in Docs.html</TITLE>
+	<META NAME="viewport" CONTENT="width=device-width, initial-scale=1.0">
+	<STYLE TYPE="text/css">
+	<!--
+		P { font-family: "Lucida Grande", "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", "Lucida Sans Unicode", "Helvetica", "Arial", sans-serif }
+		H2.cjk { font-family: "SimSun" }
+		H2.ctl { font-family: "Mangal" }
+		PRE.cjk { font-family: "NSimSun", monospace }
+		CODE.cjk { font-family: "NSimSun", monospace }
+	-->
+	</STYLE>
+</HEAD>
+<BODY LANG="en-US" BGCOLOR="#ffffff" DIR="LTR" STYLE="border: none; padding: 0in">
+<H1><A NAME="pressure_monitor-plugin-documentation"></A>Pressure Monitor Plugin
+Documentation</H1>
+<H2 CLASS="western"><A NAME="about-the-pressure_monitor-plugin"></A>About the
+Pressure Monitor Plugin</H2>
+<P>Displays a graph of historical water pressure at the bottom of the schedule timeline.</P>
+<P>This requires a water pressure sensor, hooked up through Arduino and made available through serial
+communication.  Many aspects are hard wired in such as max PSI - it may require modification depending on the
+hardware.  This is not intended to be a general-purpose solution.</P>
+<H2 CLASS="western"><A NAME="using-the-pressure_monitor-plugin"></A>Using the
+Pressure Monitor plugin</H2>
+<P>Settings include the port of the Arduino which is reading data from the pressure sensor,
+	and a Remote URL.  This allows you to fetch the SVG from an alternate RPi (that also has this plugin installed)
+	facilitating monitoring pressure from a single source that is feeding into multiple SIP systems (I have 3 systems fed
+	by a single pump.)</P>
+</BODY>
+</HTML>

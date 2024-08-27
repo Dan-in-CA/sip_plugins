@@ -571,7 +571,7 @@ def history_info(obj, curr_conditions, options):
 
     path = u"./data/weather_level_history"
     i = 1
-    count = int(options[u"days_history"])
+    count = int(options[u"days_history"])*24
     for filename in sorted(os.listdir(path)):
         tmp = re.split("_|-", filename)
         if tmp[0] == u"history":

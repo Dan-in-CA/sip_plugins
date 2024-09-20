@@ -215,6 +215,12 @@ class TelegramBot(Thread):
         await context.bot.sendMessage(chat_id, text=txt)
 
     def _initBot(self, token: str):
+        try:
+            asyncio.get_running_loop()
+        except RuntimeError:
+            self.eventLoop = asyncio.new_event_loop()
+            asyncio.set_event_loop(self.eventLoop)
+
         application = Application.builder().token(token).build()
         self._currentChats = set(self.data["currentChats"])
         application.add_error_handler(self._botError)
@@ -243,15 +249,12 @@ class TelegramBot(Thread):
                 self.bot = self._initBot(token)
 
                 # Lets Start the bot
-                # Create and set the event loop for this thread
-                self.eventLoop = asyncio.new_event_loop()
-                asyncio.set_event_loop(self.eventLoop)
                 self._announce(
                     "Bot on *" + gv.sd["name"] + "* has just started!",
                     parse_mode="Markdown",
                 )
                 try:
-                    self.bot.run_polling()
+                    self.bot.run_polling(stop_signals=None)
                 except asyncio.CancelledError:
                     logging.info("TelegramBot polling loop was cancelled")
                     pass

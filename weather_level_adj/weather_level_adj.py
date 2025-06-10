@@ -571,8 +571,8 @@ def history_info(obj, curr_conditions, options):
 
     path = u"./data/weather_level_history"
     i = 1
-    count = int(options[u"days_history"])
-    for filename in sorted(os.listdir(path)):
+    count = int(options[u"days_history"])*24
+    for filename in sorted(os.listdir(path), reverse=True):
         tmp = re.split("_|-", filename)
         if tmp[0] == u"history":
             tmp.pop(0)
@@ -733,25 +733,61 @@ def forecast_info(obj, options, curr_weather):
         u"tot_elems": 1,
         u"trend_up_down": 0,
     }
+
+    # Calculate the total number of forecast days considered for decay calculation
+    # Use a default of 5 if options[u"days_forecast"] is not available or invalid
+    total_forecast_days_considered = safe_float(options.get(u"days_forecast", 5))
+    if total_forecast_days_considered <= 0:
+        total_forecast_days_considered = 5 # Prevent division by zero or non-positive values
+
     for entry in data[u"list"]:
         try:
+            # Include the original lines to delete keys and get weather ID
             del entry[u"dt"]
             del entry[u"sys"]
             del entry[u"clouds"]
             id = next(iter(entry[u"weather"]))[u"id"]
+
             for keycodes, codes in list(options[u"weather_decipher"][u"PrecipCodes"].items()):
                 if id in codes:
                     weight = options[u"weather_decipher"][u"PrecipWeights"][keycodes]
                     entry[u"weight"] = weight
                     break
+
+            # Get the time of the forecast entry
+            entry_time_str = entry.get(u"dt_txt")
+            if not entry_time_str:
+                 continue # Skip entry if time is missing
+
+            entry_time = datetime.datetime.strptime(entry_time_str, u"%Y-%m-%d %H:%M:%S")
+
+            # Calculate the time difference in days from now
+            time_difference = entry_time - date_now
+            days_into_forecast = time_difference.total_seconds() / (24.0 * 3600.0) # Use float division
+
+            # Calculate the linear decay factor (decreases from 1 to 0 over the forecast period)
+            # Ensure the decay factor is not negative
+            decay_factor = max(0.0, 1.0 - (days_into_forecast / total_forecast_days_considered))
+
+            # Get the probability of precipitation for this entry
+            pop = safe_float(entry.get(u"pop", 0.0)) # Use .get for safety, default to 0.0 if missing
+
             if u"rain" in entry:
                 _precip_time = datetime.datetime.strptime(
                     entry[u"dt_txt"], u"%Y-%m-%d %H:%M:%S"
                 )
-                if date_future > _precip_time and entry[u"rain"] != {}:
-                    data[u"precip_accumulate"] += entry[u"rain"].get(
-                        next(iter(entry[u"rain"]))
-                    )
+                # Original check: if date_future > _precip_time and entry[u"rain"] != {}:
+                # We are now using days_into_forecast and decay_factor,
+                # so the date_future check is implicitly handled by the decay factor.
+                # We still check if rain data exists and is not empty.
+                if entry[u"rain"] != {}:
+                    # Multiply rain amount by the probability of precipitation (pop) AND the decay factor
+                    rain_amount = safe_float(entry[u"rain"].get(next(iter(entry[u"rain"])), 0.0))
+                    data[u"precip_accumulate"] += (rain_amount * pop) * decay_factor
+
+            # The rest of the loop updates temperature, humidity, wind, etc. averages for the forecast summary.
+            # If reliability should also affect temperature, wind, etc., that would require more significant changes.
+
             data[u"temperature_trend"][u"tot_elems"] += 1
             data[u"humidity_trend"][u"tot_elems"] += 1
             curr_temp_cel = entry[u"main"][u"temp"] - 273.15
@@ -791,6 +827,7 @@ def forecast_info(obj, options, curr_weather):
 
         except KeyError:
             continue
+
 
     with open(os.path.join(path, name), u"w") as jdata:
         json.dump(data, jdata, indent=4, sort_keys=True)

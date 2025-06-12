@@ -1,9 +1,0 @@
-A plugin to display an ongoing graph of system water pressure
-
-##### List all plugin files below preceded by a blank line [file_name.ext path] relative to SIP directory #####
-
-pressure_monitor.py plugins
-pressure_monitor.manifest plugins/manifests
-pressure_monitor-docs.html static/docs/plugins
-pressure_monitor.html templates
-pressure_monitor.js static/scripts

@@ -70,10 +70,17 @@ def plugin_data(params):
     # convert to minutes-since-midnight format to return
     sunrise_minutes = sunrise_time.hour * 60 + sunrise_time.minute - gv.tz_offset/60
     sunset_minutes = sunset_time.hour * 60 + sunset_time.minute - gv.tz_offset/60
+    
+    # normalize values that extend beyond midnight in one direction or the other
     if (sunrise_minutes < 0):
         sunrise_minutes += 24*60
+    if (sunrise_minutes >=24*60):
+        sunrise_minutes -= 24*60
+
     if (sunset_minutes < 0):
         sunset_minutes += 24*60
+    if (sunset_minutes >=24*60):
+        sunset_minutes -= 24*60
     
     return {
         "sunrise" : sunrise_minutes,

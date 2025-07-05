@@ -1,0 +1,64 @@
+<!DOCTYPE HTML>
+<HTML>
+<HEAD>
+	<META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset="utf-8">
+	<TITLE>Diurnal Display Plugin Docs</TITLE>
+	<META NAME="viewport" CONTENT="width=device-width, initial-scale=1.0">
+	<STYLE TYPE="text/css">
+	<!--
+		P { font-family: "Lucida Grande", "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", "Lucida Sans Unicode", "Helvetica", "Arial", sans-serif }
+		H2.cjk { font-family: "SimSun" }
+		H2.ctl { font-family: "Mangal" }
+		PRE.cjk { font-family: "NSimSun", monospace }
+		CODE.cjk { font-family: "NSimSun", monospace }
+	-->
+	</STYLE>
+</HEAD>
+<BODY LANG="en-US" BGCOLOR="#ffffff" DIR="LTR" STYLE="border: none; padding: 0in">
+<H1><A NAME="diurnal_display-plugin-documentation"></A>Diurnal Display Plugin
+Documentation</H1>
+<H2 CLASS="western"><A NAME="about-the-diurnal_display-plugin"></A>About the
+Diurnal Display Plugin</H2>
+<P>This plugin shades the home page schedule graph to illustrate sunrise and sunset times.
+It also serves as a test and illustration of the capabilities of plugins to augment the user interface
+in powerful ways. Note that this plugin does not provide any new capabilities for defining programs
+relative to sunrise or sunset, it alters the presentation only.</P>
+
+<H2>Installation Note</H2>
+<P>This plugin requires a library called "suncalc".  This should install automatically on RPi and Linux environments.  However
+    it might not on Windows.  To install type the following into a terminal window:</P>
+<CODE>pip3 install suncalc</CODE>
+<P>This may raise an error "externally-managed-environment."  There are various ways to address this, but a simple solution
+    is to break the external management, with these two lines, and then try the installation again:</P>
+    <code>cd /usr/lib/python3.11</code><br/>
+    <code>sudo rm EXTERNALLY-MANAGED</code>
+<P>This plugin requires the new script injection capabilities introduced in late 2024, please ensure you are running
+    a current SIP version for this plugin to work.</P>
+<P>The plugin consists of the plugin code (<CODE>plugins/diurnal_display.py</CODE>), the plugin javascript insertion (<CODE>/scripts/static/diurnal_display.js</CODE>)
+    the plugin settings page (<CODE>/templates/diurnal_display.html</CODE>), and this documentation (<CODE>/static/docs/plugins/diurnal_display-docs.html</CODE>,
+    as well as a manifest listing each of these files: (<CODE>/plugins/manifests/diurnal_display.manifest</CODE>).  A settings file is automatically created
+    at <CODE>/data/diurnal_display.json</CODE>.</P>
+
+<H2>Usage</H2>
+<P>After installation or enablement of the plugin, go to the Plugins menu and select the settings for the Diurnal Display Plugin, which 
+    allow you to enter precies latitude and longitude coordinates for your location.</P>
+<P>The home page schedule chart will now shade night times (before sunrise, after sunset).</P>
+
+<H2>How the plugin works</H2>
+<P>Besides installing the plugin itself and handling the pages for setting the latitude and longitude parameters,
+    the plugin provides an API at <CODE>/diurnal_display-data</CODE> which can be called from the UI.
+    The API accepts a "date" parameter with a day in "YYYY-MM-DD" format. For example <CODE>/diurnal_display-data?param=2024-08-01</CODE>.
+    Together with the latitude and longitude retrieved from the settings file, the plugin invokes the library 
+    <b>suncalc</b> to calculate sunrise and sunset times.  Note that suncalc requires the date to be in UTC, as well as returning
+    the result in UTC, so some conversion into and out of local time is required.</P>
+<P>For convenience of the scripts, the sunrise and sunset times are converted into minutes of the day, with 0
+    representing midnight, 60 representing 1AM etc.  SIP uses minutes of the day in its programs and logs and thus this
+    is a convenient format for the schedule scripts to work with.</P>
+<P>At startup the plugin also requests a javascript insertion, <B>diurnal_display.js</B>.  This file attaches an observer to
+    the schedule display (see proto plugin for details) and runs a function <B>diurnal_display_update_schedule</B>
+    every time the schedule is updated.  This function calls the plugins data api, and iterates through the schedule
+    table adding a transparent background color to each row consistent with the sunrise/sunset times.  To enable cells with partiall fills,
+    the CSS invokes an in-line SVG for the background that can be dynamically computed to represent the sunrise/sunset line
+    within that hour.</P>
+</BODY>
+</HTML>

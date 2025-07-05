@@ -16,3 +16,4 @@ chart.umd.min.js static/scripts
 d3.min.js static/scripts
 luxon.min.js static/scripts
 chartjs-adapter-luxon.umd.min.js static/scripts
+chart.umd.js.map static/scripts

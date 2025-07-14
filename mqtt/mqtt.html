@@ -1,4 +1,4 @@
-$def with(settings, client_id, error_msg)
+$def with(settings, client_id, error_msg, is_connected)
 
 $var title: $_(u'SIP MQTT Plugin')
 $var page: mqtt_plugin
@@ -15,7 +15,16 @@ $var page: mqtt_plugin
         });
     });
 </script>
-
+<style>
+    .status-connected {
+        color: #28a745;
+        font-weight: bold;
+    }
+    .status-disconnected {
+        color: #dc3545;
+        font-weight: bold;
+    }
+</style>
 <div id="plugin">
     <div class="title">$_('MQTT Plugin')</div>
     <div>
@@ -55,6 +64,15 @@ $var page: mqtt_plugin
             <tr>
                 <td style='text-transform: none;'>$_(u'MQTT Client ID'):</td>  <!--Edit-->
                 <td>${client_id}</td>
+            </tr>
+            <tr>
+                <td style='text-transform: none;'>$_(u'Connection Status'):</td>
+                <td>
+                $if is_connected:
+                    <span class="status-connected">Connected</span>
+                $else:
+                    <span class="status-disconnected">Disconnected</span>
+                </td>
             </tr>
         </table>
 

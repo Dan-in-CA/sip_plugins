@@ -88,37 +88,38 @@ def mqtt_reader(client, msg):
     """
     global settings
 
-    # Get sensor from topic
-    sensor = [
+    # Get sensors matching this topic
+    matching_sensors = [
         k
         for k, v in settings["sensors"].items()
         if "topic" in v and v["topic"] == msg.topic
     ]
 
-    if len(sensor) > 0:
-        # Could be that one topic is mapped to multiple sensors.
-        # For now just take the first one.
-        sensor = sensor[0]
-        setting = settings["sensors"][sensor]
-        sensor_file = f"{SENSOR_DATA_PATH}/{sensor}"
+    if len(matching_sensors) == 0:
+        return
 
-        #
-        # Parse the payload
-        #
-        try:
-            raw_reading = json.loads(msg.payload)
-        except ValueError as e:
-            print("mqtt_reader could not decode payload: ", msg.payload, e)
-            return
+    # Parse the payload once (same for all sensors)
+    try:
+        raw_payload = json.loads(msg.payload)
+    except ValueError as e:
+        print("mqtt_reader could not decode payload: ", msg.payload, e)
+        return
 
+    # Process EACH sensor that matches this topic
+    for sensor_name in matching_sensors:
+        setting = settings["sensors"][sensor_name]
+        sensor_file = f"{SENSOR_DATA_PATH}/{sensor_name}"
+
+        # Parse the specific path for this sensor
         path = setting["path"]
         if path != "":
             try:
-                raw_reading = jmespath.search(path, raw_reading)
-
+                raw_reading = jmespath.search(path, raw_payload)
             except Exception as e:
-                print("mqtt_reader found invalid jmespath expression: ", path, e)
-                return
+                print(f"mqtt_reader found invalid jmespath expression for {sensor_name}: {path}, {e}")
+                continue
+        else:
+            raw_reading = raw_payload
 
         reading, interval, driest, wettest, retention = validate_int_list(
             [
@@ -131,17 +132,17 @@ def mqtt_reader(client, msg):
         )
 
         if reading is None:
-            print(f"mqtt_reader did not find integer: {raw_reading}")
-            return
+            print(f"mqtt_reader did not find integer for {sensor_name}: {raw_reading}")
+            continue
 
         if driest is None or wettest is None:
-            return
+            continue
 
         ts_secs = int(gv.now)
         ts = datetime.datetime.fromtimestamp(ts_secs)
-        if interval is not None and sensor in last_reading:
-            if last_reading[sensor]["ts"] + datetime.timedelta(minutes=interval) > ts:
-                return
+        if interval is not None and sensor_name in last_reading:
+            if last_reading[sensor_name]["ts"] + datetime.timedelta(minutes=interval) > ts:
+                continue
 
         #
         # Convert reading to %
@@ -153,11 +154,11 @@ def mqtt_reader(client, msg):
         reading = round(reading)
 
         # Store reading for display purposes
-        last_reading[sensor] = {"ts": ts, "reading": reading}
+        last_reading[sensor_name] = {"ts": ts, "reading": reading}
 
         # Send msd signal
         msd_signal.send(
-            "reading", data={"sensor": sensor, "timestamp": ts_secs, "value": reading}
+            "reading", data={"sensor": sensor_name, "timestamp": ts_secs, "value": reading}
         )
 
         # Save reading data for graph plugin if retention specified.
@@ -174,7 +175,7 @@ def create_mqtt_reader(setting):
 
 def stop_mqtt_reader(setting):
     if "topic" in setting:
-        mqtt.unsubscribe(settting["topic"])
+        mqtt.unsubscribe(setting["topic"], mqtt_reader)
 
 
 def truncate_data_files(neme, **kw):

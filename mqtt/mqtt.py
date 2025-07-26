@@ -17,24 +17,42 @@ import threading
 # local module imports
 from blinker import signal  # To receive station notifications
 import gv  # Get access to SIP's settings
-from sip import template_render  #  Needed for working with web.py templates
+from sip import template_render  # Needed for working with web.py templates
 from urls import urls  # Get access to SIP's URLs
 import web  # web.py framework
 from webpages import ProtectedPage  # Needed for security
 
 try:
     import paho.mqtt.client as mqtt
+
+    # Detect Paho MQTT version - more robust detection
+    PAHO_VERSION = getattr(mqtt, '__version__', '1.0.0')
+
+    # Also check for v2-specific features
+    try:
+        from paho.mqtt.client import CallbackAPIVersion
+
+        PAHO_V2 = True
+        print(f"MQTT: Detected Paho MQTT v2 via CallbackAPIVersion (reported version: {PAHO_VERSION})")
+    except ImportError:
+        PAHO_V2 = PAHO_VERSION.startswith('2.') if PAHO_VERSION != '1.0.0' else False
+        print(f"MQTT: Detected Paho MQTT v1 (version: {PAHO_VERSION})")
+
+    print(f"MQTT: Using Paho MQTT version {PAHO_VERSION} (v2 mode: {PAHO_V2})")
 except ImportError:
     print(u"ERROR: MQTT Plugin requires paho mqtt.")
     print(u"\ttry: pip install paho-mqtt")
     print(u"or for Python 3 pip3 install paho-mqtt ")
     mqtt = None
+    PAHO_V2 = False
 
 _connection_thread = None
 _connection_stop_event = threading.Event()
 _client_lock = threading.Lock()
 _is_connected = False
 _reconnect_interval = 30  # seconds
+_initial_reconnect_interval = 5
+_connection_attempts = 0
 
 DATA_FILE = u"./data/mqtt.json"
 
@@ -52,9 +70,9 @@ _subscriptions = {}
 # fmt: off
 urls.extend(
     [
-        u"/mqtt-sp", u"plugins.mqtt.settings", 
+        u"/mqtt-sp", u"plugins.mqtt.settings",
         u"/mqtt-save", u"plugins.mqtt.save_settings"
-     ]
+    ]
 )
 # fmt: on
 
@@ -79,10 +97,11 @@ class settings(ProtectedPage):
 
     def GET(self):
         settings = get_settings()
+        version_info = f"Paho MQTT {PAHO_VERSION}" if mqtt else "Not available"
         return template_render.mqtt(
             settings,
             gv.sd[u"name"],
-            NO_MQTT_ERROR if mqtt is None else u"",
+            NO_MQTT_ERROR if mqtt is None else f"Using {version_info}",
             is_connected()
         )  # open settings page
 
@@ -175,30 +194,36 @@ def apply_new_mqtt_settings(previous):
     if status_topic_change or server_change:
         report_mqtt_settings_change()
 
-    publish_status()  # Continu or restart session with the new settings
+    publish_status()  # Continue or restart session with the new settings
 
 
 def on_message(client, userdata, msg):
     """
-    Callback for MQTT data recieved
+    Callback for MQTT data received
+    Compatible with both Paho v1.x and v2.x
     """
     global _subscriptions
     topic_string = ""
     valid_topic = False
-    for topic in _subscriptions:
-        topic_string = topic
-        if topic[-1:] == "#":
-            if topic[:len(topic)-2] == msg.topic[:len(topic)-2]:
+
+    # Extract topic from message (compatible with both versions)
+    topic = msg.topic if hasattr(msg, 'topic') else str(msg.topic)
+
+    for subscription_topic in _subscriptions:
+        topic_string = subscription_topic
+        if subscription_topic[-1:] == "#":
+            if subscription_topic[:len(subscription_topic) - 2] == topic[:len(subscription_topic) - 2]:
                 valid_topic = True
                 break
-            elif topic[:len(topic)-2] == msg.topic:
+            elif subscription_topic[:len(subscription_topic) - 2] == topic:
                 valid_topic = True
                 break
-        elif topic == msg.topic:
+        elif subscription_topic == topic:
             valid_topic = True
             break
-    if not valid_topic:    
-        print(u"MQTT plugin got unexpected message on topic:", msg.topic, msg.payload)
+
+    if not valid_topic:
+        print(u"MQTT plugin got unexpected message on topic:", topic, msg.payload)
     else:
         for cb in _subscriptions[topic_string]:
             cb(client, msg)
@@ -214,13 +239,28 @@ def get_client():
     with _client_lock:
         return _client
 
-def on_connect(client, userdata, flags, rc):
-    """Callback for successful MQTT connection"""
-    global _is_connected
 
-    if rc == 0:
-        print("MQTT: Connected successfully")
+def on_connect(client, userdata, flags, rc, properties=None):
+    """
+    Callback for successful MQTT connection
+    Compatible with both Paho v1.x (4 args) and v2.x (5 args)
+    """
+    global _is_connected, _connection_attempts
+
+    # Handle both v1 and v2 callback signatures
+    if PAHO_V2:
+        # In v2, rc is a ReasonCode object
+        success = (rc.value == 0) if hasattr(rc, 'value') else (rc == 0)
+        rc_value = rc.value if hasattr(rc, 'value') else rc
+    else:
+        # In v1, rc is an integer
+        success = (rc == 0)
+        rc_value = rc
+
+    if success:
+        print(f"MQTT: Connected successfully after {_connection_attempts} attempts")
         _is_connected = True
+        _connection_attempts = 0  # Reset attempt counter on successful connection
 
         # Re-subscribe to all topics that were previously subscribed
         print(f"MQTT: Re-subscribing to {len(_subscriptions)} topics")
@@ -241,19 +281,25 @@ def on_connect(client, userdata, flags, rc):
             except Exception as e:
                 print(f"MQTT: Failed to publish UP status: {e}")
     else:
-        print(f"MQTT: Connection failed with result code {rc}")
+        print(f"MQTT: Connection failed with result code {rc_value} (attempt #{_connection_attempts})")
         _is_connected = False
 
 
-def on_disconnect(client, userdata, rc):
-    """Callback for MQTT disconnection"""
+def on_disconnect(client, userdata, rc, properties=None):
+    """
+    Callback for MQTT disconnection
+    Compatible with both Paho v1.x (3 args) and v2.x (4 args)
+    """
     global _is_connected
     _is_connected = False
 
-    if rc == 0:
+    # Handle both v1 and v2 callback signatures
+    rc_value = rc.value if (PAHO_V2 and hasattr(rc, 'value')) else rc
+
+    if rc_value == 0:
         print("MQTT: Disconnected normally")
     else:
-        print(f"MQTT: Unexpected disconnection (code: {rc}), will attempt reconnection")
+        print(f"MQTT: Unexpected disconnection (code: {rc_value}), will attempt reconnection")
 
 
 def publish_status(status=u"UP"):
@@ -300,7 +346,6 @@ def subscribe(topic, callback, qos=0):
                 print(f"MQTT: Queued broker subscription to {topic} (will subscribe when connected)")
                 return True
     else:
-        print(f"MQTT: Topic {topic} already subscribed to broker, just added callback")
         return True
 
 
@@ -399,57 +444,89 @@ def on_restart():
 
 def connection_monitor():
     """Background thread to monitor and maintain MQTT connection"""
-    global _client, _is_connected
-
-    print("MQTT: Connection monitor thread started")
+    global _client, _is_connected, _connection_attempts
 
     while not _connection_stop_event.is_set():
         try:
             with _client_lock:
                 if not _is_connected and mqtt is not None:
-                    print(f"MQTT: Attempting to connect to {_settings['broker_host']}:{_settings['broker_port']}")
+                    _connection_attempts += 1
+                    import time
+                    start_time = time.time()
+
+                    print(
+                        f"MQTT: Connection attempt #{_connection_attempts} to {_settings['broker_host']}:{_settings['broker_port']} at {time.strftime('%H:%M:%S')}")
 
                     # Clean up old client if it exists
                     if _client is not None:
                         try:
                             _client.disconnect()
                             _client.loop_stop()
-                        except:
-                            pass
+                            time.sleep(0.5)  # Brief pause for cleanup
+                        except Exception as cleanup_error:
+                            print(f"MQTT: Cleanup error: {cleanup_error}")
                         _client = None
 
                     try:
-                        # Create new client
-                        _client = mqtt.Client(gv.sd[u"name"])
+                        # Create new client - compatible with both versions
+                        if PAHO_V2:
+                            try:
+                                from paho.mqtt.client import CallbackAPIVersion
+                                client_id = f"{gv.sd[u'name']}_sip_{int(time.time())}"
+                                _client = mqtt.Client(client_id=client_id,
+                                                      callback_api_version=CallbackAPIVersion.VERSION1)
+                                print(f"MQTT: Created v2 client with ID: {client_id}")
+                            except ImportError:
+                                client_id = f"{gv.sd[u'name']}_sip_{int(time.time())}"
+                                _client = mqtt.Client(client_id=client_id)
+                                print(f"MQTT: Created v2 fallback client with ID: {client_id}")
+                        else:
+                            client_id = f"{gv.sd[u'name']}_sip_{int(time.time())}"
+                            _client = mqtt.Client(client_id)
+                            print(f"MQTT: Created v1 client with ID: {client_id}")
 
+                        # Set up will message
                         if _settings[u"publish_up_down"]:
                             _client.will_set(
                                 _settings[u"publish_up_down"], json.dumps(u"DOWN"), qos=1, retain=True
                             )
 
+                        # Set callbacks
                         _client.on_message = on_message
                         _client.on_connect = on_connect
                         _client.on_disconnect = on_disconnect
 
-                        _client.username_pw_set(
-                            _settings[u"broker_username"], _settings[u"broker_password"]
-                        )
+                        # Set credentials
+                        if _settings[u"broker_username"] and _settings[u"broker_password"]:
+                            _client.username_pw_set(
+                                _settings[u"broker_username"], _settings[u"broker_password"]
+                            )
 
+                        # Connect
                         _client.connect(_settings[u"broker_host"], _settings[u"broker_port"], keepalive=60)
                         _client.loop_start()
 
-                        print("MQTT: Connection attempt initiated")
+                        print(
+                            f"MQTT: Connection call completed in {time.time() - start_time:.3f}s, waiting for callback...")
 
                     except Exception as e:
-                        print(f"MQTT connection attempt failed: {e}")
+                        duration = time.time() - start_time
+                        print(f"MQTT connection attempt #{_connection_attempts} failed after {duration:.3f}s: {e}")
+                        print(f"MQTT: Exception type: {type(e).__name__}")
                         _client = None
                         _is_connected = False
 
         except Exception as e:
             print(f"MQTT monitor thread error: {e}")
 
+        # Use shorter intervals for initial connection attempts
+        if _connection_attempts < 10:
+            wait_time = _initial_reconnect_interval
+        else:
+            wait_time = _reconnect_interval
+
         # Wait before next check/retry
-        _connection_stop_event.wait(_reconnect_interval)
+        _connection_stop_event.wait(wait_time)
 
     print("MQTT: Connection monitor thread stopped")
 
@@ -471,8 +548,22 @@ def stop_connection_monitor():
         _connection_thread.join(timeout=5)
 
 
+# Initialize the plugin with startup delay
 if mqtt is not None:
-    start_connection_monitor()
+    import time
+    import threading
+
+
+    def delayed_start():
+        print("MQTT: Waiting 3 seconds for other plugins to initialize...")
+        time.sleep(3)
+        # print("MQTT: Starting connection monitor...")
+        start_connection_monitor()
+
+
+    # Start in a separate thread to avoid blocking other plugins
+    startup_thread = threading.Thread(target=delayed_start, daemon=True)
+    startup_thread.start()
 else:
     print("MQTT: paho-mqtt not available, connection monitoring disabled")
 

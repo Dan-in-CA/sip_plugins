@@ -169,13 +169,34 @@ def mqtt_reader(client, msg):
 
 
 def create_mqtt_reader(setting):
+    """Create MQTT subscription for a topic if not already subscribed"""
     if ("enable" in setting) and ("topic" in setting) and (setting["topic"] != ""):
-        mqtt.subscribe(setting["topic"], mqtt_reader, qos=0)
+        # Check if any other sensor is already using this topic
+        topic = setting["topic"]
+        other_sensors_with_topic = [
+            sensor for sensor, config in settings["sensors"].items() 
+            if config.get("topic") == topic and config.get("enable") == "on"
+        ]
+        
+        # Only subscribe if this would be the first/only sensor using this topic
+        if len(other_sensors_with_topic) <= 1:  # <= 1 because we might be updating an existing sensor
+            mqtt.subscribe(topic, mqtt_reader, qos=0)
 
 
-def stop_mqtt_reader(setting):
-    if "topic" in setting:
-        mqtt.unsubscribe(setting["topic"], mqtt_reader)
+def stop_mqtt_reader(sensor_name):
+    """Stop MQTT subscription for a topic if no other sensors need it"""
+    if sensor_name in settings["sensors"]:
+        topic = settings["sensors"][sensor_name].get("topic")
+        if topic:
+            # Check if any other sensors still need this topic
+            other_sensors_with_topic = [
+                sensor for sensor, config in settings["sensors"].items() 
+                if sensor != sensor_name and config.get("topic") == topic and config.get("enable") == "on"
+            ]
+            
+            # Only unsubscribe if no other sensors need this topic
+            if len(other_sensors_with_topic) == 0:
+                mqtt.unsubscribe(topic, mqtt_reader)
 
 
 def truncate_data_files(neme, **kw):
@@ -184,7 +205,7 @@ def truncate_data_files(neme, **kw):
     last truncate timestamp as the new_day signal is also sent on
     startup.
     """
-    last_truncate = settings["last_truncate"]
+    last_truncate = settings.get("last_truncate", int(gv.now))
 
     # Only perform truncation once a week to limit IO?
     if last_truncate + (86400 * 7) > gv.now:
@@ -247,12 +268,21 @@ def moisture_sensor_data_init():
 
     load_moisture_data_mqtt_settings()
 
+    # Track unique topics to avoid duplicate subscriptions
+    subscribed_topics = set()
+
     for sensor in settings["sensors"].keys():
         sensor_file = f"{SENSOR_DATA_PATH}/{sensor}"
         if not os.path.isfile(sensor_file):
             create_sensor_data_file(sensor_file)
 
-        create_mqtt_reader(settings["sensors"][sensor])
+        # Only subscribe once per unique topic
+        setting = settings["sensors"][sensor]
+        if ("enable" in setting) and ("topic" in setting) and (setting["topic"] != ""):
+            topic = setting["topic"]
+            if topic not in subscribed_topics:
+                mqtt.subscribe(topic, mqtt_reader, qos=0)
+                subscribed_topics.add(topic)
 
 
 class get_settings(ProtectedPage):

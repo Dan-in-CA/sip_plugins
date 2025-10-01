@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
-# Python 2/3 compatibility imports
-from __future__ import print_function
-from six.moves import range
+# # Python 2/3 compatibility imports
+# from __future__ import print_function
+# from six.moves import range
 
 # standard library imports
 import json
@@ -31,14 +31,14 @@ except IOError:
 # fmt: off
 urls.extend(
     [
-        u"/rb16", u"plugins.relay_16.settings",
-        u"/rbu16", u"plugins.relay_16.update",
+        "/rb16", "plugins.relay_16.settings",
+       "/rbu16", "plugins.relay_16.update",
     ]
 )
 # fmt: on
 
 # Add this plugin to the home page plugins menu
-gv.plugin_menu.append([_(u"Relay 16"), u"/rb16"])
+gv.plugin_menu.append([_("Relay 16"), "/rb16"])
 
 params = {}
 
@@ -46,23 +46,23 @@ params = {}
 def load_params():
     global params
     try:
-        with open(u"./data/relay_16.json", u"r") as f:  # Read the settings from file
+        with open("./data/relay_16.json", "r") as f:  # Read the settings from file
             params = json.load(f)
     except IOError:  #  If file does not exist create file with defaults.
-        params = {u"enabled": u"off", u"relays": 1, u"active": u"low"}
-        with open(u"./data/relay_16.json", u"w") as f:
+        params = {"enabled": "off", "relays": 1, "active": "low"}
+        with open("./data/relay_16.json", "w") as f:
             json.dump(params, f, indent=4, sort_keys=True)
     return params
 
 
 load_params()
 
-if params[u"enabled"] == u"on":
+if params["enabled"] == "on":
     gv.use_gpio_pins = False  # Signal SIP to not use GPIO pins
 
 #### define the GPIO pins that will be used ####
 try:
-    if gv.platform == u"pi":  # If this will run on Raspberry Pi:
+    if gv.platform == "pi":  # If this will run on Raspberry Pi:
         if not gv.use_pigpio:
             GPIO.setmode(
                 GPIO.BOARD
@@ -76,9 +76,9 @@ try:
         pin_rain_sense = gv.pin_map[8]
         pin_relay = gv.pin_map[10]
     else:
-        print(u"relay_16 plugin only supported on pi.")
+        print("relay_16 plugin only supported on pi.")
 except:
-    print(u"Relay_16: GPIO pins not set")
+    print("Relay_16: GPIO pins not set")
     pass
 
 
@@ -87,12 +87,12 @@ def init_pins():
     global pi
 
     try:
-        for i in range(params[u"relays"]):
+        for i in range(params["relays"]):
             if gv.use_pigpio:
                 pi.set_mode(relay_pins[i], pigpio.OUTPUT)
             else:
                 GPIO.setup(relay_pins[i], GPIO.OUT)
-            if params[u"active"] == u"low":
+            if params["active"] == "low":
                 if gv.use_pigpio:
                     pi.write(relay_pins[i], 1)
                 else:
@@ -114,11 +114,11 @@ def on_zone_change(arg):  #  arg is just a necessary placeholder.
     global pi
 
     with gv.output_srvals_lock:
-        for i in range(params[u"relays"]):
+        for i in range(params["relays"]):
             try:
                 if gv.output_srvals[i]:  # if station is set to on
                     if (
-                        params[u"active"] == u"low"
+                        params["active"] == "low"
                     ):  # if the relay type is active low, set the output low
                         if gv.use_pigpio:
                             pi.write(relay_pins[i], 0)
@@ -131,7 +131,7 @@ def on_zone_change(arg):  #  arg is just a necessary placeholder.
                             GPIO.output(relay_pins[i], GPIO.HIGH)
                 else:  # station is set to off
                     if (
-                        params[u"active"] == u"low"
+                        params["active"] == "low"
                     ):  # if the relay type is active low, set the output high
                         if gv.use_pigpio:
                             pi.write(relay_pins[i], 1)
@@ -143,13 +143,13 @@ def on_zone_change(arg):  #  arg is just a necessary placeholder.
                         else:
                             GPIO.output(relay_pins[i], GPIO.LOW)
             except Exception as e:
-                print(u"Problem switching relays", e, relay_pins[i])
+                print("Problem switching relays", e, relay_pins[i])
                 pass
 
 
 init_pins()
 
-zones = signal(u"zone_change")
+zones = signal("zone_change")
 zones.connect(on_zone_change)
 
 ################################################################################
@@ -161,7 +161,7 @@ class settings(ProtectedPage):
     """Load an html page for entering relay board adjustments"""
 
     def GET(self):
-        with open(u"./data/relay_16.json", u"r") as f:  # Read the settings from file
+        with open("./data/relay_16.json", "r") as f:  # Read the settings from file
             params = json.load(f)
         return template_render.relay_16(params)
 
@@ -172,26 +172,26 @@ class update(ProtectedPage):
     def GET(self):
         qdict = web.input()
         changed = False
-        if params[u"enabled"] != (qdict[u"enabled"]):
-            params[u"enabled"] = qdict[u"enabled"]
+        if params["enabled"] != (qdict["enabled"]):
+            params["enabled"] = qdict["enabled"]
             changed = True
-        if params[u"relays"] != int(
-            qdict[u"relays"]
+        if params["relays"] != int(
+            qdict["relays"]
         ):  # if the number of relay channels changed, update the params
-            params[u"relays"] = int(qdict[u"relays"])
+            params["relays"] = int(qdict["relays"])
             changed = True
-        if params[u"active"] != str(
-            qdict[u"active"]
+        if params["active"] != str(
+            qdict["active"]
         ):  # if the number of relay channels changed, update the params
-            params[u"active"] = str(qdict[u"active"])
+            params["active"] = str(qdict["active"])
             params[
-                u"relays"
+                "relays"
             ] = (
                 1
             )  # since changing active could turn all the relays on, reduce the relay channels to 1
             changed = True
         if changed:
             init_pins()
-            with open(u"./data/relay_16.json", u"w") as f:  # write the settings to file
+            with open("./data/relay_16.json", "w") as f:  # write the settings to file
                 json.dump(params, f, indent=4, sort_keys=True)
-        raise web.seeother(u"/")
+        raise web.seeother("/")

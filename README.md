@@ -228,3 +228,7 @@ Adjust irrigation time based on weather forecast
 advance_control
 ----------
 Plug-in to control valves in shelly, in the future son-off will be supported and more shelly versions. Use HTTP DD commands.
+
+well
+----------
+A plugin to permit control of a well pump according to bore levels. User configuration of time to reset, logic levels and output reset type.

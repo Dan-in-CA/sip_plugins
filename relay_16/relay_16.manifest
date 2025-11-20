@@ -14,5 +14,5 @@ relay_16.py plugins
 relay_16.html templates
 relay_16.json data (generated)
 relay_16-docs.html static/docs/plugins
-Relay_16-connect.jpg static/docs/images
+Relay_16-connect.png static/docs/images
 relay_16.manifest plugins/manifests

@@ -253,7 +253,7 @@ def get_lcd_options():
         with open(u"./data/lcd_adj.json", u"r") as f:  # Read the settings from file
             file_data = json.load(f)
         for key, value in list(file_data.items()):
-            if key in datalcd:
+            if key in datalcd and key != u"status":  # Never overwrite live status
                 datalcd[key] = value
     except Exception:
         pass
@@ -297,7 +297,6 @@ class update(ProtectedPage):
             u"d_uptime": u"on",
             u"d_rain_sensor": u"on",
             u"d_running_stations": u"on",
-            u"status": checker.status,
         }
         for k in list(datalcd.keys()):
             if k in qdict:

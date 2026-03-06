@@ -142,6 +142,19 @@ class save_settings(ProtectedPage):
 
 def get_settings():
     global _settings
+    from os.path import exists
+
+    # If file doesn't exist, create it with defaults
+    if not exists(DATA_FILE):
+        print(u"MQTT Plugin: Creating default settings file")
+        try:
+            with open(DATA_FILE, "w") as f:
+                json.dump(_settings, f, indent=4, sort_keys=True)
+        except IOError as e:
+            print(u"MQTT Plugin couldn't create data file:", e)
+        return _settings
+
+    # Load existing settings
     try:
         fh = open(DATA_FILE, "r")
         try:

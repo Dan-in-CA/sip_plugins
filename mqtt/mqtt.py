@@ -277,12 +277,13 @@ def on_connect(client, userdata, flags, rc, properties=None):
         _connection_attempts = 0  # Reset attempt counter on successful connection
 
         # Re-subscribe to all topics that were previously subscribed
-        for topic in _subscriptions:
-            try:
-                client.subscribe(topic, 0)
-                print(f"MQTT: Subscribed to {topic}")
-            except Exception as e:
-                print(f"MQTT: Failed to subscribe to {topic}: {e}")
+        with _client_lock:
+            for topic in _subscriptions:
+                try:
+                    client.subscribe(topic, 0)
+                    print(f"MQTT: Success broker subscription to topic: {topic} (on reconnect)")
+                except Exception as e:
+                    print(f"MQTT: Failed broker subscription to topic: {topic}: {e} (on reconnect)")
 
         # Publish UP status
         if _settings[u"publish_up_down"]:
@@ -348,10 +349,10 @@ def subscribe(topic, callback, qos=0):
             if _client and _is_connected:
                 try:
                     _client.subscribe(topic, qos)
-                    print(f"MQTT: Subscribed to broker for topic: {topic}")
+                    print(f"MQTT: Success broker subscription to topic: {topic}")
                     return True
                 except Exception as e:
-                    print(f"MQTT: Failed to subscribe to {topic}: {e}")
+                    print(f"MQTT: Failed broker subscription to topic: {topic}: {e}")
                     return False
             else:
                 print(f"MQTT: Queued broker subscription to {topic} (will subscribe when connected)")

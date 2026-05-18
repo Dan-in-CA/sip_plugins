@@ -1,0 +1,17 @@
+Description: MCP server plugin for SIP irrigation controller.
+Copyright 2026
+Author: Tiko JG
+Email: 
+License: GNU GPL 3.0
+
+Requirements:
+
+###
+
+mcp_server.py plugins
+mcp_server_protocol.py plugins
+mcp_server.html templates
+mcp_server-docs.html static/docs/plugins
+mcp_server.manifest plugins/manifests
+mcp_server.json data (generated)
+mcp_server_protocol.py .

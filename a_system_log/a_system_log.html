@@ -1,0 +1,97 @@
+$def with(settings, error_msg)
+
+$var title: $_('A System Log')
+$var page: a_system_log_plugin
+<script>
+    // Initialize behaviors
+    jQuery(document).ready(function () {
+
+        jQuery("#cSubmit").click(function () {
+            jQuery("#pluginForm").submit();
+        });
+        jQuery("button#cCancel").click(function () {
+            window.location = "/";
+        });
+
+        jQuery("button#docButton").click(function () {
+            window.open("static/docs/plugins/a_system_log-docs.html", "_blank");
+        });
+
+    });
+</script>
+
+<div id="plugin">
+    <div class="title">A System Log Plugin
+        <button class="execute" id="docButton" type="button">$_('Help')</button>
+    </div>
+    <div>
+    <p>This plugin send messages to the console on SIP events (System, Program, Station, Plugins).</p>
+    <p>The intent is to facilitate developpement of SIP core and plugins, and for system diagnostic.</p>
+    </div>
+
+    <div id="errorMessage">${error_msg}</div>
+
+    <form id="pluginForm" action="/a_system_log-save" method="get">
+
+        <table class="optionList">
+            <tr>
+                <td style="text-transform: none;">$(u"System events"):</td>
+                <td>Start, reboot, config change, rain sensor and delay, midnight hello, ...<br />
+                    <input type="checkbox" name="system_log_enable" ${u"checked" if settings.get(u'system_log_enable',False) else u"" }>
+                </td>
+            </tr>
+            <tr>
+                <td style="text-transform: none;">$(u"Program events"):</td>
+                <td>Enable/disable, add, modify, delete, ...<br />
+                    <input type="checkbox" name="program_log_enable" ${u"checked" if settings.get(u'program_log_enable',False) else u"" }>
+                </td>
+            </tr>
+            <tr>
+                <td style="text-transform: none;">$(u"Station events"):</td>
+                <td>Scheduled (activated) / completed (desactivated) with related info.<br />
+                    <input type="checkbox" name="station_log_enable" ${u"checked" if settings.get(u'station_log_enable',False) else u"" }>
+                </td>
+            </tr>
+            <tr>
+                <td style="text-transform: none;">$(u"Stations output"):</td>
+                <td>Control command applied to stations relays (array).<br />
+                    <input type="checkbox" name="station_log_output_enable" ${u"checked" if settings.get(u'station_log_output_enable',False) else u"" }>
+                </td>
+            </tr>
+
+            <tr>
+                <td style="text-transform: none;">$(u"Water events"):</td>
+                <td>Water level, rain sensor and rain delay.<br />
+                    <input type="checkbox" name="water_log_enable" ${u"checked" if settings.get(u'water_log_enable',False) else u"" }>
+                </td>
+            </tr>
+
+
+
+            <tr>
+                <td style="text-transform: none;">$(u"Plugins alarms and events"):</td>
+                <td>General Plugin Alarm signal and this plugin event.<br />
+                    <input type="checkbox" name="plugin_log_enable" ${u"checked" if settings.get(u'plugin_log_enable',False) else u"" }>
+                </td>
+            </tr>
+            <tr>
+                <td style="text-transform: none;">$(u"Mute Web server logs"):</td>
+                <td>Mute periodic messages when SIP web page is accessed.<br />
+                    <input type="checkbox" name="web_server_mute" ${u"checked" if settings.get(u'web_server_mute',False) else u"" }>
+                </td>
+            </tr>
+            <tr>
+                <td style="text-transform: none;">$(u"Prepend timestamp to messages"):</td>
+                <td>Prepend ISO 8601 date and time with millisecond timestamp to console messages.<br />
+                    <input type="checkbox" name="start_with_timestamp" ${u"checked" if settings.get(u'start_with_timestamp',False) else u"" }>
+                </td>
+            </tr>
+        </table>
+    </form>
+
+<div class="controls">
+    <button id="cSubmit" class="submit"><b>$_(u'Submit')</b></button>
+    <button id="cCancel" class="cancel danger">$_(u'Cancel')</button>
+</div>
+
+</div>

@@ -20,7 +20,6 @@ from typing import Final
 import gv
 import web  # web.py framework
 from blinker import signal
-from helpers import report_plugin_setting_change
 from urls import urls  # Get access to SIP's URLs
 from webpages import ProtectedPage  # Needed for security
 
@@ -153,6 +152,16 @@ def apply_settings_and_save_to_file(new_settings) -> None:
 ###################
 # Helper functions
 #
+
+# TODO: move to helper.py
+plugin_setting_change = signal("plugin_setting_change")
+
+
+def report_plugin_setting_change(name, **kw) -> None:
+    """
+    Send blinker signal indicating that plugin settings changed.
+    """
+    plugin_setting_change.send(name, **kw)
 
 
 def name_to_str(name=None) -> str:

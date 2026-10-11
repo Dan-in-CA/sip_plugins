@@ -1,0 +1,83 @@
+<!DOCTYPE HTML>
+<HTML>
+
+<HEAD>
+	<META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=windows-1252">
+	<TITLE>a_system_log-docs.html</TITLE>
+	<META NAME="viewport" CONTENT="width=device-width, initial-scale=1.0">
+	<STYLE TYPE="text/css">
+		<!--
+		P {
+			font-family: "Lucida Grande", "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", "Lucida Sans Unicode", "Helvetica", "Arial", sans-serif
+		}
+
+		H2.cjk {
+			font-family: "SimSun"
+		}
+
+		H2.ctl {
+			font-family: "Mangal"
+		}
+
+		PRE.cjk {
+			font-family: "NSimSun", monospace
+		}
+
+		CODE.cjk {
+			font-family: "NSimSun", monospace
+		}
+		-->
+	</STYLE>
+</HEAD>
+
+<BODY LANG="en-US" BGCOLOR="#ffffff" DIR="LTR" STYLE="border: none; padding: 0in">
+	<H1><A NAME="a_system_log-documentation"></A>A System Log Plugin
+		Documentation</H1>
+	<H2 CLASS="western"><A NAME="about-a_system_log-plugin"></A>About A System Log Plugin</H2>
+	<P>A System Log plugin implement formatted event reporting to console for SIP System, Program, Station
+		Station and Plugin events. The intent is to facilitate developpement of SIP core
+		and plugins, and for system diagnostic. Also usefull when used in conjunction with systemd-journald service
+		to trace historic SIP behavior. Options are provided to select the different groups
+		of events sent to the console.</P>
+	<H2 CLASS="western"><A NAME="using-a_system_log-plugin"></A>Using
+		A System Log plugin</H2>
+	<P>This plugin is disabled by default. If you are reading this, A System Log plugin
+		is probably enabled on your system. Otherwise you can
+		enable it using the plugin manager or by setting the group
+		permissions of the <STRONG>a_system_log.py</STRONG> file to <STRONG>executable</STRONG>.
+		Once it is enabled, and the SIP program has been restarted, you can
+		verify it is working by selecting it from the PLUGINS drop down menu
+		of the main program&rsquo;s web interface. You should be taken to the
+		plugin&rsquo;s Settings page.</P>
+
+	<h2>Requirements</h2>
+	<ul>
+		<p>This plugin has no other dependencies.</p>
+
+	</ul>
+
+	<h2>Configuration</h2>
+	<ul>
+		<p>The following options control SIP events messages sent to the console:</p>
+		<li><STRONG><i>System events</i></STRONG>:  SIP start, restart, reboot, Web UI login, system operation mode change
+			(enable / disable, auto / manual mode), system options change, station names change,
+			rain sensor state change, rain delay change, water level change, midnight hello with OS and SIP uptime./li>
+		<li><STRONG><i>Program events</i></STRONG>: Program enable/disable, add, modify, delete, delete all./li>
+		<li><STRONG><i>Station events</i></STRONG>: Station scheduled (set to run) or completed (terminated schedule)
+			with related info (station number and name, start time, duration, program number and name)./li>
+		<li><STRONG><i>Stations output</i></STRONG>: An array representing the new state of all stations relays./li>
+		<li><STRONG><i>Water events</i></STRONG>: Water level, rain sensor and rain delay./li>
+		<li><STRONG><i>Plugins alarms and events</i></STRONG>: General Plugin Alarm signal and this plugin event./li>
+		<p></p>
+		<p>Other options:</p>
+		<li><STRONG><i>Mute Web server logs</i></STRONG>: By default SIP web server send periodic logs messages to the console (stderr)
+			when a session is openned. These periodic messages includes HTTP GET, PUT, POST packets.
+			These message are stored by systemd-journald service. Under normal operation they are not required.
+			Enablig this plugin option will mute them./li>
+		<li><STRONG><i>Prepend timestamp to messages</i></STRONG>: This option will insert an ISO 8601 formatted date and time
+			with millisecond timestamp at the beginning of all messages sent to the console when SIP is started
+			in interractive mode (command line) or during a debugging sessions./li>
+	</ul>
+</BODY>
+
+</HTML>

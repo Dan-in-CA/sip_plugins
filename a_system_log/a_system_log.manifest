@@ -1,0 +1,11 @@
+Description: Send system events to syslog with option to mute web server HTTP log messages
+
+Requirements: None
+
+##### List all plugin files below preceded by a blank line [file_name.ext path] relative to SIP directory #####
+
+a_system_log.py plugins
+a_system_log.html templates
+a_system_log.json data (generated)
+a_system_log-docs.html static/docs/plugins
+a_system_log.manifest plugins/manifests

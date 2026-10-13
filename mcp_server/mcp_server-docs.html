@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>MCP Server Plugin</title>
+</head>
+<body>
+  <h2>MCP Server Plugin</h2>
+  <p>
+    This plugin exposes an MCP Streamable HTTP endpoint for SIP control and status.
+  </p>
+  <h3>Endpoint</h3>
+  <p><code>/mcp</code></p>
+  <h3>Authentication</h3>
+  <ul>
+    <li>SIP admin session cookie, or</li>
+    <li><code>X-SIP-Passphrase</code> header, or</li>
+    <li><code>Authorization: Bearer &lt;passphrase&gt;</code></li>
+  </ul>
+  <h3>Tools</h3>
+  <ul>
+    <li>get_system_status</li>
+    <li>list_stations</li>
+    <li>list_programs</li>
+    <li>run_station</li>
+    <li>stop_all_stations</li>
+    <li>run_program_now</li>
+    <li>set_rain_delay</li>
+    <li>set_water_level</li>
+    <li>get_logs</li>
+  </ul>
+</body>
+</html>

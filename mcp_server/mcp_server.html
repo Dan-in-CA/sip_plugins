@@ -1,0 +1,68 @@
+$def with(settings, endpoint)
+
+$var title: $_(u'MCP Server')
+$var page: mcp_server
+
+<script>
+  jQuery(document).ready(function() {
+    jQuery("button#cSubmit").click(function() {
+      jQuery("#pluginForm").submit();
+    });
+    jQuery("button#cCancel").click(function() {
+      window.location = "/";
+    });
+  });
+</script>
+
+<div class="title">MCP Server Settings</div>
+
+<div style="max-width: 800px; margin-top: 12px;">
+  <p>
+    This plugin exposes an MCP endpoint at <code>$endpoint</code>.
+  </p>
+
+  <form id="pluginForm" action="/mcp-save" method="get">
+    <table class="optionList">
+      <tr>
+        <td>Enable MCP endpoint</td>
+        <td>
+          <input type="checkbox" name="enabled" id="enabled" value="on" ${"checked" if settings.get("enabled") == "on" else ""} />
+        </td>
+      </tr>
+      <tr>
+        <td>Require SIP auth</td>
+        <td>
+          <input type="checkbox" name="require_auth" id="require_auth" value="on" ${"checked" if settings.get("require_auth") == "on" else ""} />
+        </td>
+      </tr>
+      <tr>
+        <td>Validate Origin header</td>
+        <td>
+          <input type="checkbox" name="require_origin" id="require_origin" value="on" ${"checked" if settings.get("require_origin") == "on" else ""} />
+        </td>
+      </tr>
+      <tr>
+        <td>Allowed origins (comma separated)</td>
+        <td>
+          <input type="text" name="allowed_origins" id="allowed_origins" style="width: 480px;"
+          value="$settings.get('allowed_origins', '')" />
+        </td>
+      </tr>
+    </table>
+
+  </form>
+
+  <div style="margin-top: 16px;">
+    <strong>Auth notes</strong>
+    <ul>
+      <li>Browser session login is accepted.</li>
+      <li>Non-browser clients can use header <code>X-SIP-Passphrase</code>.</li>
+      <li>Bearer auth token may also carry SIP passphrase.</li>
+    </ul>
+  </div>
+</div>
+
+<div class="controls">
+  <button id="cSubmit" class="submit"><b>$_(u'Submit')</b></button>
+  <button id="cCancel" class="cancel danger">$_(u'Cancel')</button>
+</div>

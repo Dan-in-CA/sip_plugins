@@ -60,6 +60,10 @@ lcd_adj
 ----------
 Uses I2C for LCD 16x2 char data display
 
+mcp_server
+----------
+MCP server plugin for SIP irrigation controller.
+
 moisture_sensor_control
 ----------
 Suppress or trigger schedules based on moisture sensors readings.
